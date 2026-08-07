@@ -1,0 +1,34 @@
+# 依存関係
+node_modules/
+__pycache__/
+.venv/
+venv/
+vendor/bin/
+
+# ビルド成果物
+dist/
+build/
+target/
+*.egg-info/
+
+# 出荷判定の証跡(タグ push 時に CI が生成する)
+evidence/
+
+# 秘匿情報。強制層の設定でも参照を遮断するが、混入の経路をここでも塞ぐ
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# エディタ・OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/extensions.json
+
+# 一時領域
+tmp/
+.cache/
+*.log

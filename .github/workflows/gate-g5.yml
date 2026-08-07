@@ -1,0 +1,172 @@
+# G-5 自動検証(CI)
+#
+# 必須ステータスチェックの名前は gate-g5 に固定します。個々の検査ジョブではなく、
+# 集約ジョブ1つを必須にすることで、検査を足しても保護設定を変えずに済みます。
+#
+# 実際に走るコマンドは adapters/<stack>.json から差し込みます。
+# プロセスの骨格を言語に依存させないためです。
+
+name: gate-g5
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # プロセス構成が未設定のあいだは、検査の中身を判定しない
+  config:
+    name: config
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.read.outputs.configured }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: read
+        run: |
+          v=$(node -e "const c=require('./process.config.json');console.log(c.configured===false?'false':'true')")
+          echo "configured=$v" >> "$GITHUB_OUTPUT"
+          if [ "$v" = "false" ]; then
+            echo "::notice::プロセス構成が未設定です。/process-init を実行するまで G-5 の検査は実施しません"
+          fi
+
+  # 構成と設定の整合。ここが落ちたら以降の合格に意味がない
+  contract:
+    name: gate-contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/gate/verify-gate-contract.mjs
+
+  # 基準1 全テスト GREEN / 基準3 カバレッジ
+  test:
+    name: test
+    needs: config
+    if: needs.config.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-stack
+      - name: テスト
+        run: node scripts/gate/adapter.mjs run test
+      - name: カバレッジの取得
+        run: node scripts/gate/adapter.mjs run coverage
+      - name: カバレッジの判定
+        run: node scripts/gate/coverage-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-result
+          path: evidence/coverage-result.json
+          if-no-files-found: ignore
+
+  # 基準2 静的解析・脆弱性の重大指摘
+  static-analysis:
+    name: static-analysis
+    needs: config
+    if: needs.config.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-stack
+      - name: 静的解析
+        run: node scripts/gate/adapter.mjs run lint
+      - name: 依存の脆弱性
+        run: node scripts/gate/adapter.mjs run audit
+
+  # 基準4 曖昧語チェック。構成に依存しないため常に走らせる
+  spec-lint:
+    name: spec-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/gate/spec-lint.mjs
+
+  # 基準5 依存関係のライセンス検査(合否条件)
+  #
+  # 生成物と既存著作物の類似検知は合否条件にしません。「検出されなかった」が
+  # 「潔白である」という記録として残ると、依拠性の推認に対する防御になりません。
+  # 判定するのは、定めた検査を実施し記録したことです。
+  ip-clearance:
+    name: ip-clearance
+    needs: config
+    if: needs.config.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-stack
+      - name: 依存関係のライセンス
+        id: lic
+        run: node scripts/gate/adapter.mjs run licenses
+      - name: 検査の実施記録
+        if: always()
+        run: |
+          mkdir -p evidence
+          printf '{ "scanRun": true, "result": "%s", "scannedAt": "%s" }\n' \
+            "${{ steps.lic.outcome }}" "$(date -u +%FT%TZ)" > evidence/license-scan.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: license-scan
+          path: evidence/license-scan.json
+
+  # 基準7 秘匿情報の混入検査。台帳記録による通過を認めない唯一の基準
+  secret-scan:
+    name: secret-scan
+    needs: config
+    if: needs.config.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-stack
+        with:
+          install: 'false'
+      - run: node scripts/gate/adapter.mjs run secretScan
+
+  # 基準8 依存関係の追加・更新の識別。合否は判定せず一覧を出す
+  dependency-diff:
+    name: dependency-diff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git fetch origin "${{ github.base_ref }}" --depth=50 || true
+      - run: node scripts/gate/dependency-diff.mjs --base "origin/${{ github.base_ref }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-diff
+          path: evidence/dependency-diff.json
+          if-no-files-found: ignore
+
+  # 集約。ブランチ保護の必須ステータスチェックはこのジョブ名を指す
+  gate-g5:
+    name: gate-g5
+    runs-on: ubuntu-latest
+    needs: [config, contract, test, static-analysis, spec-lint, ip-clearance, secret-scan]
+    if: always()
+    steps:
+      - name: 全検査の結果を突合する
+        run: |
+          echo "configured:      ${{ needs.config.outputs.configured }}"
+          echo "contract:        ${{ needs.contract.result }}"
+          echo "test:            ${{ needs.test.result }}"
+          echo "static-analysis: ${{ needs.static-analysis.result }}"
+          echo "spec-lint:       ${{ needs.spec-lint.result }}"
+          echo "ip-clearance:    ${{ needs.ip-clearance.result }}"
+          echo "secret-scan:     ${{ needs.secret-scan.result }}"
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
+            echo "::error::G-5 は通過していません"
+            exit 1
+          fi
+          if [ "${{ needs.config.outputs.configured }}" != "true" ]; then
+            echo "::warning::プロセス構成が未設定のため、検査を実施していません。/process-init を実行してください"
+            exit 0
+          fi
+          echo "::notice::G-5 通過"

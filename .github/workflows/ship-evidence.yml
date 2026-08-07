@@ -1,0 +1,58 @@
+# G-7 出荷判定の証跡を集約する
+#
+# 出荷判定者に数値の十分性を判定させません。閾値の充足は G-5 が機械で判定済みです。
+# ここで行うのは記録と基準の突合だけです。
+#
+# 未達のゲートがある場合、品質レポートへ必ず記載されます。隠す経路はありません。
+
+name: ship-evidence
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 起点のタグ
+        required: false
+      to:
+        description: 終点のタグ
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  evidence:
+    name: ship-evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 直近の CI 成果物を取り込む
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          path: evidence
+          merge-multiple: true
+
+      - name: 証跡を集約する
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          node scripts/gate/aggregate-evidence.mjs \
+            ${{ inputs.from && format('--from {0}', inputs.from) || '' }} \
+            ${{ inputs.to && format('--to {0}', inputs.to) || '' }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ship-evidence
+          path: |
+            evidence/evidence.json
+            evidence/quality-report.md
+          if-no-files-found: error

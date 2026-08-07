@@ -1,0 +1,17 @@
+{
+  "id": "go",
+  "name": "Go",
+  "runtime": "go",
+  "runtimeVersion": "1.23",
+  "commands": {
+    "install": "go mod download",
+    "test": "go test ./...",
+    "coverage": "go test ./... -coverprofile=coverage.out && go tool cover -func=coverage.out",
+    "lint": "go vet ./...",
+    "audit": "govulncheck ./...",
+    "licenses": "go-licenses check ./...",
+    "secretScan": ""
+  },
+  "coverageSummary": null,
+  "note": "coverage.out はテキスト形式のため、カバレッジ判定はワークフロー側の go tool cover の出力で行ってください"
+}
