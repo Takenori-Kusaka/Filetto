@@ -153,6 +153,7 @@ CL1 以上および規制業では使えません。
 
 ## 関連
 
+- 📖 [AIが実装する時代の開発プロセス — ピットイン方式](https://zenn.dev/takenori_kusaka/books/pit-in-process) — 要点をまとめた本(Zenn・無料・全10章)
 - [ピットイン方式 標準本文](https://takenori-kusaka.github.io/process-compass/phase4-process-design/overview/)
 - [テーラリング(第8章)](https://takenori-kusaka.github.io/process-compass/phase4-process-design/tailoring-guide/)
 - [CI/CD ゲート構成](https://takenori-kusaka.github.io/process-compass/phase5-implementation/ci-gates/)
