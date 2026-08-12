@@ -105,7 +105,7 @@
         "ci-strict",
         "post-release-audit"
       ],
-      "reviewSourcing": null,
+      "reviewSourcing": "リポジトリを AGPL-3.0 で公開し、コミュニティのレビューを受ける。公開までの期間は独立レビューが不在のまま進む",
       "howToResolve": [
         "リポジトリを公開し、コミュニティのレビューを受ける",
         "他の個人開発者と相互レビューの取り決めをする",
