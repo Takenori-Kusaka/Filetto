@@ -25,16 +25,20 @@ OUT.mkdir(exist_ok=True)
 
 
 def main():
-    from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions, RapidOcrOptions
-    from rapidocr import LangRec, OCRVersion, ModelType
+    from docling.document_converter import DocumentConverter, PdfFormatOption
+    from rapidocr import LangRec, ModelType, OCRVersion
 
     o = PdfPipelineOptions()
     o.do_ocr = True
     o.ocr_options = RapidOcrOptions(
         force_full_page_ocr=True,
-        rapidocr_params={"Rec.lang_type": LangRec.JAPAN, "Rec.ocr_version": OCRVersion.PPOCRV4, "Rec.model_type": ModelType.MOBILE},
+        rapidocr_params={
+            "Rec.lang_type": LangRec.JAPAN,
+            "Rec.ocr_version": OCRVersion.PPOCRV4,
+            "Rec.model_type": ModelType.MOBILE,
+        },
     )
     conv = DocumentConverter(
         format_options={

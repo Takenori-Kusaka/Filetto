@@ -104,7 +104,7 @@ def main():
         stem = f.name.replace(".txt", "")
         t = f.read_text(encoding="utf-8", errors="replace")
         n = normalize(t)
-        diff = sum(1 for x, y in zip(t, n) if x != y)
+        diff = sum(1 for x, y in zip(t, n, strict=False) if x != y)
         if stem in legacy:
             side_legacy += diff
         else:
