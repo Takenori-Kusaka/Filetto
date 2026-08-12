@@ -1,27 +1,190 @@
 {
   "schemaVersion": 0,
-  "configured": false,
-  "note": "未設定です。Claude Code で /process-init を実行すると、このファイルと PROCESS-PROFILE.md が生成されます。",
-  "projectId": "P-000",
-  "adapters": { "stack": "none" },
+  "configured": true,
+  "profileName": null,
+  "projectId": "P-001",
+  "generatedAt": "2026-08-12T09:17:02.321Z",
+  "answers": {
+    "q-team-size": "size-1-2",
+    "q-biz-phase": "mvp",
+    "q-quality": "quality-high",
+    "q-criticality": "cl0",
+    "q-dev-form": "inhouse",
+    "q-external-reviewer": "reviewer-no",
+    "q-existing-gates": "gates-none",
+    "q-ai-constraint": "ai-free"
+  },
+  "answerLabels": {
+    "q-team-size": "1〜2名",
+    "q-biz-phase": "最初の顧客向け(MVP)",
+    "q-quality": "止まると社会・金銭に影響する",
+    "q-criticality": "経済的な損失や業務の中断にとどまる",
+    "q-dev-form": "自社開発",
+    "q-external-reviewer": "いない",
+    "q-existing-gates": "ない",
+    "q-ai-constraint": "制約なし"
+  },
+  "adapters": {
+    "stack": "python"
+  },
+  "ruleset": null,
   "gates": {
-    "g1": { "label": "G-1 企画承認", "state": "required", "params": {}, "why": [] },
-    "g2": { "label": "G-2 要件合意", "state": "required", "params": {}, "why": [] },
-    "g3": { "label": "G-3 技術設計判断", "state": "required", "params": {}, "why": [] },
-    "g4": { "label": "G-4 機能仕様承認", "state": "required", "params": {}, "why": [] },
-    "g5": { "label": "G-5 自動検証(CI)", "state": "required", "params": {}, "why": [] },
-    "g6": { "label": "G-6 独立レビュー", "state": "required", "params": {}, "why": [] },
-    "g7": { "label": "G-7 出荷判定", "state": "required", "params": {}, "why": [] },
-    "g8": { "label": "G-8 リリース決裁", "state": "required", "params": {}, "why": [] }
+    "g1": {
+      "label": "G-1 企画承認",
+      "approver": "事業決裁者(決裁権限規程どおりの職位)",
+      "state": "required",
+      "params": {},
+      "why": []
+    },
+    "g2": {
+      "label": "G-2 要件合意",
+      "approver": "価値責任者(単独。目安48時間以内に判定)",
+      "state": "required",
+      "params": {},
+      "why": []
+    },
+    "g3": {
+      "label": "G-3 技術設計判断",
+      "approver": "技術判断者(単独。目安48時間以内に判定)",
+      "state": "required",
+      "params": {},
+      "why": []
+    },
+    "g4": {
+      "label": "G-4 機能仕様承認(反復内)",
+      "approver": "価値責任者(または明示的に委譲された機能責任者。委譲しても結果責任は価値責任者に残る)",
+      "state": "required",
+      "params": {},
+      "why": []
+    },
+    "g5": {
+      "label": "G-5 自動検証(CI)",
+      "approver": "CI(機械判定)",
+      "state": "required",
+      "params": {},
+      "why": [
+        "代替としてCI基準を厳格化する(カバレッジ+静的解析の基準を引き上げ)"
+      ]
+    },
+    "g6": {
+      "label": "G-6 独立レビュー",
+      "approver": "独立レビュア(作成指示者本人は承認不可。ブランチ保護で強制)",
+      "state": "unmet",
+      "params": {},
+      "why": [
+        "独立レビューは実施できないため省略する"
+      ]
+    },
+    "g7": {
+      "label": "G-7 出荷判定",
+      "approver": "品質保証(第三者。署名する)",
+      "state": "required",
+      "params": {
+        "approverMode": "value-owner-merged"
+      },
+      "why": [
+        "出荷判定は価値責任者が兼ねる。ただし判定記録は必ず残す",
+        "出荷判定に限定的な抜き取り確認を追加する"
+      ]
+    },
+    "g8": {
+      "label": "G-8 リリース決裁",
+      "approver": "事業決裁者",
+      "state": "required",
+      "params": {},
+      "why": []
+    }
   },
-  "unmet": [],
+  "unmet": [
+    {
+      "gate": "g6",
+      "label": "G-6 独立レビュー",
+      "reason": "作成を指示した本人以外が挙動を確認する条件を満たす構成が存在しない(最小体制3名未満、かつ外部のレビュアが不在)",
+      "whyNotAi": "同一のモデルを用いる限り、エージェントを分けても事前学習の知識という共通の原因が残る。生成物の確認を生成器へ委ねる構成は自動化バイアスによって見落としを増やす",
+      "compensation": [
+        "ci-strict",
+        "post-release-audit"
+      ],
+      "reviewSourcing": "リポジトリを AGPL-3.0 で公開し、コミュニティのレビューを受ける。公開までの期間は独立レビューが不在のまま進む",
+      "howToResolve": [
+        "リポジトリを公開し、コミュニティのレビューを受ける",
+        "他の個人開発者と相互レビューの取り決めをする",
+        "有償のコードレビューを利用する",
+        "体制が3名以上になったら /process-init を再実行する"
+      ]
+    }
+  ],
   "ci": {
-    "coverageThreshold": 80,
-    "failOnSeverity": ["critical", "high"],
-    "allowedLicenses": ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"],
-    "strengthened": false
+    "coverageThreshold": 90,
+    "failOnSeverity": [
+      "critical",
+      "high"
+    ],
+    "allowedLicenses": [
+      "MIT",
+      "Apache-2.0",
+      "BSD-2-Clause",
+      "BSD-3-Clause",
+      "ISC",
+      "MPL-2.0",
+      "PSF-2.0",
+      "AGPL-3.0-or-later",
+      "MIT License",
+      "Apache Software License",
+      "BSD License",
+      "Apache-2.0 OR BSD-2-Clause",
+      "Mozilla Public License 2.0 (MPL 2.0)",
+      "Python Software Foundation License"
+    ],
+    "strengthened": true
   },
-  "review": { "requiredApprovals": 1, "reviewerCount": 1, "mode": null, "recordFormat": "standard" },
-  "aiReview": { "enabled": true, "canApprove": false, "requiredCheck": false },
-  "task": { "maxChangedLines": 400, "maxChangedFiles": 15, "selfHealMaxIterations": 3 }
+  "review": {
+    "requiredApprovals": 0,
+    "reviewerCount": 0,
+    "mode": null,
+    "recordFormat": "standard"
+  },
+  "aiReview": {
+    "enabled": true,
+    "canApprove": false,
+    "requiredCheck": false
+  },
+  "task": {
+    "maxChangedLines": 400,
+    "maxChangedFiles": 15,
+    "selfHealMaxIterations": 3
+  },
+  "matchedRuleIds": [
+    "r-b-mvp",
+    "r-s-no-existing-gates",
+    "r-a-solo",
+    "r-c-high",
+    "r-s-no-external-reviewer"
+  ],
+  "warnings": [
+    {
+      "target": "gate:g-ship",
+      "loser": "r-b-mvp",
+      "winner": "r-c-high",
+      "message": "gate:g-ship への「simplify」を優先度の高い規則が「strengthen」で上書き"
+    },
+    {
+      "target": "gate:g-indep-review",
+      "loser": "r-b-mvp",
+      "winner": "r-s-no-external-reviewer",
+      "message": "gate:g-indep-review の省略により設定「scope」が無効化"
+    },
+    {
+      "target": "gate:g-indep-review",
+      "loser": "r-a-solo",
+      "winner": "r-s-no-external-reviewer",
+      "message": "gate:g-indep-review の省略により設定「reviewMode」が無効化"
+    },
+    {
+      "target": "gate:g-indep-review",
+      "loser": "r-c-high",
+      "winner": "r-s-no-external-reviewer",
+      "message": "gate:g-indep-review の省略により設定「coreReviewerCount」が無効化"
+    }
+  ]
 }
