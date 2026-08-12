@@ -125,7 +125,16 @@
       "Apache-2.0",
       "BSD-2-Clause",
       "BSD-3-Clause",
-      "ISC"
+      "ISC",
+      "MPL-2.0",
+      "PSF-2.0",
+      "AGPL-3.0-or-later",
+      "MIT License",
+      "Apache Software License",
+      "BSD License",
+      "Apache-2.0 OR BSD-2-Clause",
+      "Mozilla Public License 2.0 (MPL 2.0)",
+      "Python Software Foundation License"
     ],
     "strengthened": true
   },
