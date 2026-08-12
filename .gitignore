@@ -32,3 +32,9 @@ Thumbs.db
 tmp/
 .cache/
 *.log
+
+# テスト・カバレッジの中間生成物
+coverage.json
+.coverage
+.pytest_cache/
+.ruff_cache/
