@@ -21,6 +21,7 @@ const BINARY_EXT = new Set([
 const EXCLUDE_FILES = new Set([
   'docs/session-definitions/README.md',
   'docs/session-definitions/platform.md',
+  '.claude/skills/platform/SKILL.md',
   path.relative(ROOT, fileURLToPath(import.meta.url)).split(path.sep).join('/'),
 ]);
 
