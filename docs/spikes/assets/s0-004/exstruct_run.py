@@ -1,5 +1,8 @@
 # ExStruct の JSON を行単位のテキストへ線形化する(検証3の第3条件)
-import json, pathlib, subprocess, time, sys
+import json
+import pathlib
+import subprocess
+import time
 
 BASE = pathlib.Path(__file__).parent
 EXE = BASE / "exenv/Scripts/exstruct.exe"

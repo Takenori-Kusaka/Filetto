@@ -1,7 +1,12 @@
 # S0-004 検証1: RAG 適合性の判定。
 # 抽出テキストのみを文脈として LLM に渡し、正答 / 誤答 / 回答不能 の3値で判定する。
 # LLM は評価のためだけに使う(製品の構成要素ではない)。
-import json, pathlib, sys, argparse, os, time
+import argparse
+import json
+import pathlib
+import time
+
+import anthropic
 
 BASE = pathlib.Path(__file__).parent
 SPEC = json.loads((BASE / "rag-queries.json").read_text(encoding="utf-8"))
@@ -14,7 +19,6 @@ args = ap.parse_args()
 
 TEXT = BASE / args.text_dir
 
-import anthropic
 client = anthropic.Anthropic()
 MODEL = "claude-sonnet-4-6"
 
@@ -25,7 +29,8 @@ ANSWER_SYS = (
 )
 
 JUDGE_SYS = (
-    "あなたは採点者です。question に対する correct_answer と model_answer を比較し、次の3値のいずれかだけを出力してください。\n"
+    "あなたは採点者です。question に対する correct_answer と "
+    "model_answer を比較し、次の3値のいずれかだけを出力してください。\n"
     "正答: model_answer が correct_answer と実質的に同じ内容を述べている\n"
     "誤答: model_answer が correct_answer と異なる内容を述べている(数値違い・対象違いを含む)\n"
     "回答不能: model_answer が「情報がない」等、答えられないと述べている\n"
@@ -72,7 +77,11 @@ for q in SPEC["questions"]:
     print(f"{q['id']:<4} {q['kind']:<8} ctx={len(ctx):<6} {verdict:<6} {ans[:70]}")
 
 print(f"\n=== {args.tag} ===")
-print(f"正答 {counts['正答']} / 誤答 {counts['誤答']} / 回答不能 {counts['回答不能']} / その他 {counts['その他']}  (全 {len(SPEC['questions'])} 問)")
+print(
+    f"正答 {counts['正答']} / 誤答 {counts['誤答']} / "
+    f"回答不能 {counts['回答不能']} / その他 {counts['その他']}  "
+    f"(全 {len(SPEC['questions'])} 問)"
+)
 print(f"評価に使ったトークン: {tin} in / {tout} out")
 (BASE / f"results-rag-{args.tag}.json").write_text(
     json.dumps({"tag": args.tag, "text_dir": args.text_dir, "model": MODEL,

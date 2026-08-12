@@ -1,5 +1,9 @@
 # S0-004 検証2: スキャン PDF と図表画像の内容取得を複数経路で比較する(いずれもローカル完結)
-import pathlib, time, json, sys, argparse, re
+import argparse
+import json
+import pathlib
+import re
+import time
 
 BASE = pathlib.Path(__file__).parent
 CORPUS = BASE / "corpus"
@@ -16,9 +20,9 @@ rows = []
 
 
 def run_docling_vlm():
-    from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import VlmPipelineOptions
+    from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.pipeline.vlm_pipeline import VlmPipeline
     opts = VlmPipelineOptions()
     conv = DocumentConverter(format_options={
@@ -50,9 +54,9 @@ def run_markitdown():
 
 
 def run_rapidocr():
-    from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions, RapidOcrOptions
+    from docling.document_converter import DocumentConverter, PdfFormatOption
     o = PdfPipelineOptions()
     o.do_ocr = True
     o.ocr_options = RapidOcrOptions(force_full_page_ocr=True)
@@ -71,9 +75,9 @@ def run_rapidocr():
 
 
 def run_easyocr_full():
-    from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.base_models import InputFormat
-    from docling.datamodel.pipeline_options import PdfPipelineOptions, EasyOcrOptions
+    from docling.datamodel.pipeline_options import EasyOcrOptions, PdfPipelineOptions
+    from docling.document_converter import DocumentConverter, PdfFormatOption
     o = PdfPipelineOptions()
     o.do_ocr = True
     o.ocr_options = EasyOcrOptions(lang=["ja", "en"], force_full_page_ocr=True)
@@ -100,10 +104,21 @@ for name, txt, sec, err in gen:
     (OUT / (name + ".txt")).write_text(norm, encoding="utf-8")
     total += sec
     jp = len(re.findall(r"[぀-ヿ一-鿿]", norm))
-    rows.append({"file": name, "chars": len(norm), "jp_chars": jp, "sec": round(sec, 1), "error": err})
+    rows.append({
+        "file": name,
+        "chars": len(norm),
+        "jp_chars": jp,
+        "sec": round(sec, 1),
+        "error": err,
+    })
     print(f"{name:<26} {len(norm):>7} chars (日本語 {jp:>6}) {sec:>7.1f}s {err}", flush=True)
 
 print(f"TOTAL {total:.1f}s")
 (BASE / f"route-{args.route}.json").write_text(
-    json.dumps({"route": args.route, "total_sec": total, "rows": rows}, ensure_ascii=False, indent=1),
-    encoding="utf-8")
+    json.dumps(
+        {"route": args.route, "total_sec": total, "rows": rows},
+        ensure_ascii=False,
+        indent=1,
+    ),
+    encoding="utf-8",
+)
