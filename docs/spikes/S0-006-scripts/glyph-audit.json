@@ -1,0 +1,660 @@
+{
+  "method": "CJK ideograph not encodable in CP932",
+  "routes": {
+    "rapidocr": {
+      "total_chars": 8181,
+      "total_cjk": 3556,
+      "total_hits": 13,
+      "rate_pct": 0.1589,
+      "cp932_vs_eucjp_disagreement": 0,
+      "glyphs": {
+        "带": 5,
+        "查": 5,
+        "笺": 1,
+        "项": 1,
+        "閱": 1
+      },
+      "per_file": {
+        "fig-digital-01.png": {
+          "chars": 1169,
+          "cjk": 518,
+          "hits": 1,
+          "rate_pct": 0.0855,
+          "glyphs": {
+            "笺": 1
+          }
+        },
+        "fig-digital-02.png": {
+          "chars": 1164,
+          "cjk": 280,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "fig-kakei-01.png": {
+          "chars": 632,
+          "cjk": 239,
+          "hits": 5,
+          "rate_pct": 0.7911,
+          "glyphs": {
+            "带": 5
+          }
+        },
+        "fig-kakei-02.png": {
+          "chars": 56,
+          "cjk": 16,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "scan-kaminokawa-03.pdf": {
+          "chars": 1622,
+          "cjk": 778,
+          "hits": 1,
+          "rate_pct": 0.0617,
+          "glyphs": {
+            "项": 1
+          }
+        },
+        "scan-kochi-04.pdf": {
+          "chars": 3538,
+          "cjk": 1725,
+          "hits": 6,
+          "rate_pct": 0.1696,
+          "glyphs": {
+            "查": 5,
+            "閱": 1
+          }
+        }
+      }
+    },
+    "easyocr-full": {
+      "total_chars": 3203,
+      "total_cjk": 1095,
+      "total_hits": 0,
+      "rate_pct": 0.0,
+      "cp932_vs_eucjp_disagreement": 0,
+      "glyphs": {},
+      "per_file": {
+        "fig-digital-01.png": {
+          "chars": 849,
+          "cjk": 358,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "fig-digital-02.png": {
+          "chars": 797,
+          "cjk": 193,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "fig-kakei-01.png": {
+          "chars": 495,
+          "cjk": 206,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "fig-kakei-02.png": {
+          "chars": 56,
+          "cjk": 16,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "scan-kaminokawa-03.pdf": {
+          "chars": 316,
+          "cjk": 116,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "scan-kochi-04.pdf": {
+          "chars": 690,
+          "cjk": 206,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        }
+      }
+    },
+    "vlm": {
+      "total_chars": 7968,
+      "total_cjk": 3375,
+      "total_hits": 0,
+      "rate_pct": 0.0,
+      "cp932_vs_eucjp_disagreement": 0,
+      "glyphs": {},
+      "per_file": {
+        "fig-digital-01.png": {
+          "chars": 1180,
+          "cjk": 518,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "fig-digital-02.png": {
+          "chars": 1188,
+          "cjk": 281,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "fig-kakei-01.png": {
+          "chars": 631,
+          "cjk": 239,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "fig-kakei-02.png": {
+          "chars": 45,
+          "cjk": 10,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "scan-kaminokawa-03.pdf": {
+          "chars": 1283,
+          "cjk": 572,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        },
+        "scan-kochi-04.pdf": {
+          "chars": 3641,
+          "cjk": 1755,
+          "hits": 0,
+          "rate_pct": 0.0,
+          "glyphs": {}
+        }
+      }
+    }
+  },
+  "control_pure_text": {
+    "total_chars": 513069,
+    "total_cjk": 161712,
+    "total_hits": 202,
+    "rate_pct": 0.0394,
+    "cp932_vs_eucjp_disagreement": 85,
+    "glyphs": {
+      "渀": 27,
+      "洀": 21,
+      "漀": 21,
+      "爀": 18,
+      "猀": 15,
+      "吀": 9,
+      "眀": 9,
+      "氀": 9,
+      "琀": 9,
+      "礀": 7,
+      "甀": 6,
+      "颒": 4,
+      "挀": 3,
+      "栀": 3,
+      "逦": 3,
+      "樀": 3,
+      "嘀": 3,
+      "潡": 3,
+      "慬": 3,
+      "渰": 3,
+      "梐": 3,
+      "譝": 2,
+      "崰": 2,
+      "蘀": 1,
+      "颚": 1,
+      "侦": 1,
+      "溊": 1,
+      "栰": 1,
+      "坢": 1,
+      "弰": 1,
+      "朰": 1,
+      "縰": 1,
+      "夰": 1,
+      "謰": 1,
+      "涊": 1,
+      "湩": 1,
+      "獓": 1,
+      "熖": 1,
+      "檊": 1
+    },
+    "per_file": {
+      "chisou-01.pptx": {
+        "chars": 15714,
+        "cjk": 6060,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "digital-01.pdf": {
+        "chars": 158421,
+        "cjk": 61102,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "digital-02.pdf": {
+        "chars": 55651,
+        "cjk": 17710,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "digital-03.pdf": {
+        "chars": 44172,
+        "cjk": 12163,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "digital-04.pdf": {
+        "chars": 26564,
+        "cjk": 10820,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "doc-en-01.md": {
+        "chars": 18829,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "fig-digital-01.png": {
+        "chars": 0,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "fig-digital-02.png": {
+        "chars": 0,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "fig-kakei-01.png": {
+        "chars": 0,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "fig-kakei-02.png": {
+        "chars": 0,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "inashiki-01.xls": {
+        "chars": 196,
+        "cjk": 117,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "inashiki-02.xls": {
+        "chars": 196,
+        "cjk": 117,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "inashiki-03.xls": {
+        "chars": 756,
+        "cjk": 365,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "inashiki-04.xls": {
+        "chars": 127,
+        "cjk": 74,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "inashiki-05.xls": {
+        "chars": 100,
+        "cjk": 57,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "inashiki-06.docx": {
+        "chars": 877,
+        "cjk": 458,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "inashiki-07.doc": {
+        "chars": 205,
+        "cjk": 140,
+        "hits": 71,
+        "rate_pct": 34.6341,
+        "glyphs": {
+          "渀": 9,
+          "洀": 7,
+          "漀": 7,
+          "爀": 6,
+          "猀": 5,
+          "吀": 3,
+          "眀": 3,
+          "氀": 3,
+          "琀": 3,
+          "礀": 2,
+          "甀": 2,
+          "譝": 2,
+          "挀": 1,
+          "栀": 1,
+          "逦": 1,
+          "樀": 1,
+          "嘀": 1,
+          "蘀": 1,
+          "颚": 1,
+          "侦": 1,
+          "潡": 1,
+          "慬": 1,
+          "溊": 1,
+          "栰": 1,
+          "坢": 1,
+          "弰": 1,
+          "渰": 1,
+          "朰": 1,
+          "縰": 1,
+          "夰": 1,
+          "梐": 1
+        }
+      },
+      "inashiki-08.xls": {
+        "chars": 328,
+        "cjk": 136,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "inashiki-09.doc": {
+        "chars": 236,
+        "cjk": 147,
+        "hits": 67,
+        "rate_pct": 28.3898,
+        "glyphs": {
+          "渀": 9,
+          "洀": 7,
+          "漀": 7,
+          "爀": 6,
+          "猀": 5,
+          "吀": 3,
+          "眀": 3,
+          "礀": 3,
+          "氀": 3,
+          "琀": 3,
+          "甀": 2,
+          "颒": 2,
+          "挀": 1,
+          "栀": 1,
+          "逦": 1,
+          "樀": 1,
+          "嘀": 1,
+          "潡": 1,
+          "慬": 1,
+          "崰": 1,
+          "渰": 1,
+          "謰": 1,
+          "涊": 1,
+          "湩": 1,
+          "獓": 1,
+          "梐": 1
+        }
+      },
+      "inashiki-10.doc": {
+        "chars": 233,
+        "cjk": 155,
+        "hits": 64,
+        "rate_pct": 27.4678,
+        "glyphs": {
+          "渀": 9,
+          "洀": 7,
+          "漀": 7,
+          "爀": 6,
+          "猀": 5,
+          "吀": 3,
+          "眀": 3,
+          "氀": 3,
+          "琀": 3,
+          "礀": 2,
+          "甀": 2,
+          "颒": 2,
+          "挀": 1,
+          "栀": 1,
+          "逦": 1,
+          "樀": 1,
+          "嘀": 1,
+          "潡": 1,
+          "慬": 1,
+          "崰": 1,
+          "渰": 1,
+          "熖": 1,
+          "檊": 1,
+          "梐": 1
+        }
+      },
+      "kakei-02.pdf": {
+        "chars": 27263,
+        "cjk": 8302,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kakei-03.pdf": {
+        "chars": 35703,
+        "cjk": 4501,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kakei-04.pdf": {
+        "chars": 1483,
+        "cjk": 332,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kakei-05.xlsx": {
+        "chars": 13546,
+        "cjk": 381,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kakei-06.xlsx": {
+        "chars": 14897,
+        "cjk": 1296,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kaminokawa-01.pdf": {
+        "chars": 48,
+        "cjk": 3,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kaminokawa-02.pdf": {
+        "chars": 1412,
+        "cjk": 627,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kaminokawa-03.pdf": {
+        "chars": 1491,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kaminokawa-04.pdf": {
+        "chars": 410,
+        "cjk": 77,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kaminokawa-05.pdf": {
+        "chars": 3871,
+        "cjk": 754,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kaminokawa-06.pdf": {
+        "chars": 748,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-01.docx": {
+        "chars": 307,
+        "cjk": 177,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-02.xlsx": {
+        "chars": 334,
+        "cjk": 167,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-03.xlsx": {
+        "chars": 1051,
+        "cjk": 518,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-04.pdf": {
+        "chars": 9500,
+        "cjk": 2513,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-05.pdf": {
+        "chars": 6751,
+        "cjk": 3281,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-06.docx": {
+        "chars": 4477,
+        "cjk": 2025,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-07.docx": {
+        "chars": 4106,
+        "cjk": 1856,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-08.docx": {
+        "chars": 3676,
+        "cjk": 1714,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-09.pdf": {
+        "chars": 10972,
+        "cjk": 2820,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-10.pdf": {
+        "chars": 11728,
+        "cjk": 3580,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-12.xlsx": {
+        "chars": 920,
+        "cjk": 475,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "kochi-14.xlsx": {
+        "chars": 2994,
+        "cjk": 1359,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "memo-ja-01.md": {
+        "chars": 4027,
+        "cjk": 887,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "memo-ja-02.md": {
+        "chars": 889,
+        "cjk": 179,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "memo-ja-03.md": {
+        "chars": 1011,
+        "cjk": 318,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "mhlw-01.pptx": {
+        "chars": 26110,
+        "cjk": 13656,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "mhlw-02.pptx": {
+        "chars": 739,
+        "cjk": 293,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "scan-kaminokawa-03.pdf": {
+        "chars": 0,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      },
+      "scan-kochi-04.pdf": {
+        "chars": 0,
+        "cjk": 0,
+        "hits": 0,
+        "rate_pct": 0.0,
+        "glyphs": {}
+      }
+    }
+  }
+}

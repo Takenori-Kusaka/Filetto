@@ -1,0 +1,41 @@
+{
+  "rows": [
+    {
+      "file": "scan-kaminokawa-03.pdf",
+      "chars": 1652,
+      "sec": 39.6,
+      "err": ""
+    },
+    {
+      "file": "scan-kochi-04.pdf",
+      "chars": 3545,
+      "sec": 47.2,
+      "err": ""
+    },
+    {
+      "file": "fig-digital-01.png",
+      "chars": 1184,
+      "sec": 15.3,
+      "err": ""
+    },
+    {
+      "file": "fig-digital-02.png",
+      "chars": 1180,
+      "sec": 13.0,
+      "err": ""
+    },
+    {
+      "file": "fig-kakei-01.png",
+      "chars": 660,
+      "sec": 7.7,
+      "err": ""
+    },
+    {
+      "file": "fig-kakei-02.png",
+      "chars": 59,
+      "sec": 6.0,
+      "err": ""
+    }
+  ],
+  "total_sec": 128.8
+}

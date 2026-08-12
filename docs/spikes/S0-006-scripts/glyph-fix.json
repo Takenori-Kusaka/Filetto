@@ -1,0 +1,105 @@
+{
+  "table": {
+    "带": "帯",
+    "查": "査",
+    "笺": "箋",
+    "项": "項",
+    "閱": "閲"
+  },
+  "routes": {
+    "rapidocr": {
+      "hits_before": 13,
+      "hits_after": 0,
+      "replacements": [
+        {
+          "file": "fig-digital-01.png",
+          "glyph": "笺",
+          "to": "箋",
+          "context": "する。 ## ②電子処方笺の促進 2023年（令和"
+        },
+        {
+          "file": "fig-kakei-01.png",
+          "glyph": "带",
+          "to": "帯",
+          "context": "《家計収支編》 勤労者世带(3,351) 二人以上"
+        },
+        {
+          "file": "fig-kakei-01.png",
+          "glyph": "带",
+          "to": "帯",
+          "context": " (6,161) 無職世带(2,146) 個人営業"
+        },
+        {
+          "file": "fig-kakei-01.png",
+          "glyph": "带",
+          "to": "帯",
+          "context": "10,000) 勤労者世带(1,846) 単身世帯"
+        },
+        {
+          "file": "fig-kakei-01.png",
+          "glyph": "带",
+          "to": "帯",
+          "context": " (3,839) 無職世带(1,703) 個人営業"
+        },
+        {
+          "file": "fig-kakei-01.png",
+          "glyph": "带",
+          "to": "帯",
+          "context": "内は、2025年平均の世带分布（1万分比） - ("
+        },
+        {
+          "file": "scan-kaminokawa-03.pdf",
+          "glyph": "项",
+          "to": "項",
+          "context": "## 1）共通事项（契約保証金） 鏡（表紙"
+        },
+        {
+          "file": "scan-kochi-04.pdf",
+          "glyph": "查",
+          "to": "査",
+          "context": "する建設業者）参加資格審查要綱 (趣旨) - 第1"
+        },
+        {
+          "file": "scan-kochi-04.pdf",
+          "glyph": "查",
+          "to": "査",
+          "context": "よる入札参加資格の再 審查を除く。以下同じ。）は、"
+        },
+        {
+          "file": "scan-kochi-04.pdf",
+          "glyph": "查",
+          "to": "査",
+          "context": "ところによる。 (資格審查) - 第3条資格審査は"
+        },
+        {
+          "file": "scan-kochi-04.pdf",
+          "glyph": "查",
+          "to": "査",
+          "context": "ていない者 - (3)審查基準日の前日までに納期限"
+        },
+        {
+          "file": "scan-kochi-04.pdf",
+          "glyph": "閱",
+          "to": "閲",
+          "context": "た高知県建設業者許可書類閱覧所等において 公表する"
+        },
+        {
+          "file": "scan-kochi-04.pdf",
+          "glyph": "查",
+          "to": "査",
+          "context": "届出) - 第6条資格審查を申請した者又は資格者名"
+        }
+      ]
+    },
+    "vlm": {
+      "hits_before": 0,
+      "hits_after": 0,
+      "replacements": []
+    }
+  },
+  "side_effects_on_original_text_layer": {
+    "changed_chars_excluding_legacy_doc": 0,
+    "changed_chars_in_legacy_doc": 0,
+    "control_hits_excluding_legacy_doc": 0
+  }
+}
