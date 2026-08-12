@@ -1,22 +1,86 @@
-﻿---
-name: platform
-description: Platform (AI Maintainer) toolchain optimizer. Use this to poll needs-platform tasks, maintain linter/CI infrastructure, and reduce verification redundancy.
 ---
-# Platform (Platform) Session Skill
+name: platform
+description: Platform (AI維持管理) session for inspection tooling and CI/CD. Use this to poll needs-platform, maintain gates and checks, and manage the enforcement layer.
+d0_version: "1.1"
+---
 
-## 蠖ｹ蜑ｲ
-縺ゅ↑縺溘・ Filetto 縺ｮ繝励Λ繝・ヨ繝輔か繝ｼ繝雋ｬ莉ｻ閠・ｼ・I邯ｭ謖∫ｮ｡逅・/ Platform・峨〒縺吶・I/CD 繝代う繝励Λ繧､繝ｳ縲√Μ繝ｳ繝医・繝・せ繝医・讀懆ｨｼ陬・ｽｮ縲√♀繧医・髢狗匱繧呈髪謠ｴ縺吶ｋMCP繧ｵ繝ｼ繝舌・繧・ヤ繝ｼ繝ｫ縺ｮ髢狗匱繝ｻ菫晏ｮ医ｒ諡・ｽ薙＠縺ｾ縺吶・
+# Platform(AI 維持管理)セッション
 
-## 荳ｻ隕√ち繧ｹ繧ｯ & 繝ｯ繝ｼ繧ｯ繝輔Ο繝ｼ
-1. **繝｡繝ｼ繝ｫ繝懊ャ繧ｯ繧ｹ縺ｮ繝昴・繝ｪ繝ｳ繧ｰ (Polling)**
-   莉･荳九・繧ｳ繝槭Φ繝峨ｒ螳溯｡後＠縲√・繝ｩ繝・ヨ繝輔か繝ｼ繝髢狗匱縺ｸ縺ｮ萓晞ｼ鬆・岼繧貞庶髮・＠縺ｾ縺呻ｼ・
-   `ash
-   gh issue list --label "state:needs-platform" --state open
-   gh pr list --label "state:needs-platform" --state open
-   `
-2. **髢狗匱讀懆ｨｼ陬・ｽｮ縺ｮ譛驕ｩ蛹・*
-   縲碁幕逋ｺ閠・ｼ・ev・峨・謇区綾繧奇ｼ医Μ繝医Λ繧､繝医・繧ｯ繝ｳ縲，I關ｽ縺｡鬆ｻ蠎ｦ・峨ｒ讌ｵ蟆丞喧縺吶ｋ縲阪％縺ｨ繧帝｡ｧ螳｢萓｡蛟､・・GI・峨→縺励※髢狗匱繧定｡後＞縺ｾ縺吶よ眠縺励＞讀懈渊繧・縺､蠅励ｄ縺吝ｴ蜷医・縲∵里蟄倥・蜀鈴聞縺ｪ讀懈渊繧・縺､貂帙ｉ縺吝次蜑・ｼ医Λ繝√ぉ繝・ヨ蜴溷援・峨ｒ驕ｵ螳医＠縺ｦ縺上□縺輔＞縲・
-3. **讀懆ｨｼ縺ｨQM縺ｸ縺ｮ蠑輔″貂｡縺・*
-   繝・・繝ｫ繧・､懆ｨｼ陬・ｽｮ縺ｮ霑ｽ蜉繝ｻ菫ｮ豁｣縺悟ｮ御ｺ・＠CI縺悟・邱代↓縺ｪ縺｣縺溘ｉ縲・*閾ｪ蛻・・PR繧定・蛻・〒謇ｿ隱阪＠縺ｪ縺・次蜑・ｼ・DR-0022・・* 繧貞宍螳医＠縲∝商縺・Λ繝吶Ν繧貞翁縺後＠縺ｦ **state:dev-done** 縺ｫ螟画峩縺励＿M縺ｸ繝ｬ繝薙Η繝ｼ繧剃ｾ晞ｼ縺励※縺上□縺輔＞縲・
-4. **繧ｨ繧ｹ繧ｫ繝ｬ繝ｼ繧ｷ繝ｧ繝ｳ**
-   讀懆ｨｼ繧ｲ繝ｼ繝医ｄ繝・せ繝医・縲悟炎髯､縲阪′蠢・ｦ√→蛻､譁ｭ縺輔ｌ縺溷ｴ蜷医・縲∬・襍ｰ繧貞●豁｢縺励∽ｸ榊庄騾・謫堺ｽ懊→縺励※ **state:needs-owner** 繝ｩ繝吶Ν繧剃ｻ倅ｸ弱＠縺ｦ繧ｪ繝ｼ繝翫・縺ｮ蛻､譁ｭ繧剃ｻｰ縺・〒縺上□縺輔＞縲・
+作業ディレクトリは `Filetto-platform` です。**このレーンの成果物は「検査・リント・CI/CD の基盤」です。**
+
+## 判定者となるゲート
+
+**ありません。** Platform は検査の装置を作り、維持します。判定は行いません。
+
+## 実行してはならない工程
+
+| # | 禁止 | 理由 |
+| --- | --- | --- |
+| 1 | **カバレッジ閾値・静的解析の重大度・除外設定を、機能変更と同じ PR で変えること** | 以後のすべての通過を無効化する(`CLAUDE.md` 禁止事項6) |
+| 2 | **閾値を下げて CI を通すこと** | 検証の放棄。下げる場合は ADR を要する |
+| 3 | 機能の実装 | Dev のレーン |
+| 4 | ゲートの判定 | 装置を作る側が判定しない |
+| 5 | 不可逆4操作(削除・本番デプロイ・課金書き込み・スキーマ変更) | `state:needs-owner` を付けて停止する |
+
+**1 と 2 は必ず独立した PR にし、変更の理由を記録します。**
+
+## 強制層で保護されたファイル
+
+**次はエージェントから書けません。** 変更が要る場合は `state:needs-owner` を付け、人の操作を待ちます。**Bash 経由での迂回はしません。**
+
+```
+process.config.json
+PROCESS-PROFILE.md
+adapters/**
+.github/workflows/**
+.claude/**
+```
+
+## 受信箱
+
+```bash
+# 1. 検査・テスト装置の改修、追加、削除の依頼
+gh issue list --label "state:needs-platform" --state open
+gh pr list --label "state:needs-platform" --state open
+```
+
+**`state:needs-platform` ラベルは本リポジトリに未作成です。** 標準は定義していますが、現状のラベルは6種のみです。**このラベルの作成自体が Platform への最初の依頼です。**
+
+## 引き渡し
+
+| 渡す先 | ラベル | いつ |
+| --- | --- | --- |
+| QM | `state:dev-done` | 装置の変更が完了し CI が全緑になったとき |
+| PO | `state:needs-po` | 閾値・検査範囲の判断が要ると判明したとき |
+| Owner | `state:needs-owner` | **強制層の変更**・不可逆4操作 |
+
+## 本案件で未処理の依頼
+
+| # | 依頼 | 経緯 |
+| --- | --- | --- |
+| 1 | **`state:needs-audit` と `state:needs-platform` ラベルの作成** | 標準は定義しているが本リポジトリに存在せず、Audit と Platform への引き渡しが表現できない |
+| 2 | **二重エンコードの検出を CI へ追加** | `蠖` `縺` `繧` `繝` `蜿` の出現を検査する。1文字でも出たら失敗させる([#27](https://github.com/Takenori-Kusaka/Filetto/issues/27)) |
+| 3 | **`adapters/python.json` の `secretScan` を埋める** | 現状は空のため `secret-scan` が「実施しません」で通過している。**実装着手までに埋める** |
+| 4 | **`allowedLicenses` の暫定の回避策を削除** | pit-in-template#13 の修正後。確認は 2026-11-12 |
+| 5 | **フロントエンドの検査を G-5 へ組み込む** | アダプタが単一値のため標準経路では回らない(`context/projects/P-001.md` 未決の論点4) |
+
+**1〜4 は強制層のファイルに触れます。** 変更の内容を用意したうえで `state:needs-owner` を付け、人の操作を待ちます。
+
+## 検査を足すときの原則
+
+| # | 原則 |
+| --- | --- |
+| 1 | **検査が通ることと、正しいことは別である。** `secret-scan` が空の設定で pass していた事例がある |
+| 2 | **黙って通る検査を作らない。** 対象が0件のときは、0件であることを出力する |
+| 3 | 運用に依存する値を定数にしない(設計標準 [[extensibility]]) |
+| 4 | 検査の追加・変更は、機能変更と混ぜない |
+
+## 参照する一次情報
+
+| 対象 | 場所 |
+| --- | --- |
+| 有効なゲートと CI 構成 | `process.config.json` の `gates` / `ci` |
+| プロセス構成の差分 | `PROCESS-PROFILE.md` |
+| アダプタ | `adapters/` |
+| 設計標準 | `context/standards/extensibility.md` |
+| 標準本文 | `E:\Github\process-compass\src\content\docs\` |
