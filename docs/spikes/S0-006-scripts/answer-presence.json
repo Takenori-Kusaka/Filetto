@@ -1,0 +1,315 @@
+{
+  "rapidocr-v6(S0-004 推奨)": {
+    "hit": 9,
+    "total": 9,
+    "rows": [
+      {
+        "q": "R01",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R02",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R03",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R04",
+        "file": "scan-kochi-04.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R05",
+        "file": "fig-digital-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R06",
+        "file": "fig-digital-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08b",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R07",
+        "file": "fig-kakei-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      }
+    ]
+  },
+  "rapidocr-ja(PP-OCRv4)": {
+    "hit": 8,
+    "total": 9,
+    "rows": [
+      {
+        "q": "R01",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [
+          "7日"
+        ],
+        "ok": false
+      },
+      {
+        "q": "R02",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R03",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R04",
+        "file": "scan-kochi-04.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R05",
+        "file": "fig-digital-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R06",
+        "file": "fig-digital-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08b",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R07",
+        "file": "fig-kakei-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      }
+    ]
+  },
+  "rapidocr-v6 + 字形正規化": {
+    "hit": 9,
+    "total": 9,
+    "rows": [
+      {
+        "q": "R01",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R02",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R03",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R04",
+        "file": "scan-kochi-04.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R05",
+        "file": "fig-digital-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R06",
+        "file": "fig-digital-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08b",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R07",
+        "file": "fig-kakei-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      }
+    ]
+  },
+  "vlm": {
+    "hit": 9,
+    "total": 9,
+    "rows": [
+      {
+        "q": "R01",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R02",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R03",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R04",
+        "file": "scan-kochi-04.pdf",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R05",
+        "file": "fig-digital-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R06",
+        "file": "fig-digital-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08b",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R07",
+        "file": "fig-kakei-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      }
+    ]
+  },
+  "easyocr-full": {
+    "hit": 4,
+    "total": 9,
+    "rows": [
+      {
+        "q": "R01",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [
+          "7日"
+        ],
+        "ok": false
+      },
+      {
+        "q": "R02",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [
+          "500万円"
+        ],
+        "ok": false
+      },
+      {
+        "q": "R03",
+        "file": "scan-kaminokawa-03.pdf",
+        "missing": [
+          "工程表",
+          "100万円"
+        ],
+        "ok": false
+      },
+      {
+        "q": "R04",
+        "file": "scan-kochi-04.pdf",
+        "missing": [
+          "高知県外"
+        ],
+        "ok": false
+      },
+      {
+        "q": "R05",
+        "file": "fig-digital-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R06",
+        "file": "fig-digital-02.png",
+        "missing": [
+          "取扱"
+        ],
+        "ok": false
+      },
+      {
+        "q": "R08b",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R07",
+        "file": "fig-kakei-01.png",
+        "missing": [],
+        "ok": true
+      },
+      {
+        "q": "R08",
+        "file": "fig-kakei-02.png",
+        "missing": [],
+        "ok": true
+      }
+    ]
+  }
+}
