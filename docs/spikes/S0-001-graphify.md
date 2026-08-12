@@ -2,16 +2,18 @@
 id: S0-001
 stage: S0 探索
 issue: "#1"
-status: 判定済み
-verdict: 前提は成立しない
+status: 判定済み(訂正あり)
+verdict: 条件つきで成立する(当初の「成立しない」を訂正)
 date: 2026-08-12
 ---
 
 # S0-001 Graphify が汎用ドキュメント(日本語 PDF / Office)で実用精度を出せるか
 
-Issue #1 の検証記録です。実作業は 1 日の時間箱内(約 1 時間)で完了しました。
+Issue #1 の検証記録です。実作業は 1 日の時間箱内で完了しました。
 
-## 結論
+> **この文書の読み方**: 以下「結論」から「再現手順」までは、ヘッドレス CLI で検証した**当初の記録**です。その後、Graphify が主として想定する Claude Code スキル経由の手順を見落としていたことが判明し、基準2 の判定が覆りました。**最終的な判定は末尾の「追記(同日)」を参照してください。** 当初の記録は測定した事実としてそのまま残します。
+
+## 結論(当初 — 末尾の追記で訂正済み)
 
 **前提は成立しません。**
 
@@ -206,6 +208,99 @@ gfxenv/Scripts/graphify.exe query "電子納品のやり方を定めた要領" -
 ```
 
 検証に使ったコーパスの取得元一覧、10 件のクエリ定義、生の実行ログは、レビュー時に提示できる状態で保持しています。
+
+## 追記(同日): 基準2 の判定を訂正します
+
+事前調査で見かけた「Claude Code から日本語ドキュメント群を検索する用途に十分向いている」という評価と、上の 3/10 という結果が食い違う理由を追跡しました。**結果として、基準2 の判定は誤りでした。訂正します。**
+
+### 何を取り違えていたか
+
+上の検証はヘッドレス CLI(`graphify extract --backend claude` + `graphify query "<日本語文>"`)で行いました。しかし Graphify が主として想定しているのは **Claude Code 内の `/graphify` スキル経由**で、この 2 つは抽出も検索も別物です。
+
+同梱スキル(`graphify/skills/claude/references/query.md`)は、**検索の前に必ず実行する Step 0** を定義しています。
+
+> graphify's `query` CLI matches nodes via case-folded substring + IDF — there is **no stemming, no synonyms, no cross-language match** inside the binary... If the user's question uses different language or different domain vocabulary than the graph's labels... the literal matcher returns 0 hits and the answer collapses to noise.
+
+つまり Graphify 自身が「binary は言語をまたいだ一致をしない」と明言しており、それを埋めるために **ホストのエージェントがグラフの語彙ファイルを読み、質問を実在するトークンへ写像してから `query` を叩く**という手順を必須にしています。私は `query` を素で叩いており、この必須ステップを飛ばしていました。
+
+### 語彙を見て分かったこと
+
+生成された 282 トークンの語彙を確認したところ、**日本語文書から作られたノードのラベルが英語・ローマ字になっていました**。
+
+```
+arbitration / compliance / bidding / disability / pledge / electronic /
+fukutoji / kaminokawa / inashiki / kochi / shinsa / kaitei / hoshu ...
+```
+
+「仲裁合意書」は `arbitration agreement`、「袋とじ」は `fukutoji`、「電子納品」は `electronic submission` になっています。抽出プロンプト(`references/extraction-spec.md`)が英語で書かれ、`"label": "Human Readable Name"` と英語例で指示しているためです。
+
+**日本語クエリが 0 件になった真因は、空白区切りのトークナイザではなく「クエリは日本語・ラベルは英語」という言語のずれでした。** Step 0 はまさにこれを埋めるために存在します。
+
+### 手順どおりに実行し直した結果
+
+Step 0 に従い、語彙ファイルに実在するトークンだけを選んで(捏造なし)同じ 10 件を再実行しました。
+
+| # | 拡張トークン | 上位3件 | 判定 |
+| --- | --- | --- | --- |
+| Q1 | arbitration / agreement / form / inashiki | **inashiki-06** / kochi-14 / kochi-14 | 合格 |
+| Q2 | bidding / form / envelope / submission / kaminokawa | kaminokawa-04 / -05 / kochi-09 | 不合格 |
+| Q3 | 消費支出 / expenditure / household / 家計調査報告 | **kakei-03** / **kakei-02** / kakei-02 | 合格 |
+| Q4 | disability / employment / pledge / kochi | **kochi-01** / kochi-09 / kochi-14 | 合格 |
+| Q5 | compliance / policy / basic / example | **kochi-06** / **kochi-07** / **kochi-08** | 合格 |
+| Q6 | electronic / submission / guidelines / kaminokawa | **kaminokawa-05** / fig-digital-01 / kochi-09 | 合格 |
+| Q7 | qualification / examination / bidding / competitive / kochi | kochi-05 / **kochi-04** / kochi-09 | 合格 |
+| Q8 | デジタル社会の実現に向けた重点計画 | **digital-01** / digital-02 / digital-04 | 合格 |
+| Q9 | nursing / care / insurance / revision | fig-digital-01 / fig-digital-01 / kakei-06 | 不合格 |
+| Q10 | fukutoji | **kaminokawa-04** | 合格 |
+
+**8/10。基準2 は合格です。**
+
+残る 2 件の性質は異なります。Q2 は素の取りこぼしです。Q9 の期待ファイル mhlw-01.pptx は **.pptx が対応形式でないためインデックスに存在せず、どう検索しても到達できません**。
+
+| 実行条件 | 正答数 |
+| --- | --- |
+| 素の日本語文で `query`(当初の測定) | 3/10 |
+| `[chinese]` extra (jieba) を追加 | 2/10 |
+| **スキル手順どおり(Step 0 の語彙拡張あり)** | **8/10** |
+
+### 基準1・基準4 についても、スキル経由では前提が変わります
+
+同梱スキル(`graphify/skills/claude/skill.md`)には次の記述があります。
+
+> **graphify needs no API key. Never ask the user for one, and never block on one.** ... Semantic extraction (only for docs, papers, and images) uses Gemini **only if** `GEMINI_API_KEY`/`GOOGLE_API_KEY` is already set; otherwise **the host agent itself is the LLM**. graphify does **not** read `ANTHROPIC_API_KEY`.
+
+スキル経由では、文書の意味抽出を **Claude Code のサブエージェントが担当**します。したがって:
+
+- **基準4「外部 API キー不要」は、スキル経由なら成立します。** ただし費用が消えるわけではなく、**Claude Code セッションのトークン消費に付け替わります**。Filetto の訴求である「維持コストゼロ」が成り立つかは、Claude Code を実行基盤として要求してよいかという企画判断に還元されます
+- **基準1 の PDF 問題(pypdf 未導入で無言の空文字)も、スキル経由では起きません。** サブエージェントは自分の Read で直接ファイルを読むため(`extraction-spec.md`: "Read the files listed")、pypdf を経由しません。画像は vision で読みます。テキスト層のないスキャン PDF も読める可能性がありますが、未検証です
+
+### 訂正後も変わらない結論
+
+経路によらず残る事実は次の 2 点です。いずれも `detect.py` の分類が全経路で共有されているためです。
+
+1. **.xls / .doc / .pptx は対応形式ではありません。** `DOC_EXTENSIONS` に .doc/.xls は無く、`OFFICE_EXTENSIONS = {'.docx', '.xlsx'}`、python-pptx への依存はどの extra にも存在しません。今回の 50 件では 12 件がこれに該当します
+2. **日本語文書のラベルは英語・ローマ字で生成され、日本語の素のクエリでは当たりません。** 実用には、質問をグラフ語彙へ写像するエージェントが検索の前段に常に必要です
+
+### 判定の差し替え
+
+| # | 基準 | 当初 | **訂正後** |
+| --- | --- | --- | --- |
+| 1 | 取り込み | 条件つき合格 | **合格**(スキル経由。ただし .xls/.doc/.pptx は対象外) |
+| 2 | 日本語検索精度 | 不合格(3/10) | **合格(8/10)** |
+| 3 | 所要時間 | 合格 | 合格 |
+| 4 | 外部 API キーなし | 不合格 | **条件つき合格**(Claude Code をランタイムとして要求することを許容する場合) |
+
+**「前提は成立しない」という当初の結論は取り下げます。**「Claude Code を実行基盤として要求してよいか」「.xls/.doc/.pptx 非対応を許容できるか」という 2 つの企画判断に置き換わります。どちらも PO の判断事項です。
+
+### この訂正で検証できていないこと
+
+上の 8/10 は、当初のヘッドレス抽出で作った graph.json に対して Step 0 を適用した測定です。**スキル経由の抽出(サブエージェントによる意味抽出)そのものは実行していません。** したがって次は未確認です。
+
+- サブエージェント抽出で生成されるグラフの質が、ヘッドレス抽出と同等か
+- スキャン PDF がサブエージェントの vision で読めるか
+- スキル経由での所要時間と Claude Code セッションのトークン消費量
+
+これらは PO の判断次第で追加検証します。
 
 ## 関連
 
