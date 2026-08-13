@@ -39,9 +39,11 @@ function run(cmd, argv) {
   return execFileSync(cmd, argv, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 }
 
-/** 既定ブランチの参照を決める。CI では origin/<base>、手元でも同じものを使う */
+/** 既定ブランチの参照を決める。CI では origin/<base>、手元でも同じものを使う。
+ *  --base-ref は判定の基準を差し替えます。テストが履歴の取得の深さに依存しないためのものです */
 function resolveBaseRef() {
-  for (const ref of [`origin/${DEFAULT_BASE}`, DEFAULT_BASE]) {
+  const override = argOf('--base-ref', null);
+  for (const ref of override ? [override] : [`origin/${DEFAULT_BASE}`, DEFAULT_BASE]) {
     try {
       run('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
       return ref;

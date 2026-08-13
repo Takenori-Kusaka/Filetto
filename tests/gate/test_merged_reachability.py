@@ -32,31 +32,22 @@ def _git(*argv: str) -> str:
     ).stdout.strip()
 
 
-def _base_ref() -> str:
-    base = json.loads(POLICY.read_text(encoding="utf-8"))["defaultBase"]
-    for ref in (f"origin/{base}", base):
-        r = subprocess.run(  # noqa: S603
-            ["git", "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if r.returncode == 0:
-            return ref
-    pytest.fail(f"既定ブランチ {base} が手元にありません")
+# 判定の基準を HEAD に差し替えます。CI の checkout は fetch-depth: 1 で
+# origin/main を持たないため、既定ブランチに依存すると環境しだいで落ちます。
+# 確かめたいのは「祖先か否か」であって、基準がどのブランチかではありません。
+BASE_REF = "HEAD"
 
 
 @pytest.fixture
 def reached_sha() -> str:
-    """既定ブランチの先端。必ず祖先である。"""
-    return _git("rev-parse", f"{_base_ref()}^{{commit}}")
+    """基準そのもの。必ず祖先である。"""
+    return _git("rev-parse", f"{BASE_REF}^{{commit}}")
 
 
 @pytest.fixture
 def unreached_sha() -> str:
     """どこからも参照されない孤立コミット。祖先になり得ない。"""
-    tree = _git("rev-parse", f"{_base_ref()}^{{tree}}")
+    tree = _git("rev-parse", f"{BASE_REF}^{{tree}}")
     return subprocess.run(  # noqa: S603
         ["git", "commit-tree", tree, "-m", "test: 到達していないコミット"],
         cwd=ROOT,
@@ -94,7 +85,7 @@ def _run(tmp_path: Path, prs: list[dict], *argv: str) -> subprocess.CompletedPro
     f = tmp_path / "prs.json"
     f.write_text(json.dumps(prs, ensure_ascii=False), encoding="utf-8")
     return subprocess.run(  # noqa: S603
-        [_node(), SCRIPT, "--pr-json", str(f), *argv],
+        [_node(), SCRIPT, "--pr-json", str(f), "--base-ref", BASE_REF, *argv],
         cwd=ROOT,
         capture_output=True,
         text=True,
