@@ -56,6 +56,19 @@
           }
         ]
       }
+    ],
+
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/worktree-freshness.mjs",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   }
 }
