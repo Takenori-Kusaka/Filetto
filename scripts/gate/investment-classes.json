@@ -1,8 +1,6 @@
 {
   "note": "投入量の分類規則(#107)。investment-measure.mjs が読みます。先に一致した規則を採ります",
-
   "unclassifiedPolicy": "一致しないファイルは未分類として出力し、失敗させます。規則を増やさずに新しい領域が増えると、内訳が実態とずれるためです",
-
   "classes": [
     {
       "id": "process",
@@ -36,13 +34,20 @@
       "id": "gate-record",
       "label": "ゲート記録",
       "note": "判定が成立した証拠",
-      "patterns": ["docs/gates/**"]
+      "patterns": [
+        "docs/gates/**"
+      ]
     },
     {
       "id": "code",
       "label": "実装コード",
       "note": "プロダクトとして動くもの。S1 のゴールに直接効く",
-      "patterns": ["src/**", "tests/**", "pyproject.toml", "uv.lock"]
+      "patterns": [
+        "src/**",
+        "tests/**",
+        "pyproject.toml",
+        "uv.lock"
+      ]
     },
     {
       "id": "product",
@@ -63,21 +68,85 @@
       ]
     }
   ],
-
   "aiUsage": {
-    "note": "Claude Code のセッション記録から AI の使用量を測るときの対象。作業ツリーの名前で絞ります",
-    "worktreePattern": "^E--Github-Filetto"
+    "note": "AI 実行費は ccusage(OSS)から取ります。自前で価格表を持ちません。ccusage claude session --json の projectPath で本案件を絞ります",
+    "tool": "ccusage@latest",
+    "command": [
+      "claude",
+      "session",
+      "--json"
+    ],
+    "projectPathPattern": "Filetto"
   },
-
   "lineCountTargets": [
-    { "id": "code", "label": "実装コード", "paths": ["src"], "extensions": [".py"] },
-    { "id": "test", "label": "テスト", "paths": ["tests"], "extensions": [".py", ".mjs"] },
-    { "id": "gate-script", "label": "検査の装置", "paths": ["scripts"], "extensions": [".mjs", ".json"] },
+    {
+      "id": "code",
+      "label": "実装コード",
+      "paths": [
+        "src"
+      ],
+      "extensions": [
+        ".py"
+      ]
+    },
+    {
+      "id": "test",
+      "label": "テスト",
+      "paths": [
+        "tests"
+      ],
+      "extensions": [
+        ".py",
+        ".mjs"
+      ]
+    },
+    {
+      "id": "gate-script",
+      "label": "検査の装置",
+      "paths": [
+        "scripts"
+      ],
+      "extensions": [
+        ".mjs",
+        ".json"
+      ]
+    },
     {
       "id": "doc",
       "label": "文書",
-      "paths": ["docs", "specs", "context", "templates"],
-      "extensions": [".md"]
+      "paths": [
+        "docs",
+        "specs",
+        "context",
+        "templates"
+      ],
+      "extensions": [
+        ".md"
+      ]
     }
-  ]
+  ],
+  "effort": {
+    "note": "稼働時間は git のコミット間隔から推定します。人の自己申告を求めません。確度は高くありません。値ではなく推移を見ます",
+    "maxCommitGapMinutes": 120,
+    "firstCommitMinutes": 30,
+    "authorAliases": {
+      "takenori-kusaka": "Takenori Kusaka"
+    }
+  },
+  "progress": {
+    "note": "進捗率の代理指標。git と GitHub から取れるものだけで組みます。進捗そのものではありません",
+    "gates": [
+      "G-1",
+      "G-2",
+      "G-3",
+      "G-4",
+      "G-5",
+      "G-6",
+      "G-7",
+      "G-8"
+    ],
+    "gateRecordDir": "docs/gates",
+    "specDir": "specs",
+    "planFile": "plan.md"
+  }
 }

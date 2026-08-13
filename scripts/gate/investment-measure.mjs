@@ -174,75 +174,195 @@ function countLines(targets) {
   return out;
 }
 
-// ---- 3. AI の応答数とトークン ---------------------------------------------
+// ---- 3. AI 実行費(ccusage) --------------------------------------------------
+// 価格表を自前で持ちません。ccusage(OSS)が LiteLLM の価格から金額を出します。
+// ccusage は ~/.claude のセッション記録を読むため、**CI では取れません。**
 
-export function measureAiUsage(dir, pattern = config.aiUsage?.worktreePattern) {
-  if (!fs.existsSync(dir)) return { error: `${dir} がありません` };
-  if (!pattern) return { error: 'investment-classes.json に aiUsage.worktreePattern がありません' };
-  const re = new RegExp(pattern);
+export function summarizeCcusage(rows, pattern) {
+  const re = new RegExp(pattern, 'i');
+  const target = rows.filter((r) => re.test(r.projectPath ?? ''));
+  const byProject = new Map();
+  const totals = { sessions: 0, cost: 0, output: 0, input: 0, cacheRead: 0, cacheCreate: 0, spanMs: 0 };
+  const intervals = [];
 
-  const totals = { responses: 0, input: 0, output: 0, cacheRead: 0, cacheCreate: 0 };
-  const byModel = new Map();
-  const byWorktree = new Map();
-  let sessions = 0;
+  for (const r of target) {
+    const key = String(r.projectPath).split(/[\/]/).pop();
+    const v = byProject.get(key) ?? { sessions: 0, cost: 0 };
+    v.sessions += 1;
+    v.cost += r.totalCost ?? 0;
+    byProject.set(key, v);
 
-  const worktrees = fs
-    .readdirSync(dir, { withFileTypes: true })
-    .filter((e) => e.isDirectory())
-    .map((e) => e.name)
-    .filter((n) => re.test(n));
+    totals.sessions += 1;
+    totals.cost += r.totalCost ?? 0;
+    totals.output += r.outputTokens ?? 0;
+    totals.input += r.inputTokens ?? 0;
+    totals.cacheRead += r.cacheReadTokens ?? 0;
+    totals.cacheCreate += r.cacheCreationTokens ?? 0;
 
-  if (!worktrees.length) return { error: `${pattern} に一致する作業ツリーがありません` };
-
-  for (const w of worktrees) {
-    const wt = { responses: 0, output: 0 };
-    for (const f of fs.readdirSync(path.join(dir, w)).filter((x) => x.endsWith('.jsonl'))) {
-      sessions++;
-      const text = fs.readFileSync(path.join(dir, w, f), 'utf8');
-      for (const line of text.split('\n')) {
-        if (!line.trim()) continue;
-        let o;
-        try {
-          o = JSON.parse(line);
-        } catch {
-          continue;
-        }
-        const u = o?.message?.usage;
-        if (!u) continue;
-        totals.responses++;
-        wt.responses++;
-        totals.input += u.input_tokens ?? 0;
-        totals.output += u.output_tokens ?? 0;
-        wt.output += u.output_tokens ?? 0;
-        totals.cacheRead += u.cache_read_input_tokens ?? 0;
-        totals.cacheCreate += u.cache_creation_input_tokens ?? 0;
-        const m = o.message.model ?? '不明';
-        byModel.set(m, (byModel.get(m) ?? 0) + 1);
-      }
+    const a = Date.parse(r.firstActivity);
+    const b = Date.parse(r.lastActivity);
+    if (Number.isFinite(a) && Number.isFinite(b) && b >= a) {
+      totals.spanMs += b - a;
+      intervals.push([a, b]);
     }
-    byWorktree.set(w, wt);
   }
 
-  return { sessions, worktrees: worktrees.length, totals, byModel, byWorktree };
+  // 5つの作業ツリーは同時に動くため、単純な合計は実時間を超えます。重なりを潰します
+  intervals.sort((x, y) => x[0] - y[0]);
+  let mergedMs = 0;
+  let cur = null;
+  for (const [a, b] of intervals) {
+    if (!cur) cur = [a, b];
+    else if (a <= cur[1]) cur[1] = Math.max(cur[1], b);
+    else {
+      mergedMs += cur[1] - cur[0];
+      cur = [a, b];
+    }
+  }
+  if (cur) mergedMs += cur[1] - cur[0];
+
+  return { ...totals, mergedMs, byProject, matched: target.length, scanned: rows.length };
+}
+
+function readCcusage() {
+  const file = argOf('--ccusage-json', null);
+  const cfg = config.aiUsage ?? {};
+  try {
+    const raw = file
+      ? fs.readFileSync(path.resolve(file), 'utf8')
+      : run('npx', ['-y', cfg.tool ?? 'ccusage@latest', ...(cfg.command ?? ['claude', 'session', '--json'])]);
+    const o = JSON.parse(raw);
+    const rows = o.sessions ?? o.session ?? [];
+    if (!Array.isArray(rows)) return { error: 'ccusage の出力を解釈できません' };
+    return summarizeCcusage(rows, cfg.projectPathPattern ?? 'Filetto');
+  } catch (e) {
+    return { error: `ccusage を実行できません(${String(e.message).split(String.fromCharCode(10))[0]})` };
+  }
+}
+
+// ---- 4. 稼働時間(git のコミット間隔からの推定) ------------------------------
+// **人の自己申告を求めません。** 確度は高くありません。値ではなく推移を見ます。
+
+export function estimateEffortHours(commits, cfg) {
+  const maxGap = (cfg.maxCommitGapMinutes ?? 120) * 60000;
+  const first = (cfg.firstCommitMinutes ?? 30) * 60000;
+  const alias = cfg.authorAliases ?? {};
+
+  const byAuthor = new Map();
+  for (const c of commits) {
+    const a = alias[c.author] ?? c.author;
+    if (!byAuthor.has(a)) byAuthor.set(a, []);
+    byAuthor.get(a).push(c.time);
+  }
+
+  const perAuthor = [];
+  let totalMs = 0;
+  for (const [a, tsRaw] of byAuthor) {
+    const ts = [...tsRaw].sort((x, y) => x - y);
+    let ms = first;
+    for (let i = 1; i < ts.length; i++) {
+      const d = ts[i] - ts[i - 1];
+      ms += d < maxGap ? d : first;
+    }
+    perAuthor.push({ author: a, commits: ts.length, hours: ms / 3600000 });
+    totalMs += ms;
+  }
+  return { hours: totalMs / 3600000, perAuthor };
+}
+
+function measureEffort() {
+  try {
+    const out = run('git', ['log', 'origin/main', '--pretty=%at|%an']);
+    const commits = out
+      .trim()
+      .split(String.fromCharCode(10))
+      .filter(Boolean)
+      .map((l) => {
+        const [t, ...rest] = l.split('|');
+        return { time: Number(t) * 1000, author: rest.join('|') };
+      });
+    if (!commits.length) return { error: 'origin/main のコミットが読めません' };
+    return { ...estimateEffortHours(commits, config.effort ?? {}), commits: commits.length };
+  } catch (e) {
+    return { error: `git log に失敗しました: ${e.message}` };
+  }
+}
+
+// ---- 5. 進捗の代理指標 ------------------------------------------------------
+// **進捗そのものではありません。** git から取れるものだけで組みます。
+
+function measureProgress() {
+  const cfg = config.progress ?? {};
+  const gates = cfg.gates ?? [];
+  const dir = path.join(ROOT, cfg.gateRecordDir ?? 'docs/gates');
+  const records = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.md')) : [];
+  const passed = gates.filter((g) => records.some((f) => f.toLowerCase().startsWith(g.toLowerCase().replace('-', ''))));
+
+  const specDir = path.join(ROOT, cfg.specDir ?? 'specs');
+  const specs = fs.existsSync(specDir)
+    ? fs.readdirSync(specDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
+    : [];
+  const withPlan = specs.filter((s) => fs.existsSync(path.join(specDir, s, cfg.planFile ?? 'plan.md')));
+
+  return { gates: gates.length, gatesWithRecord: passed.length, passed, specs: specs.length, withPlan: withPlan.length };
 }
 
 // ---- 実行 ------------------------------------------------------------------
-// import されたときは実行しません(テストから分類の関数だけを読み込むため)。
+// import されたときは実行しません(テストから関数だけを読み込むため)。
 
 const invokedDirectly = process.argv[1] ? pathToFileURL(process.argv[1]).href === import.meta.url : false;
 
 if (invokedDirectly) {
   const prs = measurePrs();
   const lines = countLines(config.lineCountTargets ?? []);
-  const aiDir = argOf('--ai-usage', null);
-  const ai = aiDir ? measureAiUsage(path.resolve(aiDir)) : null;
+  const effort = measureEffort();
+  const progress = measureProgress();
+  const ai = has('--no-ai') ? { error: '--no-ai が指定されました' } : readCcusage();
 
   const md = has('--markdown');
   const out = [];
   const say = (s = '') => out.push(s);
+  const k = (n) => Math.round(n).toLocaleString();
+  const h = (ms) => (ms / 3600000).toFixed(1);
 
+  // 1. 投入
   if (md) {
-    say('### 機械で測った値');
+    say('### 投入(すべて機械が出した値。自己申告はありません)');
+    say();
+    say('| 項目 | 値 | 出所 | 確度 |');
+    say('| --- | --- | --- | --- |');
+    say(
+      ai.error
+        ? `| AI 実行費 | 取得できません | ${ai.error} | — |`
+        : `| AI 実行費 | **$${ai.cost.toFixed(2)}** | ccusage(${ai.matched} セッション) | 中。価格表は ccusage が持つ |`
+    );
+    say(
+      effort.error
+        ? `| 稼働時間 | 取得できません | ${effort.error} | — |`
+        : `| 稼働時間(推定) | **${effort.hours.toFixed(1)} 時間** | git のコミット間隔 ${effort.commits} 件 | **低。値ではなく推移を見る** |`
+    );
+    if (!ai.error) {
+      say(`| セッションが動いていた実時間 | ${h(ai.mergedMs)} 時間 | ccusage の活動時刻(重なりを潰した値) | 低 |`);
+      say(`| 出力トークン | ${k(ai.output)} | ccusage | 高 |`);
+    }
+  } else {
+    say('## 投入');
+    say(ai.error ? `  AI 実行費: 取得できません(${ai.error})` : `  AI 実行費  $${ai.cost.toFixed(2)}(${ai.matched} セッション)`);
+    if (!ai.error) {
+      say(`  出力 ${k(ai.output)} / 入力 ${k(ai.input)} / キャッシュ読み ${k(ai.cacheRead)}`);
+      for (const [w, v] of [...ai.byProject].sort((a, b) => b[1].cost - a[1].cost)) {
+        say(`    ${w}  $${v.cost.toFixed(2)}(${v.sessions} セッション)`);
+      }
+      say(`  セッションが動いていた実時間 ${h(ai.mergedMs)} 時間(重なりを潰した値)`);
+    }
+    say(effort.error ? `  稼働時間: 取得できません(${effort.error})` : `  稼働時間(推定) ${effort.hours.toFixed(1)} 時間 / コミット ${effort.commits} 件`);
+    if (!effort.error) for (const a of effort.perAuthor) say(`    ${a.author}  ${a.commits} コミット  ${a.hours.toFixed(1)} 時間`);
+  }
+
+  // 2. 成果物の内訳
+  say();
+  if (md) {
+    say('### 成果物の内訳');
     say();
     say('| 区分 | PR件数 | 変更行数 |');
     say('| --- | --- | --- |');
@@ -260,10 +380,7 @@ if (invokedDirectly) {
       else say(`  ${c.label.padEnd(8)} ${String(v.prs).padStart(3)}件(${String(pct).padStart(2)}%)  ${v.lines} 行`);
     }
     if (md) say(`| **合計** | **${prs.total}件** | — |`);
-    else {
-      say(`  合計 ${prs.total} 件`);
-      say(`  変更ファイルが取得できなかった PR: ${prs.noFiles} 件`);
-    }
+    else say(`  合計 ${prs.total} 件 / 変更ファイルを取得できなかった PR ${prs.noFiles} 件`);
   }
 
   say();
@@ -276,33 +393,24 @@ if (invokedDirectly) {
     for (const t of lines) say(`  ${t.label.padEnd(12)} ${String(t.files).padStart(4)} ファイル  ${t.lines} 行`);
   }
 
+  // 3. 進捗の代理指標
   say();
-  const k = (n) => n.toLocaleString();
-  if (ai && !ai.error) {
-    const t = ai.totals;
-    if (md) {
-      say('| AI の使用量(累計) | 値 |');
-      say('| --- | --- |');
-      say(`| セッション記録 | ${ai.sessions} ファイル(作業ツリー ${ai.worktrees} 個) |`);
-      say(`| 応答数 | ${k(t.responses)} |`);
-      say(`| 出力トークン | ${k(t.output)} |`);
-      say(`| 入力トークン(キャッシュ外) | ${k(t.input)} |`);
-      say(`| キャッシュ読み | ${k(t.cacheRead)} |`);
-      say(`| キャッシュ書き | ${k(t.cacheCreate)} |`);
-    } else {
-      say('## AI の使用量');
-      say(`  セッション記録 ${ai.sessions} ファイル(作業ツリー ${ai.worktrees} 個)`);
-      say(`  応答 ${k(t.responses)} 件`);
-      say(`  出力 ${k(t.output)} / 入力 ${k(t.input)} / キャッシュ読み ${k(t.cacheRead)} / 書き ${k(t.cacheCreate)}`);
-      say(`  モデル別: ${[...ai.byModel].map(([m, n]) => `${m}=${n}`).join(', ')}`);
-      for (const [w, v] of ai.byWorktree) say(`    ${w}  応答 ${v.responses} 件 / 出力 ${k(v.output)}`);
+  const perGate = progress.gates ? Math.round((progress.gatesWithRecord / progress.gates) * 100) : 0;
+  if (md) {
+    say('### 進捗の代理指標(進捗そのものではありません)');
+    say();
+    say('| 指標 | 値 |');
+    say('| --- | --- |');
+    say(`| 判定記録のあるゲート | ${progress.gatesWithRecord} / ${progress.gates}(${perGate}%)  ${progress.passed.join(' ')} |`);
+    say(`| 実装計画のある機能 | ${progress.withPlan} / ${progress.specs} |`);
+    if (!ai.error && !effort.error) {
+      const perGateCost = progress.gatesWithRecord ? ai.cost / progress.gatesWithRecord : 0;
+      say(`| ゲート1つあたりの AI 実行費 | $${perGateCost.toFixed(2)} |`);
     }
   } else {
-    const msg = ai?.error
-      ? `AI の使用量: 取得できません(${ai.error})`
-      : 'AI の使用量: 測っていません(--ai-usage <~/.claude/projects> を渡すと測ります)。' +
-        'セッション記録は利用者のマシンにあり、リポジトリにも CI にもありません';
-    say(md ? msg : `## AI の使用量\n  ${msg}`);
+    say('## 進捗の代理指標');
+    say(`  判定記録のあるゲート ${progress.gatesWithRecord} / ${progress.gates}(${perGate}%)  ${progress.passed.join(' ')}`);
+    say(`  実装計画のある機能 ${progress.withPlan} / ${progress.specs}`);
   }
 
   console.log(out.join('\n'));

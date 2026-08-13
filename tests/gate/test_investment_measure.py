@@ -133,9 +133,24 @@ def test_PRの未分類は握りつぶさない() -> None:
     assert "まだ無い領域/x.txt" in out
 
 
-def test_AI使用量の対象は作業ツリーの名前で絞る() -> None:
-    """全プロジェクトを合算すると、本案件の投入量にならない。"""
-    assert _config()["aiUsage"]["worktreePattern"]
+def test_AI実行費は既存のOSSから取る() -> None:
+    """価格表を自前で持つと、更新が止まった時点で誤った金額を出し続ける。"""
+    ai = _config()["aiUsage"]
+    assert "ccusage" in ai["tool"]
+    assert ai["projectPathPattern"]
+
+
+def test_稼働時間は自己申告ではなくgitから推定する() -> None:
+    """ロールに主目的以外の作業をさせない。"""
+    e = _config()["effort"]
+    assert e["maxCommitGapMinutes"] > 0
+    assert e["firstCommitMinutes"] > 0
+
+
+def test_進捗は代理指標として定義されている() -> None:
+    p = _config()["progress"]
+    assert p["gates"]
+    assert p["gateRecordDir"]
 
 
 def test_行数の対象が定義されている() -> None:
@@ -143,10 +158,82 @@ def test_行数の対象が定義されている() -> None:
     assert {"code", "test", "doc"} <= ids
 
 
-def test_台帳が存在する() -> None:
+def test_台帳が存在し自己申告を求めない() -> None:
     """測っても置き場が無ければ、推移が残らない。"""
     ledger = ROOT / "docs/platform/investment-ledger.md"
     assert ledger.is_file()
     body = ledger.read_text(encoding="utf-8")
     assert "稼働時間" in body
     assert "AI 実行費" in body
+    assert "誰も自己申告しません" in body
+    assert "未記入" not in body
+
+
+def test_稼働時間の推定が単調に増える() -> None:
+    """コミットが増えれば推定も増える。減ることはない。"""
+    cfg = {"maxCommitGapMinutes": 120, "firstCommitMinutes": 30, "authorAliases": {}}
+    base = [{"time": 0, "author": "a"}, {"time": 60 * 60000, "author": "a"}]
+    more = base + [{"time": 90 * 60000, "author": "a"}]
+    out = _eval(
+        "import { estimateEffortHours } from './scripts/gate/investment-measure.mjs';\n"
+        f"const cfg = {json.dumps(cfg)};\n"
+        f"console.log(estimateEffortHours({json.dumps(base)}, cfg).hours);\n"
+        f"console.log(estimateEffortHours({json.dumps(more)}, cfg).hours);"
+    )
+    a, b = (float(x) for x in out.splitlines())
+    assert b > a
+
+
+def test_同じ人の別名をまとめる() -> None:
+    """作業ツリーごとに author が割れると、稼働が二重に数えられる。"""
+    cfg = {"maxCommitGapMinutes": 120, "firstCommitMinutes": 30, "authorAliases": {"b": "a"}}
+    commits = [{"time": 0, "author": "a"}, {"time": 60 * 60000, "author": "b"}]
+    out = _eval(
+        "import { estimateEffortHours } from './scripts/gate/investment-measure.mjs';\n"
+        f"const r = estimateEffortHours({json.dumps(commits)}, {json.dumps(cfg)});\n"
+        "console.log(r.perAuthor.length);"
+    )
+    assert out == "1"
+
+
+def test_重なるセッションを二重に数えない() -> None:
+    """5つの作業ツリーは同時に動く。単純合計は実時間を超える。"""
+    rows = [
+        {
+            "projectPath": "/x/Filetto-po",
+            "firstActivity": "2026-08-13T00:00:00Z",
+            "lastActivity": "2026-08-13T02:00:00Z",
+            "totalCost": 1,
+        },
+        {
+            "projectPath": "/x/Filetto-dev",
+            "firstActivity": "2026-08-13T01:00:00Z",
+            "lastActivity": "2026-08-13T03:00:00Z",
+            "totalCost": 2,
+        },
+    ]
+    out = _eval(
+        "import { summarizeCcusage } from './scripts/gate/investment-measure.mjs';\n"
+        f"const r = summarizeCcusage({json.dumps(rows)}, 'Filetto');\n"
+        "console.log(r.spanMs / 3600000);\n"
+        "console.log(r.mergedMs / 3600000);\n"
+        "console.log(r.cost);"
+    )
+    span, merged, cost = (float(x) for x in out.splitlines())
+    assert span == 4.0
+    assert merged == 3.0
+    assert cost == 3.0
+
+
+def test_対象外のプロジェクトを混ぜない() -> None:
+    rows = [
+        {"projectPath": "/x/Filetto-po", "firstActivity": "2026-08-13T00:00:00Z",
+         "lastActivity": "2026-08-13T01:00:00Z", "totalCost": 1},
+        {"projectPath": "/x/other-project", "firstActivity": "2026-08-13T00:00:00Z",
+         "lastActivity": "2026-08-13T01:00:00Z", "totalCost": 99},
+    ]
+    out = _eval(
+        "import { summarizeCcusage } from './scripts/gate/investment-measure.mjs';\n"
+        f"console.log(summarizeCcusage({json.dumps(rows)}, 'Filetto').cost);"
+    )
+    assert out == "1"
