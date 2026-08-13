@@ -13,39 +13,55 @@ Platform は検査・リント・CI/CD の装置を作り、維持します。**
 次のファイルはエージェントから書けません。`.claude/guard.json` の `protectedPatterns` が遮断します。
 
 ```
-.claude/settings.json  .claude/guard.json  .claude/hooks/**
-.github/rulesets/**    .github/workflows/**
+.claude/settings.json  .claude/guard.json
 process.config.json    PROCESS-PROFILE.md
-adapters/**            scripts/gate/**      scripts/vendor/**
 CODEOWNERS             .github/CODEOWNERS
 ```
 
-**この遮断は不具合ではありません。** エージェントが自分を縛る設定を変えられる構成では、遮断が成立しません。**Bash 経由での迂回もしません。**
+**残っているのは「自分の合否条件を自分で書き換える」経路だけです。** エージェントが自分を縛る設定を変えられる構成では、遮断が成立しません。**Bash 経由での迂回もしません。**
 
-そのうえで、変更のたびに手順を思い出す状態にはしません。**手順を固定します。**
+### 2026-08-13 に遮断を縮めた
 
-### 手順
+本 Issue #60 の作業中に、遮断が実務を止めていることが分かりました。**`scripts/gate/**` が遮断されているために、Platform レーンが自分の成果物である検査スクリプトを書けませんでした。** 人が `cp` を1行打つ作業が発生し、その1行が判断の質を上げることはありません。
 
-1. **Platform が変更内容を `docs/platform/proposed/` に置く。** 配置先と同じ名前にする(`proposed/license-check.mjs` → `scripts/gate/license-check.mjs`)
+外したもの:
+
+| 対象 | 外した理由 |
+| --- | --- |
+| `scripts/gate/**` / `adapters/**` | **Platform レーンの成果物そのもの。** 変更は PR の差分に出て、G-6 独立レビューで人が見ます。書けないことに意味がありません |
+| `.github/workflows/**` / `.github/rulesets/**` | 同上。CI 定義の変更は差分に出ます |
+| `.claude/hooks/**` | 同上 |
+| `scripts/vendor/**` | 同上 |
+
+残したもの:
+
+| 対象 | 残した理由 |
+| --- | --- |
+| `.claude/settings.json` / `.claude/guard.json` | **遮断の定義そのもの。** これを書き換えられると、他の遮断がすべて無効になります |
+| `process.config.json` / `PROCESS-PROFILE.md` | 有効なゲートの正本。閾値と検査範囲の判断は人に紐づきます(`CLAUDE.md` 禁止事項6) |
+| `CODEOWNERS` | マージ保護の割り当て |
+
+**遮断は「差分に出ないもの」に絞る**、という線引きです。差分に出るものは、遮断ではなくレビューで見ます。
+
+### 残る手順
+
+上記2ファイル(`.claude/settings.json` / `.claude/guard.json`)と `process.config.json` / `PROCESS-PROFILE.md` に触る場合だけ、次の順序で進めます。
+
+1. **Platform が変更内容を `docs/platform/proposed/` に置く。** 配置先と同じ名前にする
 2. **Platform が検証結果を PL-NNNN として記録する。** 実測の出力を貼る。「通るはず」は書かない
-3. **Platform がテストを `tests/` へ置く。** 強制層ではないため書ける。CI から必ず走る経路まで用意する
-4. **人が適用する。** 適用コマンドは PR 本文に載せる。人がやることは「読んで貼る」だけにする
+3. **Platform がテストを `tests/` へ置く。** CI から必ず走る経路まで用意する
+4. **人が適用する。** 適用コマンドは PR 本文へ、そのまま貼れる形で載せる
 5. **適用後、`docs/platform/proposed/` から消す。** 正本が2箇所にある状態を残さない
 
-### 適用コマンドの書き方
+## 残っている確認待ち
 
-PR 本文へ、そのまま貼れる形で載せます。**何をどこへ置くかが1行で読めること。**
+`.claude/settings.json` の `ask` に次が残っています。**いずれも取り消せる操作で、確認待ちにする必要はありません。**
 
-```bash
-cp docs/platform/proposed/<name> <配置先>
-git rm -r --cached docs/platform/proposed  # 適用後に proposed を畳む場合
+```
+Bash(git push:*)   Bash(gh pr create:*)   Bash(curl:*)   Bash(wget:*)
 ```
 
-## 既知の穴
-
-| # | 内容 | 判断者 |
-| --- | --- | --- |
-| 1 | `.claude/settings.json` の `deny` に `Edit(./scripts/gate/**)` はあるが **`Write(./scripts/gate/**)` が無い**。`scripts/vendor/**` は両方ある。`guard.json` 側が塞いでいるため実害は出ていないが、二重の防護のうち片方が欠けている | **Owner**。エージェントは自分を縛る設定を変えません |
+`ask` は permission mode が bypass でも確認待ちになります。**「bypass にしているのに止まる」の原因はここです。** 外す場合は `ask` を公開系(`Bash(npm publish:*)` / `Bash(twine upload:*)`)だけに絞ります。判断者は **Owner** です(エージェントは自分を縛る設定を変えません)。
 
 ## 検査を足すときの原則
 
