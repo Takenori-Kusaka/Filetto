@@ -9,7 +9,7 @@
     "coverage": "pytest --cov --cov-report=json:coverage.json",
     "lint": "ruff check .",
     "audit": "pip-audit",
-    "licenses": "pip-licenses --format=json --allow-only=\"$PIT_IN_ALLOWED_LICENSES\"",
+    "licenses": "pip-licenses --format=json --from=all | node scripts/gate/license-check.mjs",
     "secretScan": ""
   },
   "coverageSummary": "coverage.json",
