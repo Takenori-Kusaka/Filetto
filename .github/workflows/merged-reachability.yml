@@ -1,0 +1,53 @@
+# マージ済み PR が main へ到達したかの検査(#95 依頼3)
+#
+# GitHub の「MERGED」表示は、main へ到達したことを意味しません。マージ先が main
+# でない PR は、親が squash マージされた時点で内容がどこにも残らないことがあります。
+# 実際に PR #87 がこれで失われ、PR #94 として出し直しました。
+#
+# G-5 には入れません。PR 単位の検査ではなく、リポジトリ全体の状態の検査だからです。
+# main への push ごとと、1日1回に走らせます。
+
+name: merged-reachability
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 21 * * *' # UTC 21:00 = JST 06:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  merged-reachability:
+    name: merged-reachability
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: マージ済み PR の到達を検査する
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/gate/merged-reachability.mjs --json evidence/merged-reachability.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: merged-reachability
+          path: evidence/merged-reachability.json
+          if-no-files-found: ignore
+      # 失敗を Issue として残す。定期実行の失敗は通知に埋もれるため
+      - name: 未到達を Issue へ起票する
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          body=$(node scripts/gate/merged-reachability.mjs 2>&1 || true)
+          gh issue create \
+            --title "[Platform] マージ済み PR が main へ到達していません($(date -u +%F))" \
+            --label "state:needs-platform" \
+            --body "$(printf '本 Issue は merged-reachability の失敗により自動で起票されました。\n\n```\n%s\n```\n\n内容が別経路で到達済みの場合は `scripts/gate/pr-base-policy.json` の `resolved` へ理由とともに書いてください。到達していない場合は main ベースで出し直してください。\n' "$body")"

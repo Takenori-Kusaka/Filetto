@@ -105,6 +105,19 @@ jobs:
       - uses: actions/checkout@v4
       - run: node scripts/gate/session-definition-drift.mjs
 
+  # PR のマージ先が main であることの検査(#95 依頼2)
+  #
+  # 積み上げ PR を禁じません。理由の記載を求めます。親が squash マージされると
+  # 子が持つ親のコミットは main のどこにも存在しなくなり、内容が失われます(#87)。
+  pr-base-check:
+    name: pr-base-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/gate/pr-base-check.mjs
+
   # 基準5 依存関係のライセンス検査(合否条件)
   #
   # 生成物と既存著作物の類似検知は合否条件にしません。「検出されなかった」が
@@ -178,6 +191,7 @@ jobs:
         spec-lint,
         double-encoding-check,
         session-definition-drift,
+        pr-base-check,
         ip-clearance,
         secret-scan,
       ]
@@ -192,6 +206,7 @@ jobs:
           echo "spec-lint:       ${{ needs.spec-lint.result }}"
           echo "double-encoding-check: ${{ needs.double-encoding-check.result }}"
           echo "session-definition-drift: ${{ needs.session-definition-drift.result }}"
+          echo "pr-base-check:   ${{ needs.pr-base-check.result }}"
           echo "ip-clearance:    ${{ needs.ip-clearance.result }}"
           echo "secret-scan:     ${{ needs.secret-scan.result }}"
           if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
