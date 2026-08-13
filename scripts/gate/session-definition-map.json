@@ -1,0 +1,38 @@
+{
+  "note": "ロール定義の正本と、各ランタイム向け生成物の対応。乖離検査(session-definition-drift.mjs)が読みます",
+
+  "roleDefinitions": [
+    ".claude/skills/po/SKILL.md",
+    ".claude/skills/dev/SKILL.md",
+    ".claude/skills/qm/SKILL.md",
+    ".claude/skills/audit/SKILL.md",
+    ".claude/skills/platform/SKILL.md",
+    ".claude/agents/tech-advisor.md"
+  ],
+
+  "pairs": [
+    {
+      "role": "dev",
+      "source": ".claude/skills/dev/SKILL.md",
+      "generated": ".gemini/commands/dev.toml",
+      "format": "gemini-toml",
+
+      "allowedTrailer": "---\n\n**本ファイルは `.claude/skills/dev/SKILL.md` を Gemini CLI 用に移植したものです。** 内容が食い違った場合、`.claude/skills/dev/SKILL.md` を正とします。同ファイルは D-0(`docs/D-0-governance.md`)から導出されています。\n\n{{args}}",
+
+      "allowedDifferences": [
+        {
+          "reason": "禁止事項3の遮断は Claude Code の settings.json による。Gemini CLI には適用されないため、本ランタイムでは指示への遵守だけが歯止めになることを明記する",
+          "source": "**2 は `.claude/settings.json` の書き込み範囲でも遮断しています。** 指示への遵守だけに依存しません。",
+          "generated": "**2 は `.claude/settings.json` の書き込み範囲でも遮断しています。** 指示への遵守だけに依存しません。**この遮断は Claude Code の設定であり、Gemini CLI には適用されません。** 本ランタイムでは指示への遵守だけが歯止めになります。"
+        },
+        {
+          "reason": "gh pr merge / gh pr review は Claude Code では設定で拒否されるが、Gemini CLI では拒否されない。事実として異なるため、記述を分ける",
+          "source": "- **`gh pr merge` と `gh pr review` はエージェントに拒否されます。** マージは人の操作",
+          "generated": "- **`gh pr merge` と `gh pr review` を実行しません。** マージは人の操作です"
+        }
+      ]
+    }
+  ],
+
+  "unmappedNote": "生成物が未整備のロール。検査は失敗させず、未展開として数え上げます(#43 の生成経路は最適化期間の終了後)"
+}
