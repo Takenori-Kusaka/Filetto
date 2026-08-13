@@ -10,15 +10,28 @@ Platform は検査・リント・CI/CD の装置を作り、維持します。**
 
 ## 強制層に触る変更をどう進めるか
 
-次のファイルはエージェントから書けません。`.claude/guard.json` の `protectedPatterns` が遮断します。
+次のファイルはエージェントから書けません。`.claude/guard.json` の `protectedPatterns` が遮断します。**2026-08-13 に実測した結果です。**
 
 ```
-.claude/settings.json  .claude/guard.json
-process.config.json    PROCESS-PROFILE.md
+.claude/guard.json     PROCESS-PROFILE.md
 CODEOWNERS             .github/CODEOWNERS
 ```
 
-**残っているのは「自分の合否条件を自分で書き換える」経路だけです。** エージェントが自分を縛る設定を変えられる構成では、遮断が成立しません。**Bash 経由での迂回もしません。**
+**`.claude/settings.json` と `process.config.json` は遮断されていません。** かつてこの一覧に載っていましたが、**実際には通過します。** `permissions.deny` も空です。
+
+**これは意図した状態です。** 序盤フェーズは `.claude/` をプロダクトへ合わせて最適化している期間であり、その期間中に遮断をかけたまま運用しない、という事業決裁者の判断によります([ADR-0015](../../context/decisions/0015-enforcement-scope-during-optimization.md))。
+
+**そのため、次の3点は機械では止まりません。指示の遵守だけで保たれています。**
+
+| # | 止まらないもの | 保つ根拠 |
+| --- | --- | --- |
+| 1 | **`.claude/settings.json` の書き換え**(他の遮断をすべて無効にできる) | `CLAUDE.md` 禁止事項6 |
+| 2 | `process.config.json` の書き換え(カバレッジ閾値) | 同上 |
+| 3 | **`gh pr review` / `gh pr merge`**(セルフ・アプルーブ) | `CLAUDE.md`「AI レビューは判定に使わない。承認もしない」 |
+
+**遮断範囲の再設計は [#75](https://github.com/Takenori-Kusaka/Filetto/issues/75) で行います。`status:on-hold` です。**
+
+**遮断されている4パターンについては、Bash 経由での迂回もしません。**
 
 ### 2026-08-13 に遮断を縮めた(Owner の操作)
 
@@ -35,9 +48,21 @@ CODEOWNERS             .github/CODEOWNERS
 | `.claude/hooks/**` | 同上 |
 | `scripts/vendor/**` | 同上 |
 
-残したのは `.claude/settings.json` / `.claude/guard.json`(遮断の定義そのもの)、`process.config.json` / `PROCESS-PROFILE.md`(有効なゲートの正本)、`CODEOWNERS` です。
+**当時「残した」と書いたのは** `.claude/settings.json` / `.claude/guard.json`(遮断の定義そのもの)、`process.config.json` / `PROCESS-PROFILE.md`(有効なゲートの正本)、`CODEOWNERS` **です。**
 
-**ここは「差分に出ないものだけ遮断する」という線引きです。**
+**ここは「差分に出ないものだけ遮断する」という線引きでした。**
+
+> **訂正(2026-08-13)**
+>
+> **上の記述は実態と食い違っていました。** 2026-08-13 の実測で、`.claude/settings.json` と `process.config.json` が**遮断を通過する**ことが分かりました([#70](https://github.com/Takenori-Kusaka/Filetto/issues/70))。
+>
+> ```
+> .claude/settings.json  exit=0  通過
+> process.config.json    exit=0  通過
+> .claude/guard.json     exit=2  遮断
+> ```
+>
+> **事業決裁者は「何も戻さなくていい」と判断しました。** 経緯と受容したリスクは [ADR-0015](../../context/decisions/0015-enforcement-scope-during-optimization.md) にあります。**PR #65 のコミットメッセージも同じ食い違いを含みますが、書き換えられないため本節で訂正を残します。**
 
 #### `settings.json` の `permissions.deny` を空にした
 
@@ -55,9 +80,11 @@ CODEOWNERS             .github/CODEOWNERS
 
 **Owner の判断です。** 戻す場合は `deny` へ上表の項目を書き戻します。
 
+> **判断(2026-08-13)**: **戻しません。** 序盤フェーズの間は `deny` を空のまま運用します([ADR-0015](../../context/decisions/0015-enforcement-scope-during-optimization.md) 決定1)。**見直しは G-4 通過後、[#75](https://github.com/Takenori-Kusaka/Filetto/issues/75) で行います。**
+
 ### 残る手順
 
-上記2ファイル(`.claude/settings.json` / `.claude/guard.json`)と `process.config.json` / `PROCESS-PROFILE.md` に触る場合だけ、次の順序で進めます。
+**遮断されている `.claude/guard.json` / `PROCESS-PROFILE.md` / `CODEOWNERS` に触る場合だけ**、次の順序で進めます。**`.claude/settings.json` と `process.config.json` は遮断されていませんが、合否条件の正本であるため同じ手順を踏んでください。**
 
 1. **Platform が変更内容を `docs/platform/proposed/` に置く。** 配置先と同じ名前にする
 2. **Platform が検証結果を PL-NNNN として記録する。** 実測の出力を貼る。「通るはず」は書かない
