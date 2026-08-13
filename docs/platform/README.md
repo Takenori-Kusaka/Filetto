@@ -11,28 +11,30 @@ Platform は検査・リント・CI/CD の装置を作り、維持します。**
 
 ## 強制層に触る変更をどう進めるか
 
-次のファイルはエージェントから書けません。`.claude/guard.json` の `protectedPatterns` が遮断します。**2026-08-13 に実測した結果です。**
+**2026-08-13 時点で、エージェントから書けないファイルは1件もありません。強制層は動いていません。**
 
-```
-.claude/guard.json     PROCESS-PROFILE.md
-CODEOWNERS             .github/CODEOWNERS
-```
-
-**`.claude/settings.json` と `process.config.json` は遮断されていません。** かつてこの一覧に載っていましたが、**実際には通過します。** `permissions.deny` も空です。
+| 層 | 状態 |
+| --- | --- |
+| `permissions.deny` | **空** |
+| **`PreToolUse` hook(`guard-write.mjs`)** | **`.claude/settings.json` に登録されていない。呼ばれない** |
 
 **これは意図した状態です。** 序盤フェーズは `.claude/` をプロダクトへ合わせて最適化している期間であり、その期間中に遮断をかけたまま運用しない、という事業決裁者の判断によります([ADR-0015](../../context/decisions/0015-enforcement-scope-during-optimization.md))。
 
-**そのため、次の3点は機械では止まりません。指示の遵守だけで保たれています。**
+**そのため、次の5点は機械では止まりません。指示の遵守だけで保たれています。**
 
 | # | 止まらないもの | 保つ根拠 |
 | --- | --- | --- |
-| 1 | **`.claude/settings.json` の書き換え**(他の遮断をすべて無効にできる) | `CLAUDE.md` 禁止事項6 |
-| 2 | `process.config.json` の書き換え(カバレッジ閾値) | 同上 |
-| 3 | **`gh pr review` / `gh pr merge`**(セルフ・アプルーブ) | `CLAUDE.md`「AI レビューは判定に使わない。承認もしない」 |
+| 1 | `.claude/settings.json` / `process.config.json` の書き換え | `CLAUDE.md` 禁止事項6 |
+| 2 | **`gh pr review` / `gh pr merge`**(セルフ・アプルーブ) | `CLAUDE.md`「AI レビューは判定に使わない。承認もしない」 |
+| **3** | **自己修正ループ中のテストの改変** | **`CLAUDE.md` 禁止事項3** |
+| 4 | 秘密情報の読み取り・force push | ロール定義 |
+| 5 | `PROCESS-PROFILE.md` / `CODEOWNERS` / `.claude/guard.json` の書き換え | 本ページの手順 |
+
+**3 が最も重いものです。** これまで機械で止めていた唯一の「実装の質に直接効く」遮断であり、**テストが実装の誤りを検出しなくなることに直結します。**
+
+**hook 本体(`.claude/hooks/guard-write.mjs`)と `.claude/guard.json` は残しています。** 見直しのときに書き直すのは無駄なため、**呼び出しを外しただけです。**
 
 **遮断範囲の再設計は [#75](https://github.com/Takenori-Kusaka/Filetto/issues/75) で行います。`status:on-hold` です。**
-
-**遮断されている4パターンについては、Bash 経由での迂回もしません。**
 
 ### 2026-08-13 に遮断を縮めた(Owner の操作)
 
@@ -77,7 +79,7 @@ CODEOWNERS             .github/CODEOWNERS
 | `Bash(gh api repos/*/rulesets:*)` | ブランチ保護の書き換え |
 | `Edit(./scripts/gate/**)` ほか強制層の各種 | 上の `guard.json` と同じ範囲 |
 
-**`gh pr review` / `gh pr merge` の遮断が外れている点は、記録として残します。** `CLAUDE.md` は「AI レビューは監査の入力であり、判定には使わない。承認もしない」と定めており、G-6 独立レビューと G-7 出荷判定の前提でもあります。**外れた後は、この前提を指示だけで保っています**(禁止事項3を `settings.json` で二重に塞いでいるのとは異なる状態です)。
+**`gh pr review` / `gh pr merge` の遮断が外れている点は、記録として残します。** `CLAUDE.md` は「AI レビューは監査の入力であり、判定には使わない。承認もしない」と定めており、G-6 独立レビューと G-7 出荷判定の前提でもあります。**外れた後は、この前提を指示だけで保っています**(**2026-08-13 に hook の登録も外したため、禁止事項3 も同じ状態です**)。
 
 **Owner の判断です。** 戻す場合は `deny` へ上表の項目を書き戻します。
 

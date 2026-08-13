@@ -52,18 +52,39 @@ $ 実際の protectedPatterns          $ 実際の permissions.deny
 
 ## 決定
 
-### 1. 遮断範囲は現状のまま。戻さない
+### 1. 機械による遮断を行わない
 
-**遮断されるのは次の4パターンのみである。**
+**序盤フェーズの間、エージェントの操作を機械で止めない。**
 
-```
-.claude/guard.json
-PROCESS-PROFILE.md
-CODEOWNERS
-.github/CODEOWNERS
-```
+| 層 | 状態 |
+| --- | --- |
+| `permissions.deny` | **空。何も遮断しない** |
+| **`PreToolUse` hook(`guard-write.mjs`)** | **`.claude/settings.json` から登録を外す。呼ばれない** |
 
-**`permissions.deny` は空のままとする。**
+**hook 本体(`.claude/hooks/guard-write.mjs`)と `.claude/guard.json` は残す。** 決定4 の見直しで戻す前提であり、そのときに書き直すのは無駄である。**呼び出しを外すだけとする。**
+
+**判断は事業決裁者による。** 同じ指示が繰り返し出ている。
+
+> **遮断をしないでください。**(2026-08-13)
+
+**PO は当初この指示を `permissions.deny` に限定して解釈し、hook を有効なまま残した。** 指示は層を限定していない。
+
+### 1-2. hook を外すことで、あわせて失われるもの
+
+**`guard-write.mjs` は2つのものを止めていた。** 登録を外すと、両方が止まらなくなる。
+
+| # | 止めていたもの | 根拠 |
+| --- | --- | --- |
+| 1 | `protectedPatterns` の4件(`.claude/guard.json` / `PROCESS-PROFILE.md` / `CODEOWNERS` / `.github/CODEOWNERS`)への書き込み | 強制層の自己言及 |
+| **2** | **自己修正ループ中のテストファイルへの書き込み**(`.claude/.self-heal` が存在する間) | **`CLAUDE.md` 禁止事項3** |
+
+**2 は `CLAUDE.md` が「指示への遵守だけに依存しません」と明記していた箇所である。**
+
+> 禁止事項3は `.claude/settings.json` の書き込み範囲でも遮断しています。**指示への遵守だけに依存しません。**
+
+**この記述は事実でなくなる。** 決定2 で `CLAUDE.md` を実態へ合わせる。
+
+**禁止事項3 は、以後 `CLAUDE.md` とロール定義の遵守だけで保つ。**
 
 ### 2. 記録を実態へ合わせる
 
@@ -71,8 +92,9 @@ CODEOWNERS
 
 | 場所 | 何を直すか |
 | --- | --- |
-| `docs/platform/README.md` | 「書けません」の一覧から `.claude/settings.json` と `process.config.json` を外す。**遮断が外れている期間であることを明記する** |
-| `context/projects/P-001.md` 運用上の注意3 | 保護対象の表を実測へ合わせる |
+| `docs/platform/README.md` | 「書けません」の一覧を消す。**この期間、書けないファイルは1件も無い** |
+| `context/projects/P-001.md` 運用上の注意3 | 同上 |
+| **`CLAUDE.md`** | **「禁止事項3 は `.claude/settings.json` の書き込み範囲でも遮断しています」を削る。遮断していない** |
 | PR #65 のコミットメッセージ | **書き換えられない。** 本 ADR で訂正を残す |
 
 **記録が実態より強く書かれている状態を残さない。** 「守られている」と読める記述は、守られていないときに最も害が大きい。
@@ -86,6 +108,8 @@ CODEOWNERS
 | 1 | `.claude/settings.json` / `process.config.json` の書き換え | `CLAUDE.md` 禁止事項6 |
 | 2 | `gh pr review` / `gh pr merge` | `CLAUDE.md`「AI レビューは判定に使わない。承認もしない」 |
 | 3 | 秘密情報の読み取り・force push | ロール定義 |
+| **4** | **自己修正ループ中のテストの改変** | **`CLAUDE.md` 禁止事項3** |
+| **5** | **`PROCESS-PROFILE.md` / `CODEOWNERS` / `.claude/guard.json` の書き換え** | **ロール定義。Platform の手順** |
 
 **これは弱い担保である。** 弱いことを承知のうえで受容する。
 
@@ -146,12 +170,17 @@ CODEOWNERS
 
 | # | リスク |
 | --- | --- |
-| 1 | **エージェントが `.claude/settings.json` を書き換え、他の遮断を無効にできる** |
-| 2 | エージェントが `process.config.json` のカバレッジ閾値を書き換えられる |
-| 3 | **エージェントが自分の PR を承認してマージできる** |
-| 4 | 秘密情報の読み取り・force push が機械で止まらない |
+| 1 | エージェントが `.claude/settings.json` / `process.config.json` を書き換えられる |
+| 2 | **エージェントが自分の PR を承認してマージできる** |
+| 3 | 秘密情報の読み取り・force push が機械で止まらない |
+| **4** | **エージェントが、渡されたテストの失敗をテスト側の変更で解消できる**(禁止事項3) |
+| 5 | エージェントが `PROCESS-PROFILE.md` / `CODEOWNERS` を書き換えられる |
 
-**1 と 3 が重い。** どちらも「指示の遵守」だけで保たれている。
+**2 と 4 が重い。**
+
+**4 は、これまで機械で止めていた唯一の「実装の質に直接効く」遮断である。** 1・2・3・5 は統制や運用に関わるが、**4 はテストが実装の誤りを検出しなくなるという、成果物そのものの欠陥に直結する。**
+
+**この期間、G-5 の合否は「テストが正しいこと」を前提にしており、その前提を機械で保証しない。**
 
 ### 検出の経路
 
