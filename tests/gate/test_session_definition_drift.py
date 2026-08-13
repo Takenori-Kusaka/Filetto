@@ -45,6 +45,43 @@ def _run(cwd: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
+DIFF_REASON = "テスト用に宣言したランタイム差"
+DIFF_SUFFIX = "(本ランタイム固有の追記)"
+
+
+def _write_map(work: Path, mapping: dict) -> None:
+    (work / MAP).write_text(json.dumps(mapping, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _declare_difference(work: Path, *, declare: bool = True) -> str:
+    """生成物へ差を1つ作る。declare=True なら map へ理由つきで宣言する。
+
+    許容差分の件数は運用で変わります(ランタイム間で事実が揃えば0件になる)。
+    リポジトリの現在の中身を前提にせず、テストが自分で差を作ります。
+    """
+    generated = (work / GENERATED).read_text(encoding="utf-8")
+    source_body = (work / SOURCE).read_text(encoding="utf-8")
+
+    # 正本と生成物の双方に1度だけ現れる見出しを選ぶ。特定の文言に依存しない
+    anchor = next(
+        line
+        for line in source_body.splitlines()
+        if line.startswith("## ") and source_body.count(line) == 1 and generated.count(line) == 1
+    )
+    altered = anchor + DIFF_SUFFIX
+
+    (work / GENERATED).write_text(generated.replace(anchor, altered), encoding="utf-8")
+
+    if declare:
+        mapping = json.loads((work / MAP).read_text(encoding="utf-8"))
+        mapping["pairs"][0]["allowedDifferences"] = [
+            {"reason": DIFF_REASON, "source": anchor, "generated": altered}
+        ]
+        _write_map(work, mapping)
+
+    return anchor
+
+
 @pytest.fixture
 def sandbox(tmp_path: Path) -> Path:
     """検査に要るファイルだけを写した作業場を作る。"""
@@ -62,10 +99,10 @@ def test_現状は乖離が無い() -> None:
     assert "0 組で乖離を検出" in r.stdout
 
 
-def test_許容した差分を必ず出力する() -> None:
+def test_許容した差分の件数を必ず出力する() -> None:
+    """0件のときも「0件」と出す。件数そのものは運用で変わるため前提にしない。"""
     r = _run(ROOT)
     assert "許容した差分:" in r.stdout
-    assert "理由:" in r.stdout
 
 
 def test_未展開のロール定義を数え上げる() -> None:
@@ -103,9 +140,10 @@ def test_否定_生成物が無いと落ちる(sandbox: Path) -> None:
 
 def test_否定_許容差分が古くなると落ちる(sandbox: Path) -> None:
     """生成物から許容差分の文言が消えたら、map が古い証拠として落とす。"""
+    _declare_difference(sandbox)
     mapping = json.loads((sandbox / MAP).read_text(encoding="utf-8"))
     mapping["pairs"][0]["allowedDifferences"][0]["generated"] = "存在しない文言"
-    (sandbox / MAP).write_text(json.dumps(mapping, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_map(sandbox, mapping)
     r = _run(sandbox)
     assert r.returncode == 1
     assert "allowedDifferences" in r.stdout + r.stderr
@@ -115,7 +153,7 @@ def test_否定_対応が0件なら落ちる(sandbox: Path) -> None:
     """対象0件を「実施した」として通す経路を作らない。"""
     mapping = json.loads((sandbox / MAP).read_text(encoding="utf-8"))
     mapping["pairs"] = []
-    (sandbox / MAP).write_text(json.dumps(mapping, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_map(sandbox, mapping)
     r = _run(sandbox)
     assert r.returncode == 1
 
@@ -127,8 +165,19 @@ def test_否定_ロール定義が消えると落ちる(sandbox: Path) -> None:
     assert "roleDefinitions" in r.stdout + r.stderr
 
 
-def test_許容差分そのものは乖離としない(sandbox: Path) -> None:
-    """ランタイム差の2件は、書かれているとおりであれば通る。"""
+def test_宣言した差分は乖離としない(sandbox: Path) -> None:
+    """宣言した差分は通し、理由とともに出力する。"""
+    _declare_difference(sandbox)
     r = _run(sandbox)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "許容した差分: 2 件" in r.stdout
+    assert "許容した差分: 1 件" in r.stdout
+    assert "理由:" in r.stdout
+    assert DIFF_REASON in r.stdout
+
+
+def test_否定_宣言していない差分は乖離とする(sandbox: Path) -> None:
+    """同じ差を作り、宣言だけしなければ落ちる。宣言の有無が判定を分けることの確認。"""
+    _declare_difference(sandbox, declare=False)
+    r = _run(sandbox)
+    assert r.returncode == 1
+    assert "乖離" in r.stdout + r.stderr
