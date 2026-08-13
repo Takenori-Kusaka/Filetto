@@ -6,6 +6,8 @@
 
 **本 ADR の一部は暫定です。** [pit-in-template#13](https://github.com/Takenori-Kusaka/pit-in-template/issues/13) の修正後に見直します(下記「期限」)。
 
+**一部置き換え(→ [ADR-0013](./0013-license-check-spdx-expression.md))。** 置き換えの範囲は「表記の吸収(暫定)」の6件と「期限」節に限る。それ以外の決定・記録は有効なまま残る。
+
 ## コンテキスト
 
 G-5 基準5(依存関係のライセンス検査 / `ip-clearance`)が、**ライセンス上の問題がない状態で失敗します**。
