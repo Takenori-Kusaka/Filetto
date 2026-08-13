@@ -18,22 +18,132 @@
 
 <!-- generated:process-rules start -->
 
-**この区間は `/process-init` が `process.config.json` から生成します。** 2026-08-13 時点では未生成です。
+## このプロジェクトの構成(自動生成)
 
-**未生成である理由**: 生成器が `.claude/settings.json` の `permissions.deny` を全置換し、[ADR-0015](context/decisions/0015-enforcement-scope-during-optimization.md) で決めた「序盤フェーズは遮断しない」を巻き戻すためです([pit-in-template#23](https://github.com/Takenori-Kusaka/pit-in-template/issues/23))。**同 Issue の解決後に生成します。**
+この節は `process.config.json` から生成しています。**手で編集しないでください**。内容を変えるときは `/process-init` を再実行します。手で編集すると `check-process-rules` が失敗します。
 
-**生成されると、次が入ります。**
+- 案件 ID: `P-001`
+- 追随している D-0 体制図の版: `1.4`
 
-| # | 内容 |
+### 有効なゲートと判定者
+
+| ゲート | 判定 | 判定者 |
+| --- | --- | --- |
+| [G-1 企画承認](https://takenori-kusaka.github.io/process-compass/phase4-process-design/gate-criteria/#g-1-企画承認事業決裁者既存規程どおり) | 適用する | 事業決裁者(決裁権限規程どおりの職位) |
+| [G-2 要件合意](https://takenori-kusaka.github.io/process-compass/phase4-process-design/gate-criteria/#g-2-要件合意価値責任者48時間) | 適用する | 価値責任者(単独。目安48時間以内に判定) |
+| [G-3 技術設計判断](https://takenori-kusaka.github.io/process-compass/phase4-process-design/gate-criteria/#g-3-技術設計判断技術判断者48時間) | 適用する | 技術判断者(単独。目安48時間以内に判定) |
+| [G-4 機能仕様承認(反復内)](https://takenori-kusaka.github.io/process-compass/phase4-process-design/gate-criteria/#g-4-機能仕様承認価値責任者または委譲先24時間) | 適用する | 価値責任者(または明示的に委譲された機能責任者。委譲しても結果責任は価値責任者に残る) |
+| [G-5 自動検証(CI)](https://takenori-kusaka.github.io/process-compass/phase4-process-design/gate-criteria/#g-5-自動検証-ci機械判定即時) | 適用する | CI(機械判定) |
+| [G-6 独立レビュー](https://takenori-kusaka.github.io/process-compass/phase4-process-design/gate-criteria/#g-6-独立レビュー独立レビュア応答1営業日--判定2営業日) | **未達** | 独立レビュア(作成指示者本人は承認不可。ブランチ保護で強制) |
+| [G-7 出荷判定](https://takenori-kusaka.github.io/process-compass/phase4-process-design/gate-criteria/#g-7-出荷判定qa3営業日) | 適用する | 価値責任者(出荷判定者を兼務。代償措置つきの逸脱) |
+| [G-8 リリース決裁](https://takenori-kusaka.github.io/process-compass/phase4-process-design/gate-criteria/#g-8-リリース決裁事業決裁者48時間) | 適用する | 事業決裁者 |
+
+**判定の基準を確認するときは、ゲート名のリンク先(標準の該当節)を読んでください**。
+
+**未達のゲート**: G-6 独立レビュー(作成を指示した本人以外が挙動を確認する条件を満たす構成が存在しない(最小体制3名未満、かつ外部のレビュアが不在))
+
+未達は省略ではありません。**AI で埋めてはなりません**。
+
+**代償措置つきの逸脱**: G-7 出荷判定(開発ライン × 出荷判定者(同一案件)の兼務の禁止(第3章 3.5))
+
+### ロールごとの権限
+
+**自分がどのロールのセッションかを確認してから作業を始めてください**。
+分離は、作業領域・セッション・認証情報の3つがすべて分かれている場合にのみ成立します(標準 第3章 3.5.3)。
+
+| ロール | 判定するゲート | 判定してはならないゲート | 受信箱 | 引き渡しに使うラベル |
+| --- | --- | --- | --- | --- |
+| [価値責任者(Value Owner)](https://takenori-kusaka.github.io/process-compass/phase4-process-design/roles-responsibilities/) | G-2 / G-4 / G-7。G-7 を兼務する(代償措置つきの逸脱。判定記録と抜き取り確認を要する) | — | `state:needs-po` | `state:needs-dev` `state:needs-tech` `state:needs-audit` `state:needs-platform` `state:needs-owner` |
+| [技術判断者(Tech Lead)](https://takenori-kusaka.github.io/process-compass/phase4-process-design/roles-responsibilities/) | G-3 | — | `state:needs-tech` | `state:needs-dev` `state:needs-po` `state:needs-owner` |
+| [開発者(検証者)](https://takenori-kusaka.github.io/process-compass/phase4-process-design/roles-responsibilities/) | — | G-6 / G-7 | `state:needs-dev` `state:qm-blocked` | `state:dev-done` `state:needs-po` `state:needs-tech` `state:needs-owner` `state:needs-platform` |
+| [独立レビュア](https://takenori-kusaka.github.io/process-compass/phase4-process-design/roles-responsibilities/) | G-6(未達) | — | `state:dev-done` | `state:qm-blocked` `state:ready-to-merge` |
+| [品質保証(出荷判定者)](https://takenori-kusaka.github.io/process-compass/phase4-process-design/roles-responsibilities/) | この構成では分離できていない。判定は価値責任者が兼ねる | G-7 | `state:dev-done` `state:ready-to-merge` | `state:qm-blocked` `state:ready-to-merge` |
+| [事業決裁者](https://takenori-kusaka.github.io/process-compass/phase4-process-design/roles-responsibilities/) | G-1 / G-8 | — | `state:needs-owner` | `state:needs-po` `state:needs-dev` |
+| [AI維持管理者(AI Maintainer)](https://takenori-kusaka.github.io/process-compass/phase4-process-design/roles-responsibilities/) | — | — | `state:needs-platform` | `state:dev-done` |
+
+- **起案した主体は、その成果物の判定者になりません**。役割の組み合わせによらない禁止です
+- **自分のロールの受信箱以外を拾わないでください**。ディレクトリが分かれていても、複数のレーンの受信箱を見た時点で文脈は合流します
+- エージェント指示資産(強制層。`.claude/**`)の統合・削除は AI維持管理者へ集約します。変更が必要な場合は `state:needs-platform` を付与します([第5章 Label Mailbox](https://takenori-kusaka.github.io/process-compass/phase5-implementation/label-mailbox/))
+
+#### 標準の条項を課す前に、適用範囲を確認する
+
+**条項番号だけを根拠にしないでください**。適用範囲を書けない条項は課さないでください。箇条書きだけを読んで限定を落とすと、適用されない条項を課すことになります([適用範囲の書き方](https://takenori-kusaka.github.io/process-compass/community/scope-marking/))。
+
+| 条項 | 適用範囲 | 判定の単位 |
+| --- | --- | --- |
+| [AIエージェント安全リスクアセスメント](https://takenori-kusaka.github.io/process-compass/phase4-process-design/deliverable-templates/#aiエージェント安全リスクアセスメント適用-物理的な危険源r1-の変更種別本番到達l2-以上のいずれか) | 物理的な危険源・R1 の変更種別・本番到達・L2 以上のいずれか | **変更ごと** |
+| [5.7.3 選択肢の比較](https://takenori-kusaka.github.io/process-compass/phase4-process-design/human-ai-boundary/#573-選択肢の比較適用-r1-の決定例外承認) | R1 の決定・例外承認 | **変更ごと** |
+
+**リスク区分(R)は変更ごとに判定します**。この案件の安全重要度から「適用されない」を導いてはなりません。CL0 の案件でも、認証・認可・個人データ・外部インタフェースに触れる変更は R1 です。
+
+#### 統制の弱化を見つけたら
+
+**遮断の解除・閾値の緩和・強制層の縮小**を見つけた場合は、差分が変更の主張と一致するかまでを確認し、**許容してよいかは判断しないでください**。
+
+| 対象 | 付与するラベル |
 | --- | --- |
-| 1 | 有効なゲートと判定者。**判定基準への直接リンク** |
-| 2 | 未達・逸脱の一覧 |
-| 3 | ロールごとの権限。受信箱・引き渡しラベル・**判定してはならないゲート** |
-| **4** | **標準の条項を課す前に確認する適用範囲の一覧** |
+| 強制層(`.claude/**` 等)の縮小 | `state:needs-platform` |
+| 不可逆4操作に該当する(ガード・検証ゲート・重要テストの削除を含む) | 上に加えて `state:needs-owner` |
+| 弱化の範囲そのものの適否 | `state:needs-po` |
 
-**4 が要る理由は、本案件で実際に失敗したためです。** 標準 5.7.3 の適用範囲(「リスク区分 R1 の決定、および例外承認では」)を落として全体へ適用し、判定者に44行の記入を課しました([ADR-0014](context/decisions/0014-standard-scope-misapplication.md))。**その条項は既に標準側で注記済みで、この区間があれば届いていました。**
+**引き渡し先が分からないことを、自分で決める理由にしないでください**。特定できない場合は `state:needs-po` を付与します。兼務していても、ラベルを経由させて引き渡しを記録します([第5章 4.7](https://takenori-kusaka.github.io/process-compass/phase5-implementation/label-mailbox/))。
 
-**生成後、この区間を手で編集しないでください。** `check-process-rules` が失敗します。
+**規定の全文は標準にあります**。判断に迷ったら、表のリンク先を読んでから進めてください。推測で補わないでください。
+
+- **開発者(検証者)** が兼ねてはならない役割: 独立レビュア / 品質保証(出荷判定者)(例外: 3名未満に限り、代償措置つきで兼務を認める(第3章 3.5.2 / ADR-0029))
+- **独立レビュア** が兼ねてはならない役割: 開発者(検証者)
+- **品質保証(出荷判定者)** が兼ねてはならない役割: 開発者(検証者)(例外: 3名未満に限り、代償措置つきで兼務を認める(第3章 3.5.2 / ADR-0029))
+- **AI維持管理者(AI Maintainer)** が兼ねてはならない役割: AI運用担当者(AIOps)
+- **AI運用担当者(AIOps)** が兼ねてはならない役割: AI維持管理者(AI Maintainer)
+
+### 自分の受信箱を見る
+
+**自分のロールのブロックだけを実行してください**。他のロールの受信箱を見た時点で文脈は合流し、分離は成立しなくなります([第5章 4.5.1](https://takenori-kusaka.github.io/process-compass/phase5-implementation/label-mailbox/))。
+
+```bash
+# 価値責任者(Value Owner)
+gh issue list --label "state:needs-po" --state open
+gh pr list --label "state:needs-po" --state open
+
+# 技術判断者(Tech Lead)
+gh issue list --label "state:needs-tech" --state open
+gh pr list --label "state:needs-tech" --state open
+
+# 開発者(検証者)
+gh issue list --label "state:needs-dev" --state open
+gh pr list --label "state:needs-dev" --state open
+gh issue list --label "state:qm-blocked" --state open
+gh pr list --label "state:qm-blocked" --state open
+
+# 独立レビュア: この構成では未達。担い手がいないため受信箱を置かない
+
+# 品質保証(出荷判定者)
+gh issue list --label "state:dev-done" --state open
+gh pr list --label "state:dev-done" --state open
+gh issue list --label "state:ready-to-merge" --state open
+gh pr list --label "state:ready-to-merge" --state open
+
+# 事業決裁者
+gh issue list --label "state:needs-owner" --state open
+gh pr list --label "state:needs-owner" --state open
+
+# AI維持管理者(AI Maintainer)
+gh issue list --label "state:needs-platform" --state open
+gh pr list --label "state:needs-platform" --state open
+```
+
+状態ラベルの付いていない Issues/PRs(孤児)の再配分は価値責任者の義務です。**再配分した仕事を自ら拾わないでください**。再配分の権限と、仕事を拾う権限は別です。
+
+### エスカレーションの段階とラベル
+
+| 段階 | 報告先 | 付与するラベル |
+| --- | --- | --- |
+| 段階1 | プロジェクト責任者 | `state:needs-po` |
+| 段階2 | 部門責任者・PMO | `state:needs-owner` |
+| 段階3 | ステアリングコミッティ(B-2) | `state:needs-owner` |
+| 不可逆4操作 | オーナー(事業決裁者) | `state:needs-owner` |
+
+発火条件と閾値は[第7章 7.6](https://takenori-kusaka.github.io/process-compass/phase4-process-design/exception-escalation/)、実際の宛先は D-0 体制図の第4節によります。**ラベルの付与だけで報告を済ませないでください**。エスカレーションレポートの5項目(状態・原因・事業影響・リカバリ選択肢3案・推奨と決裁事項)を書きます。**推奨と決裁事項は人が記入します**。
 
 <!-- generated:process-rules end -->
 
@@ -124,7 +234,7 @@
 | 7 | **`state:*` ラベルを貼らず、コメントや `@mention` だけで判断依頼や引き渡しを済ませる** | 相手の polling クエリに現れず、すべての受信箱から消えてタスクが滞留（orphan化）するため |
 | 8 | **差し戻し（`qm-blocked`）対応後に、そのラベルを剥がし忘れる、または `dev-done` を貼り忘れる** | 復路の伝達が不完全となり、QMの受信箱に現れずプロセスが完全停止するため |
 
-禁止事項3は `.claude/settings.json` の書き込み範囲でも遮断しています。指示への遵守だけに依存しません。
+禁止事項3は、**2026-08-13 時点では機械で遮断していません**。序盤フェーズの間、強制層の遮断をすべて外しているためです([ADR-0015](context/decisions/0015-enforcement-scope-during-optimization.md))。**この期間、禁止事項3 は本文書とロール定義の遵守だけで保たれています。**
 
 ## 受入基準の書き方
 
