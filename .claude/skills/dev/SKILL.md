@@ -47,7 +47,7 @@ gh pr list --search "review-requested:@me is:open"
 | --- | --- | --- |
 | QM | `state:dev-done` | **実装と単体テストが完了し CI が全緑になったとき** |
 | PO | `state:needs-po` | 仕様・優先度の判断が要ると判明したとき |
-| Platform | `state:needs-platform` | 検査・CI の改修を依頼するとき(**ラベル未作成**) |
+| Platform | `state:needs-platform` | 検査・CI の改修を依頼するとき |
 | Owner | `state:needs-owner` | 不可逆4操作・安全に関わる懸念 |
 
 **Draft PR の間は `state:needs-dev` を維持します。** 完了時に剥がして `state:dev-done` を付けます。
