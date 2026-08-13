@@ -15,9 +15,7 @@
   ],
 
   "protectedPatterns": [
-    ".claude/settings.json",
     ".claude/guard.json",
-    "process.config.json",
     "PROCESS-PROFILE.md",
     "CODEOWNERS",
     ".github/CODEOWNERS"
