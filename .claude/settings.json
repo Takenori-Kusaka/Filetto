@@ -3,9 +3,6 @@
 
   "permissions": {
     "deny": [
-      "Bash(gh pr review:*)",
-      "Bash(gh pr merge:*)",
-      "Bash(gh api repos/*/rulesets:*)"
     ],
 
     "ask": [
