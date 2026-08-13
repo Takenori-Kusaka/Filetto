@@ -6,11 +6,6 @@
     ],
 
     "ask": [
-      "Bash(git push:*)",
-      "Bash(gh pr create:*)",
-      "Bash(npm publish:*)",
-      "Bash(curl:*)",
-      "Bash(wget:*)"
     ],
 
     "allow": [
