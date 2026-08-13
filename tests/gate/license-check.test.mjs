@@ -8,7 +8,12 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { check, evaluateExpression, resolveLicense } from '../../scripts/gate/license-check.mjs';
+import {
+  check,
+  evaluateExpression,
+  resolveLicense,
+  selfPackageFromPyproject,
+} from '../../scripts/gate/license-check.mjs';
 
 const ALLOWED = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', 'MPL-2.0', 'PSF-2.0'];
 
@@ -122,11 +127,46 @@ test('否定: ライセンスを特定できない依存は落とす', () => {
   assert.equal(r.denied.length, 0);
 });
 
-test('自プロジェクトの除外は既定で行わない(検査範囲の変更は PO の判断)', () => {
+test('自プロジェクトを外さなければ、自分のライセンスで落ちる', () => {
   const self = [pkg('filetto', { 'License-Expression': 'AGPL-3.0-or-later' })];
   assert.equal(check(self, ALLOWED).denied.length, 1);
   assert.equal(check(self, ALLOWED, ['filetto']).denied.length, 0);
   assert.equal(check(self, ALLOWED, ['filetto']).skipped.length, 1);
+});
+
+test('自プロジェクトの名前を pyproject.toml から読む', () => {
+  assert.equal(selfPackageFromPyproject(), 'filetto');
+});
+
+test('自プロジェクトを外せば、許可一覧に AGPL を入れる必要はない', () => {
+  // allowedLicenses は依存関係に許す一覧であり、自プロジェクトのライセンスとは別の概念
+  const deps = [
+    pkg('filetto', { 'License-Expression': 'AGPL-3.0-or-later' }),
+    pkg('pytest', { 'License-Expression': 'MIT' }),
+  ];
+  const r = check(deps, ALLOWED, [selfPackageFromPyproject()]);
+  assert.deepEqual(r.denied, []);
+  assert.equal(r.skipped.length, 1);
+  assert.ok(!ALLOWED.includes('AGPL-3.0-or-later'));
+});
+
+test('SPDX の7件だけで、表記のゆれを含む依存が通る', () => {
+  // 暫定回避策(表記吸収6件 + 自プロジェクト1件)を削除できることの根拠
+  const SPDX_ONLY = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', 'MPL-2.0', 'PSF-2.0'];
+  const deps = [
+    pkg('markdown-it-py', { 'License-Classifier': 'MIT License' }),
+    pkg('pip-audit', { 'License-Classifier': 'Apache Software License' }),
+    pkg('colorama', { 'License-Classifier': 'BSD License' }),
+    pkg('certifi', { 'License-Classifier': 'Mozilla Public License 2.0 (MPL 2.0)' }),
+    pkg('defusedxml', { 'License-Metadata': 'PSFL' }),
+    pkg('sortedcontainers', { 'License-Metadata': 'Apache 2.0' }),
+    pkg('packaging', { 'License-Expression': 'Apache-2.0 OR BSD-2-Clause' }),
+    pkg('cryptography', { 'License-Expression': 'Apache-2.0 OR BSD-3-Clause' }),
+  ];
+  const r = check(deps, SPDX_ONLY);
+  assert.deepEqual(r.denied, []);
+  assert.deepEqual(r.unresolved, []);
+  assert.equal(r.normalized.length, 6);
 });
 
 test('自プロジェクトの照合は PyPI の正規化規則に従う', () => {
