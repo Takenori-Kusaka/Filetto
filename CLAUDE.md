@@ -16,6 +16,27 @@
 
 `PROCESS-PROFILE.md` が未設定の場合、まず `/process-init` の実行を人へ促してください。プロセス構成が決まる前に 実装を始めないでください。
 
+<!-- generated:process-rules start -->
+
+**この区間は `/process-init` が `process.config.json` から生成します。** 2026-08-13 時点では未生成です。
+
+**未生成である理由**: 生成器が `.claude/settings.json` の `permissions.deny` を全置換し、[ADR-0015](context/decisions/0015-enforcement-scope-during-optimization.md) で決めた「序盤フェーズは遮断しない」を巻き戻すためです([pit-in-template#23](https://github.com/Takenori-Kusaka/pit-in-template/issues/23))。**同 Issue の解決後に生成します。**
+
+**生成されると、次が入ります。**
+
+| # | 内容 |
+| --- | --- |
+| 1 | 有効なゲートと判定者。**判定基準への直接リンク** |
+| 2 | 未達・逸脱の一覧 |
+| 3 | ロールごとの権限。受信箱・引き渡しラベル・**判定してはならないゲート** |
+| **4** | **標準の条項を課す前に確認する適用範囲の一覧** |
+
+**4 が要る理由は、本案件で実際に失敗したためです。** 標準 5.7.3 の適用範囲(「リスク区分 R1 の決定、および例外承認では」)を落として全体へ適用し、判定者に44行の記入を課しました([ADR-0014](context/decisions/0014-standard-scope-misapplication.md))。**その条項は既に標準側で注記済みで、この区間があれば届いていました。**
+
+**生成後、この区間を手で編集しないでください。** `check-process-rules` が失敗します。
+
+<!-- generated:process-rules end -->
+
 ## 作業の進め方
 
 1機能あたりのサイクルは次のとおりです。
