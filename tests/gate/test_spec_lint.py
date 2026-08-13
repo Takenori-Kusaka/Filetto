@@ -167,11 +167,14 @@ def test_コード塀の中は検査しない(docs: Path) -> None:
 
 def test_コード塀の中の注記は区間として数えない(docs: Path) -> None:
     """説明のために書いた例が、本物の除外として働かないこと。"""
-    _write(
-        docs,
-        "a.md",
-        "説明:\n\n```markdown\n<!-- spec-lint-ignore start: 例 -->\n本文\n<!-- spec-lint-ignore end -->\n```\n",
+    body = (
+        "説明:\n\n```markdown\n"
+        "<!-- spec-lint-ignore start: 例 -->\n"
+        "本文\n"
+        "<!-- spec-lint-ignore end -->\n"
+        "```\n"
     )
+    _write(docs, "a.md", body)
     r = _run(docs)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "検査から外した区間: 0 件" in r.stdout
