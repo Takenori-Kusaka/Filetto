@@ -1,0 +1,18 @@
+{
+  "note": "作業ツリーの鮮度を見るための設定(#95 依頼4)。worktree-freshness.mjs が読みます",
+
+  "defaultBase": "main",
+
+  "watchedPathsNote": "ロールの挙動を決めるファイル。ここが origin/main と違うと、古い規約・古い遮断設定のまま動きます",
+
+  "watchedPaths": [
+    ".claude/settings.json",
+    ".claude/guard.json",
+    ".claude/skills",
+    ".claude/agents",
+    ".gemini/commands",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "process.config.json"
+  ]
+}
