@@ -10,7 +10,7 @@
 | 1 | 発生させない — `delete_branch_on_merge` を `true` にする | **完了**(2026-08-13 に適用) |
 | 2 | 通さない — ベースが `main` でない PR を検出する | **完了**(`pr-base-check`) |
 | 3 | 見逃さない — マージ済み PR が `main` に到達したかを検査する | **完了**(`merged-reachability`) |
-| — | stale ブランチの掃除 | **未実施。削除は不可逆のため PO の確認を待ちます**(§5) |
+| — | stale ブランチの掃除 | **A の61件のみ PO が承認済み(2026-08-13)。実行は本 PR のマージ後**(§5) |
 
 ## 2. 層1: `delete_branch_on_merge`
 
@@ -102,9 +102,9 @@ true
 
 目印(`積み上げの理由:`)と既定ブランチは `pr-base-policy.json` に持ちます。運用に依存する値を検査の定数にしません。
 
-## 5. stale ブランチの掃除(PO の確認を待ちます)
+## 5. stale ブランチの掃除(A の61件を PO が承認)
 
-**削除は不可逆です。実行していません。**
+**削除は不可逆です。** [PR #98](https://github.com/Takenori-Kusaka/Filetto/pull/98) の PO 判断(2026-08-13)により、**区分 A の61件のみ承認されました。C の2件は残します。**
 
 ### 現状
 
@@ -119,7 +119,18 @@ true
 | C. PR が閉じられたがマージされていない | **2** | **しない** |
 | D. PR が1件も無い | 0 | しない |
 
-C の2件は `docs/g2-record-rework`(PR #46)と `fix/session-definitions-deploy`(PR #35)です。**マージされていないため、内容が失われます。**
+### C の2件を残す理由(PO の条件)
+
+**PO は「残す理由を記録に書くこと」を承認の条件にしました。** 理由の無い残置は、次に掃除する人が同じ判断をやり直すためです。
+
+| ブランチ | PR | 状態 | 残す理由 |
+| --- | --- | --- | --- |
+| `docs/g2-record-rework` | [#46](https://github.com/Takenori-Kusaka/Filetto/pull/46) | CLOSED / merged=null | **作業したが採用されなかった。内容が `main` のどこにも無い。** 削除すると現物が失われる |
+| `fix/session-definitions-deploy` | [#35](https://github.com/Takenori-Kusaka/Filetto/pull/35) | CLOSED / merged=null | 同上 |
+
+**この2件は「到達していない」のではなく「到達させない判断がされた」ものです。** `merged-reachability` の検査対象(マージ済み PR)には入りません。**残しても検査は赤になりません。**
+
+**次に掃除する人へ: この表に無いブランチだけが削除の候補です。**
 
 ### 安全性をどう確かめたか
 
@@ -127,7 +138,9 @@ C の2件は `docs/g2-record-rework`(PR #46)と `fix/session-definitions-deploy`
 
 **確かめられるのは PR 単位です。** `merged-reachability` が「61件が到達済み、3件は別経路で到達済み」と出しています。**A の61件は、内容が `main` またはその出し直し先へ到達しています。**
 
-### 実行するなら
+### 実行の手順と順序
+
+**本 PR のマージ後に実行します。** 順序を逆にすると、**残す理由の記録が `main` に無いまま61件が消えます。** PO の条件は記録を伴うことでした。
 
 ```bash
 # 先に一覧を出す(削除しない)
@@ -138,7 +151,11 @@ gh pr list --repo Takenori-Kusaka/Filetto --state merged --limit 300 \
 gh api -X DELETE repos/Takenori-Kusaka/Filetto/git/refs/heads/<branch>
 ```
 
-**PO の確認を待ちます。** 削除しなくても、`delete_branch_on_merge` により**今後のブランチは残りません。** 掃除は過去分だけの話です。
+**削除の対象は区分 A の61件だけです。** 上の一覧から C の2件(`docs/g2-record-rework` / `fix/session-definitions-deploy`)を除いて実行します。
+
+**承知のうえで進める点が1つあります。** `docs/adr-decisions-0010` を消すと、**[PR #87](https://github.com/Takenori-Kusaka/Filetto/pull/87) のマージコミット `bd75aff` がブランチから到達できなくなります。** 内容は [PR #94](https://github.com/Takenori-Kusaka/Filetto/pull/94) として `main` にあり、PR 自体は GitHub 上に残るため実害はありませんが、**「行き止まりへマージされた」という事実の現物は PR ページだけになります。** 経緯は本記録の §4 が保持します。
+
+削除しなくても、`delete_branch_on_merge` により**今後のブランチは残りません。** 掃除は過去分だけの話です。
 
 ## 6. 検証
 
