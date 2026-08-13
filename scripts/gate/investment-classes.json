@@ -1,0 +1,83 @@
+{
+  "note": "投入量の分類規則(#107)。investment-measure.mjs が読みます。先に一致した規則を採ります",
+
+  "unclassifiedPolicy": "一致しないファイルは未分類として出力し、失敗させます。規則を増やさずに新しい領域が増えると、内訳が実態とずれるためです",
+
+  "classes": [
+    {
+      "id": "process",
+      "label": "プロセス",
+      "note": "プロセスを回すための装置と規約。プロダクトの価値そのものではない",
+      "patterns": [
+        ".claude/**",
+        ".gemini/**",
+        ".github/**",
+        "scripts/**",
+        "adapters/**",
+        "templates/**",
+        "tests/gate/**",
+        "process.config.json",
+        "PROCESS-PROFILE.md",
+        "CLAUDE.md",
+        "AGENTS.md",
+        "docs/platform/**",
+        "docs/D-0-governance.md",
+        "docs/session-definitions/**",
+        "context/decisions/0007-allowed-licenses.md",
+        "context/decisions/0009-claude-code-permissions-no-ask.md",
+        "context/decisions/0012-line-limit-scope.md",
+        "context/decisions/0013-license-check-spdx-expression.md",
+        "context/decisions/0014-standard-scope-misapplication.md",
+        "context/decisions/0015-enforcement-scope-during-optimization.md"
+      ],
+      "adrNote": "プロセスに関する判断記録は個別に列挙します。context/decisions/ を丸ごとどちらかへ寄せると、プロダクトの技術判断と混ざります。ADR を足したら、この一覧か product 側かを決めてください"
+    },
+    {
+      "id": "gate-record",
+      "label": "ゲート記録",
+      "note": "判定が成立した証拠",
+      "patterns": ["docs/gates/**"]
+    },
+    {
+      "id": "code",
+      "label": "実装コード",
+      "note": "プロダクトとして動くもの。S1 のゴールに直接効く",
+      "patterns": ["src/**", "tests/**", "pyproject.toml", "uv.lock"]
+    },
+    {
+      "id": "product",
+      "label": "プロダクト",
+      "note": "何を作るかを決める作業。受入基準・探索・技術調査・企画",
+      "patterns": [
+        "specs/**",
+        "context/**",
+        "docs/spikes/**",
+        "docs/tech-advisor/**",
+        "docs/project-brief.md",
+        "docs/README.md",
+        "README.md",
+        "LICENSE",
+        "LICENSE-docs",
+        "NOTICE",
+        ".gitignore"
+      ]
+    }
+  ],
+
+  "aiUsage": {
+    "note": "Claude Code のセッション記録から AI の使用量を測るときの対象。作業ツリーの名前で絞ります",
+    "worktreePattern": "^E--Github-Filetto"
+  },
+
+  "lineCountTargets": [
+    { "id": "code", "label": "実装コード", "paths": ["src"], "extensions": [".py"] },
+    { "id": "test", "label": "テスト", "paths": ["tests"], "extensions": [".py", ".mjs"] },
+    { "id": "gate-script", "label": "検査の装置", "paths": ["scripts"], "extensions": [".mjs", ".json"] },
+    {
+      "id": "doc",
+      "label": "文書",
+      "paths": ["docs", "specs", "context", "templates"],
+      "extensions": [".md"]
+    }
+  ]
+}
