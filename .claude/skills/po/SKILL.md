@@ -59,8 +59,8 @@ gh pr list --state open --limit 50 --json number,title,labels --jq '.[]|select([
 | --- | --- | --- |
 | Dev | `state:needs-dev` | 実装・検証・ADR の執筆を依頼するとき |
 | QM | `state:dev-done` | **自分が起草した成果物の判定を依頼するとき** |
-| Audit | `state:needs-audit` | 統合監査・リリース判定を依頼するとき(**ラベル未作成**) |
-| Platform | `state:needs-platform` | 検査・CI の改修を依頼するとき(**ラベル未作成**) |
+| Audit | `state:needs-audit` | 統合監査・リリース判定を依頼するとき |
+| Platform | `state:needs-platform` | 検査・CI の改修を依頼するとき |
 | Owner | `state:needs-owner` | 不可逆4操作・安全に関わる懸念 |
 
 **判断を下したら、必ず古いラベルを剥がし、次に動くロールを指すラベルを付けます。** 自分を指したまま残しません。

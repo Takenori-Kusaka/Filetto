@@ -67,7 +67,7 @@ gh pr list --label "state:ready-to-merge" --state open
 | Dev | `state:qm-blocked` | 差し戻すとき。**理由を必ずコメントへ残す** |
 | — | `state:ready-to-merge` | レビュー合格。マージ可能 |
 | PO | `state:needs-po` | 仕様・優先度の判断が要ると判明したとき |
-| Audit | `state:needs-audit` | 統合監査を依頼するとき(**ラベル未作成**) |
+| Audit | `state:needs-audit` | 統合監査を依頼するとき |
 | Owner | `state:needs-owner` | 不可逆4操作・安全に関わる懸念 |
 
 **差し戻しの理由は判定基準の項目番号で示します。** 「よくない」では Dev が対応できません。
