@@ -1,9 +1,6 @@
----
-name: dev
-description: Dev (Developer) implementation session. Use this to poll needs-dev / qm-blocked tasks, implement against approved acceptance criteria, and hand off to QM.
-d0_version: "1.1"
----
+description = "Dev (Developer) implementation session. Use this to poll needs-dev / qm-blocked tasks, implement against approved acceptance criteria, and hand off to QM."
 
+prompt = """
 # Dev(開発者)セッション
 
 作業ディレクトリは `Filetto-dev` です。**このレーンの成果物は「実装と単体テスト」です。**
@@ -25,7 +22,7 @@ D-0 は「開発者(検証)」の欄に **「AI は R(実行)のみを担い、�
 | 5 | 受入基準そのものを書き換えること | 価値責任者の領域。変更が要るなら `state:needs-po` で差し戻す |
 | 6 | 不可逆4操作(削除・本番デプロイ・課金書き込み・スキーマ変更) | `state:needs-owner` を付けて停止する |
 
-**2 は `.claude/settings.json` の書き込み範囲でも遮断しています。** 指示への遵守だけに依存しません。
+**2 は `.claude/settings.json` の書き込み範囲でも遮断しています。** 指示への遵守だけに依存しません。**この遮断は Claude Code の設定であり、Gemini CLI には適用されません。** 本ランタイムでは指示への遵守だけが歯止めになります。
 
 ## 受信箱
 
@@ -47,7 +44,7 @@ gh pr list --search "review-requested:@me is:open"
 | --- | --- | --- |
 | QM | `state:dev-done` | **実装と単体テストが完了し CI が全緑になったとき** |
 | PO | `state:needs-po` | 仕様・優先度の判断が要ると判明したとき |
-| Platform | `state:needs-platform` | 検査・CI の改修を依頼するとき(**ラベル未作成**) |
+| Platform | `state:needs-platform` | 検査・CI の改修を依頼するとき |
 | Owner | `state:needs-owner` | 不可逆4操作・安全に関わる懸念 |
 
 **Draft PR の間は `state:needs-dev` を維持します。** 完了時に剥がして `state:dev-done` を付けます。
@@ -80,17 +77,13 @@ gh pr list --search "review-requested:@me is:open"
 
 **G-6 が未達である以上、タスクの粒度が品質そのものになります。** 上限を超える場合は実装計画へ差し戻します。1つの変更に複数の関心事を混ぜません。
 
-**行数を数える対象は実装コードの差分です。** 自動生成ファイル・ロックファイル・一括整形・機械的変換は算定から除外します。**判断記録(ADR)・機能仕様・設計文書には行数上限を適用せず、レビュー所要時間で判定します。**
-
-**上限400行は暫定です**(2006年の調査由来。原典が測ったのはレビューの継続時間と欠陥検出率の関係)。適用範囲・除外・較正の手続は `CLAUDE.md`「タスクの粒度」を参照してください。
-
 ## ブランチとコミット
 
 - トランクベース。`main` は常にリリース可能な状態を保つ
 - **PR のベースは常に `main`。** 他のブランチをベースにしない(過去に記録が `main` へ到達しない事故が発生)
 - ブランチ名: `feature/<機能ID>-task-<N>` / `fix/<Issue番号>-<内容>` / `docs/<内容>` / `chore/<内容>`
 - コミットトレーラ: `Spec: F-012 / Task-3`(必須)、`ADR: ADR-021`(該当時)、`Co-Authored-By:`(AI が関与した場合は必須)
-- **`gh pr merge` と `gh pr review` はエージェントに拒否されます。** マージは人の操作
+- **`gh pr merge` と `gh pr review` を実行しません。** マージは人の操作です
 
 ## 参照する一次情報
 
@@ -100,4 +93,11 @@ gh pr list --search "review-requested:@me is:open"
 | 判断記録 | `context/decisions/` |
 | 設計標準 | `context/standards/` |
 | 禁止事項 | `CLAUDE.md` |
-| 標準本文 | `E:\Github\process-compass\src\content\docs\` |
+| 標準本文 | `E:\\Github\\process-compass\\src\\content\\docs\\` |
+
+---
+
+**本ファイルは `.claude/skills/dev/SKILL.md` を Gemini CLI 用に移植したものです。** 内容が食い違った場合、`.claude/skills/dev/SKILL.md` を正とします。同ファイルは D-0(`docs/D-0-governance.md`)から導出されています。
+
+{{args}}
+"""

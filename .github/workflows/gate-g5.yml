@@ -85,6 +85,14 @@ jobs:
       - uses: actions/checkout@v4
       - run: node scripts/gate/spec-lint.mjs
 
+  # 二重エンコード(CP932誤読→UTF-8再保存)の検出。file コマンドでは検知できない破損(#27)
+  double-encoding-check:
+    name: double-encoding-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/gate/double-encoding-check.mjs
+
   # 基準5 依存関係のライセンス検査(合否条件)
   #
   # 生成物と既存著作物の類似検知は合否条件にしません。「検出されなかった」が
@@ -149,7 +157,7 @@ jobs:
   gate-g5:
     name: gate-g5
     runs-on: ubuntu-latest
-    needs: [config, contract, test, static-analysis, spec-lint, ip-clearance, secret-scan]
+    needs: [config, contract, test, static-analysis, spec-lint, double-encoding-check, ip-clearance, secret-scan]
     if: always()
     steps:
       - name: 全検査の結果を突合する
@@ -159,6 +167,7 @@ jobs:
           echo "test:            ${{ needs.test.result }}"
           echo "static-analysis: ${{ needs.static-analysis.result }}"
           echo "spec-lint:       ${{ needs.spec-lint.result }}"
+          echo "double-encoding-check: ${{ needs.double-encoding-check.result }}"
           echo "ip-clearance:    ${{ needs.ip-clearance.result }}"
           echo "secret-scan:     ${{ needs.secret-scan.result }}"
           if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
