@@ -2,7 +2,7 @@
 //
 //   pip-licenses --format=json --from=all | node scripts/gate/license-check.mjs
 //
-// pip-licenses の --allow-only は、報告された文字列を許可一覧と**単純に文字列比較**します。
+// pip-licenses の --allow-only は、報告された文字列を許可一覧と単純に文字列比較します。
 // そのため SPDX の複合式(`Apache-2.0 OR BSD-3-Clause`)は、構成要素がすべて許可範囲でも
 // 不一致になります。--partial-match は逆に `MIT` の許可で `MIT-0` を通してしまいます。
 // どちらも判定として成立しないため、判定をこちらへ持ちます。
@@ -15,12 +15,25 @@
 // 出力の原則:
 //   - 対象が0件のときは、0件であることを出力する
 //   - 分類子から補正して通したものは、必ず一覧で出力する(黙って通さない)
+//
+// 判断記録: context/decisions/0007-allowed-licenses.md
+// 調査記録: docs/platform/PL-0001-ip-clearance-pep639.md
 
 import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 const ALLOWED = (process.env.PIT_IN_ALLOWED_LICENSES ?? '')
   .split(';')
   .map((s) => s.trim())
+  .filter(Boolean);
+
+// 検査対象から外すパッケージ。既定は空(現行の挙動と同じ)。
+// `pip install -e .` が自分自身を検査対象に含めることへの対処に使えます。
+// allowedLicenses は依存関係に許すライセンスの一覧であり、自プロジェクトのライセンスとは
+// 別の概念です(ADR-0007)。既定を空にしてあるのは、検査範囲の変更が PO の判断だからです。
+const SELF_PACKAGES = (process.env.PIT_IN_SELF_PACKAGES ?? '')
+  .split(';')
+  .map((s) => normalizeName(s))
   .filter(Boolean);
 
 // 分類子・自由記述を SPDX 識別子へ補正する表。
@@ -40,6 +53,13 @@ const NORMALIZE = {
 };
 
 const UNKNOWN = new Set(['', 'UNKNOWN', 'UNKNOWN LICENSE']);
+
+function normalizeName(name) {
+  return String(name ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[-_.]+/g, '-');
+}
 
 // ---- SPDX 式の評価 -------------------------------------------------------
 // AND は OR より強く結合する(SPDX Specification Annex D)。
@@ -65,6 +85,7 @@ function parseExpression(tokens, allowed) {
   let i = 0;
 
   function primary() {
+    if (tokens[i] === undefined) throw new Error('式が途中で終わっています');
     if (tokens[i] === '(') {
       i += 1;
       const v = orExpr();
@@ -72,10 +93,12 @@ function parseExpression(tokens, allowed) {
       i += 1;
       return v;
     }
+    if (tokens[i] === ')') throw new Error('対応する開き括弧がありません');
     const parts = [tokens[i]];
     i += 1;
     // `GPL-2.0 WITH Classpath-exception-2.0` は1つの識別子として扱う
     while (tokens[i] && tokens[i].toUpperCase() === 'WITH') {
+      if (tokens[i + 1] === undefined) throw new Error('WITH の後に例外識別子がありません');
       parts.push(tokens[i], tokens[i + 1]);
       i += 2;
     }
@@ -105,13 +128,13 @@ function parseExpression(tokens, allowed) {
   return result;
 }
 
-function evaluate(expr, allowed) {
-  return parseExpression(tokenize(expr), allowed);
+export function evaluateExpression(expr, allowed) {
+  return parseExpression(tokenize(expr), allowed instanceof Set ? allowed : new Set(allowed));
 }
 
 // ---- ライセンスの解決 ----------------------------------------------------
 
-function resolve(pkg) {
+export function resolveLicense(pkg) {
   const expression = pkg['License-Expression'];
   const metadata = pkg['License-Metadata'];
   const classifier = pkg['License-Classifier'];
@@ -121,94 +144,129 @@ function resolve(pkg) {
   }
   if (metadata && !UNKNOWN.has(metadata)) {
     const n = NORMALIZE[metadata];
-    if (n) return { license: n.spdx, source: 'License-Metadata', normalizedFrom: metadata, ambiguous: n.ambiguous };
+    if (n) {
+      return { license: n.spdx, source: 'License-Metadata', normalizedFrom: metadata, ambiguous: n.ambiguous };
+    }
     return { license: metadata, source: 'License-Metadata' };
   }
   if (classifier && !UNKNOWN.has(classifier)) {
     const n = NORMALIZE[classifier];
-    if (n) return { license: n.spdx, source: 'License-Classifier', normalizedFrom: classifier, ambiguous: n.ambiguous };
+    if (n) {
+      return { license: n.spdx, source: 'License-Classifier', normalizedFrom: classifier, ambiguous: n.ambiguous };
+    }
     return { license: classifier, source: 'License-Classifier' };
   }
   return { license: null, source: null };
 }
 
+// 判定の本体。入出力を持たないため、テストから直接呼べます。
+export function check(packages, allowedList, selfPackages = []) {
+  const allowed = new Set(allowedList);
+  const self = new Set(selfPackages.map(normalizeName));
+  const denied = [];
+  const unresolved = [];
+  const normalized = [];
+  const skipped = [];
+
+  for (const pkg of packages) {
+    const name = `${pkg.Name}:${pkg.Version}`;
+
+    if (self.has(normalizeName(pkg.Name))) {
+      skipped.push(name);
+      continue;
+    }
+
+    const r = resolveLicense(pkg);
+
+    if (!r.license) {
+      unresolved.push(name);
+      continue;
+    }
+    if (r.normalizedFrom) normalized.push({ name, ...r });
+
+    let ok;
+    try {
+      ok = parseExpression(tokenize(r.license), allowed);
+    } catch (e) {
+      denied.push({ name, license: r.license, source: r.source, reason: `式を解釈できません(${e.message})` });
+      continue;
+    }
+    if (!ok) denied.push({ name, license: r.license, source: r.source, reason: '許可一覧にありません' });
+  }
+
+  return { total: packages.length, denied, unresolved, normalized, skipped };
+}
+
 // ---- 実行 ----------------------------------------------------------------
+// import されたときは実行しません(テストから読み込むため)。
 
-const raw = readFileSync(process.env.PIT_IN_LICENSE_JSON || 0, 'utf8').trim();
+const invokedDirectly = process.argv[1] ? pathToFileURL(process.argv[1]).href === import.meta.url : false;
 
-if (!ALLOWED.length) {
-  console.error(
-    '許可ライセンス一覧が空です。process.config.json の ci.allowedLicenses を設定してください。' +
-      '空のまま通すと、検査を実施していない状態を通過した記録として残ります'
-  );
-  process.exit(1);
-}
-
-let packages;
-try {
-  packages = JSON.parse(raw);
-} catch {
-  console.error('pip-licenses の JSON を解釈できませんでした。--format=json --from=all で渡してください');
-  process.exit(1);
-}
-
-const denied = [];
-const unresolved = [];
-const normalized = [];
-
-for (const pkg of packages) {
-  const name = `${pkg.Name}:${pkg.Version}`;
-  const r = resolve(pkg);
-
-  if (!r.license) {
-    unresolved.push(name);
-    continue;
-  }
-  if (r.normalizedFrom) normalized.push({ name, ...r });
-
-  let ok;
-  try {
-    ok = evaluate(r.license, new Set(ALLOWED));
-  } catch (e) {
-    denied.push({ name, license: r.license, source: r.source, reason: `式を解釈できません(${e.message})` });
-    continue;
-  }
-  if (!ok) denied.push({ name, license: r.license, source: r.source, reason: '許可一覧にありません' });
-}
-
-console.log(`許可一覧(${ALLOWED.length}件): ${ALLOWED.join(', ')}`);
-console.log(`検査した依存: ${packages.length}件`);
-
-if (normalized.length) {
-  console.log(`\n分類子・自由記述から SPDX へ補正したもの: ${normalized.length}件`);
-  for (const n of normalized) {
-    console.log(
-      `  ${n.name}  "${n.normalizedFrom}" → ${n.license}  (${n.source})` +
-        (n.ambiguous ? '  ※この分類子は複数の SPDX を含みうる' : '')
+if (invokedDirectly) {
+  if (!ALLOWED.length) {
+    console.error(
+      '許可ライセンス一覧が空です。process.config.json の ci.allowedLicenses を設定してください。' +
+        '空のまま通すと、検査を実施していない状態を通過した記録として残ります'
     );
+    process.exit(1);
   }
-} else {
-  console.log('\n分類子・自由記述から補正したもの: 0件');
+
+  const raw = readFileSync(process.env.PIT_IN_LICENSE_JSON || 0, 'utf8').trim();
+
+  let packages;
+  try {
+    packages = JSON.parse(raw);
+  } catch {
+    console.error('pip-licenses の JSON を解釈できませんでした。--format=json --from=all で渡してください');
+    process.exit(1);
+  }
+  if (!Array.isArray(packages)) {
+    console.error('pip-licenses の JSON が配列ではありません。--format=json --from=all で渡してください');
+    process.exit(1);
+  }
+
+  const r = check(packages, ALLOWED, SELF_PACKAGES);
+
+  console.log(`許可一覧(${ALLOWED.length}件): ${ALLOWED.join(', ')}`);
+  console.log(`検査した依存: ${r.total - r.skipped.length}件(取得 ${r.total}件)`);
+
+  if (r.skipped.length) {
+    console.log(`\n自プロジェクトとして検査から外したもの: ${r.skipped.length}件`);
+    for (const n of r.skipped) console.log(`  ${n}`);
+  } else {
+    console.log('\n自プロジェクトとして検査から外したもの: 0件');
+  }
+
+  if (r.normalized.length) {
+    console.log(`\n分類子・自由記述から SPDX へ補正したもの: ${r.normalized.length}件`);
+    for (const n of r.normalized) {
+      console.log(
+        `  ${n.name}  "${n.normalizedFrom}" → ${n.license}  (${n.source})` +
+          (n.ambiguous ? '  ※この分類子は複数の SPDX を含みうる' : '')
+      );
+    }
+  } else {
+    console.log('\n分類子・自由記述から SPDX へ補正したもの: 0件');
+  }
+
+  if (r.unresolved.length) {
+    console.log(`\nライセンスを特定できない依存: ${r.unresolved.length}件`);
+    for (const n of r.unresolved) console.log(`  ${n}`);
+  } else {
+    console.log('\nライセンスを特定できない依存: 0件');
+  }
+
+  if (r.denied.length) {
+    console.log(`\n許可範囲外の依存: ${r.denied.length}件`);
+    for (const d of r.denied) console.log(`  ${d.name}  ${d.license}  (${d.source})  ${d.reason}`);
+  } else {
+    console.log('\n許可範囲外の依存: 0件');
+  }
+
+  if (r.denied.length || r.unresolved.length) {
+    console.error('\nip-clearance: 不合格');
+    process.exit(1);
+  }
+
+  console.log('\nip-clearance: 合格');
 }
-
-if (unresolved.length) {
-  console.log(`\nライセンスを特定できない依存: ${unresolved.length}件`);
-  for (const n of unresolved) console.log(`  ${n}`);
-} else {
-  console.log('\nライセンスを特定できない依存: 0件');
-}
-
-if (denied.length) {
-  console.log(`\n許可範囲外の依存: ${denied.length}件`);
-  for (const d of denied) console.log(`  ${d.name}  ${d.license}  (${d.source})  ${d.reason}`);
-  process.exit(1);
-}
-
-console.log('\n許可範囲外の依存: 0件');
-
-if (unresolved.length) {
-  console.error('\nライセンスを特定できない依存があります。特定できないものを通す経路は作りません');
-  process.exit(1);
-}
-
-console.log('ip-clearance: 合格');

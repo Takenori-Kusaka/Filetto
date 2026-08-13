@@ -2,7 +2,7 @@
 
 対象 Issue: [#60](https://github.com/Takenori-Kusaka/Filetto/issues/60)
 作成: 2026-08-13 / レーン: Platform
-状態: **強制層の変更を含むため、人の操作を待つ**(`state:needs-owner`)
+状態: **適用済み**(強制層の2ファイルは人の操作で配置。手順は [README](README.md))
 
 Platform は検査の装置だけを直します。ADR-0007 の改訂と `process.config.json` の内容判断は PO / 文脈オーナーの領域です。
 
@@ -88,10 +88,7 @@ pip-licenses には `--partial-match` があり、これを付けると `cryptog
 
 ### 3.1 新規: `scripts/gate/license-check.mjs`(強制層)
 
-判定を pip-licenses の文字列比較から引き取ります。内容は本 PR の
-[`docs/platform/proposed/license-check.mjs`](proposed/license-check.mjs) にそのまま置いてあります。**このファイルを `scripts/gate/license-check.mjs` へ移してください。**
-
-やること:
+判定を pip-licenses の文字列比較から引き取ります。
 
 | # | 内容 |
 | --- | --- |
@@ -100,7 +97,22 @@ pip-licenses には `--partial-match` があり、これを付けると `cryptog
 | 3 | 分類子・自由記述を SPDX へ補正する表を持つ(`MIT License` → `MIT` 等) |
 | 4 | **補正して通したものを必ず一覧で出力する。** 複数の SPDX を含みうる分類子には印を付ける |
 | 5 | **0件のときも「0件」と出力する**(検査の原則2) |
-| 6 | ライセンスを特定できない依存があれば落とす。許可一覧が空なら落とす |
+| 6 | ライセンスを特定できない依存があれば落とす。許可一覧が空なら落とす。壊れた SPDX 式も落とす |
+| 7 | `PIT_IN_SELF_PACKAGES` で自プロジェクトを検査から外せる。**既定は空**(現行の挙動と同じ)。有効化は検査範囲の変更にあたるため PO の判断 |
+
+判定の本体(`check` / `resolveLicense` / `evaluateExpression`)は入出力を持たない関数として公開し、テストから直接呼べるようにしています。
+
+### 3.3 新規: `tests/gate/`(強制層ではない)
+
+**検査の装置そのものを検査します。**
+
+| ファイル | 役割 |
+| --- | --- |
+| `tests/gate/license-check.test.mjs` | 判定の単体テスト18件。`node --test` で走る |
+| `tests/gate/test_license_check.py` | **CI の `test` 工程(pytest)から上記を起動する橋渡し。** これが無いと、テストが存在するのに一度も実行されない |
+
+`.github/workflows/**` は強制層のため触れません。**pytest から Node を起動することで、ワークフローを変えずに CI へ引き込みます。**
+`scripts/gate/license-check.mjs` が存在しない場合、この pytest は失敗します(未適用のまま通る経路を作らないため)。
 
 ### 3.2 変更: `adapters/python.json`(強制層)
 
@@ -111,7 +123,7 @@ pip-licenses には `--partial-match` があり、これを付けると `cryptog
 
 `PIT_IN_ALLOWED_LICENSES` は `scripts/gate/adapter.mjs` が既に環境変数として渡しているため、そちらの変更は要りません。
 
-### 3.3 触らないもの
+### 3.4 触らないもの
 
 | 対象 | 理由 |
 | --- | --- |
@@ -122,15 +134,31 @@ pip-licenses には `--partial-match` があり、これを付けると `cryptog
 
 ---
 
-## 4. 変更案の検証
+## 4. 検証
 
-`docs/platform/proposed/license-check.mjs` を実際に動かした結果です。
+実際に動かした結果です。
+
+### 検証0: 単体テスト18件
+
+```
+$ node --test tests/gate/license-check.test.mjs
+# tests 18
+# pass 18
+# fail 0
+```
+
+読む順序 / SPDX 式(`OR` `AND` 結合順序 `()` `WITH` `+`)/ 補正表 / 曖昧な分類子の印 /
+部分一致で通さないこと / 壊れた式を落とすこと / 特定できない依存を落とすこと / 自プロジェクト除外を網羅しています。
+
+pytest 橋渡しの否定確認: `scripts/gate/license-check.mjs` を退避すると 2件とも失敗しました。**未適用のまま通りません。**
 
 ### 検証1: 本リポジトリの dev 依存 35件 / 許可一覧を SPDX 8件のみに絞る
 
 ```
 許可一覧(8件): MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0, PSF-2.0, AGPL-3.0-or-later
-検査した依存: 35件
+検査した依存: 35件(取得 35件)
+
+自プロジェクトとして検査から外したもの: 0件
 
 分類子・自由記述から SPDX へ補正したもの: 8件
   colorama:0.4.6  "BSD License" → BSD-3-Clause  (License-Classifier)  ※この分類子は複数の SPDX を含みうる
@@ -209,7 +237,7 @@ Mozilla Public License 2.0 (MPL 2.0) / Python Software Foundation License
 PO へお願いしたい判断:
 
 1. 上記6件を `process.config.json` から削除してよいか
-2. `AGPL-3.0-or-later`(自プロジェクト自身)の扱い。**本変更では触っていません。** ADR-0007 が「依存に AGPL を許す意図ではない」と書いたとおりで、`filetto` 自身を検査対象から外す方が意図に近いですが、それは検査範囲の判断です
+2. `AGPL-3.0-or-later`(自プロジェクト自身)の扱い。**既定の挙動は変えていません。** ADR-0007 が「依存に AGPL を許す意図ではない」と書いたとおりで、`filetto` 自身を検査対象から外す方が意図に近いため、`PIT_IN_SELF_PACKAGES` という入口だけ用意して**空のままにしてあります**。有効化は検査範囲の判断です
 3. ADR-0007 の改訂範囲。「期限」節(pit-in-template#13 待ち)は、本変更で **#13 を待たずに解消**します
 
 pit-in-template#13 の起票内容(pip-licenses 側での正規化)は引き続き有効です。**本変更はこのリポジトリ側で判定を持つ選択であり、上流の修正を不要にするものではありません。**
@@ -227,9 +255,13 @@ venv/bin/pip-licenses --format=json \
   --allow-only="$(node -e 'console.log(require("./process.config.json").ci.allowedLicenses.join(";"))')" \
   --packages PyJWT cryptography
 
-# 4(変更案)
+# 4 検証0(単体テスト)
+node --test tests/gate/license-check.test.mjs
+venv/bin/pytest tests/gate/test_license_check.py
+
+# 4 検証1〜3
 export PIT_IN_ALLOWED_LICENSES='MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;MPL-2.0;PSF-2.0;AGPL-3.0-or-later'
-venv/bin/pip-licenses --format=json --from=all | node docs/platform/proposed/license-check.mjs
+venv/bin/pip-licenses --format=json --from=all | node scripts/gate/license-check.mjs
 ```
 
 測定環境: Python 3.14.6 / pip 26.1.2 / pip-licenses 5.5.5 / Windows 11。
