@@ -206,3 +206,78 @@ def test_設定が理由と原則を書いている() -> None:
     assert c["why"].strip()
     assert "5.7.4" in c["principle"]
     assert c["resultVocabulary"]
+
+
+PENDING_RECORD = """# ゲート判定記録
+
+| 項目 | 値 |
+| --- | --- |
+| ゲート | **G-2 要件合意(再判定)** |
+| 対象 | F-002 |
+| 判定者 | 価値責任者 |
+| 判定日時 | 判定待ち(2026-08-14 提示) |
+| 結果 | 判定待ち(2026-08-14 提示) |
+"""
+
+
+def _write_pending(work: Path, date: str = "2026-08-14") -> None:
+    body = PENDING_RECORD.replace("2026-08-14", date)
+    (work / "docs/gates/g2-F-002-pending.md").write_text(body, encoding="utf-8")
+
+
+def test_判定待ちは落とさない(repo: Path) -> None:
+    """判定前の記録を PR で用意する運用がある。空欄と区別して明示させる。"""
+    _write_pending(repo)
+    r = _run(repo, [{"number": 900, "state": "OPEN"}])
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_判定待ちの件数を必ず出力する(repo: Path) -> None:
+    _write_pending(repo)
+    r = _run(repo, [{"number": 900, "state": "OPEN"}])
+    assert "判定待ちの記録: 1 件" in r.stdout
+    assert "2026-08-14 提示" in r.stdout
+
+
+def test_判定待ちが0件でも件数を出力する(repo: Path) -> None:
+    r = _run(repo, [{"number": 900, "state": "OPEN"}])
+    assert "判定待ちの記録: 0 件" in r.stdout
+
+
+def test_否定_判定待ちを放置すれば落ちる(repo: Path) -> None:
+    """事例1(空欄のまま main に1日残った)は、放置を検出することで防ぐ。"""
+    _write_pending(repo, "2026-08-01")
+    r = _run(repo, [{"number": 900, "state": "OPEN"}])
+    assert r.returncode == 1
+    assert "判定期限" in r.stdout + r.stderr
+
+
+def test_否定_提示日の無い判定待ちは空欄として落ちる(repo: Path) -> None:
+    """いつから待っているかが分からなければ、放置を検出できない。"""
+    body = PENDING_RECORD.replace("判定待ち(2026-08-14 提示)", "判定待ち")
+    (repo / "docs/gates/g2-F-002-pending.md").write_text(body, encoding="utf-8")
+    r = _run(repo, [{"number": 900, "state": "OPEN"}])
+    assert r.returncode == 1
+    assert "空欄" in r.stdout + r.stderr
+
+
+def test_判定待ちは語彙検査の対象外(repo: Path) -> None:
+    _write_pending(repo)
+    r = _run(repo, [{"number": 900, "state": "OPEN"}])
+    assert "検査4 判定値の語彙: 0 件" in r.stdout
+
+
+def test_否定_判定待ちの記録を承認欄で通過と書けば落ちる(repo: Path) -> None:
+    """判定していない記録を根拠に「通過」と書かせない。"""
+    _write_pending(repo)
+    body = (
+        "# F-001\n\n## 承認(G-2 / G-4)\n\n"
+        "| ゲート | 判定者 | 判定日 | 結果 | 判定記録 |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        "| G-2 | 日下 | 2026/08/14 | **通過** | "
+        "[x](../../docs/gates/g2-F-002-pending.md) |\n"
+    )
+    (repo / "specs/F-001/spec.md").write_text(body, encoding="utf-8")
+    r = _run(repo, [{"number": 900, "state": "OPEN"}])
+    assert r.returncode == 1
+    assert "判定待ち" in r.stdout + r.stderr
