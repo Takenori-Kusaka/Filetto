@@ -1,0 +1,30 @@
+{
+  "note": "組織の管理外のホストへの参照を検出する検査(#115)。external-host-check.mjs が読みます",
+
+  "why": "2026-08-14、着手決裁の資料を claude.ai の Artifact として発行した。組織が保存期間もアクセス権も制御できないホストに、決裁の入力が置かれた状態になった",
+
+  "limitationNote": "本検査が見つけるのは、リポジトリに残った参照だけです。発行そのものは検出できません。発行の遮断は .claude/settings.json の permissions で行います",
+
+  "targets": ["docs", "specs", "context", "templates", "README.md", "CLAUDE.md", "AGENTS.md"],
+
+  "deniedHostsNote": "決裁資料・レビュー資料の置き場として使わないホスト。組織が保存期間とアクセス権を制御できないもの",
+  "deniedHosts": [
+    "claude.ai",
+    "chatgpt.com",
+    "chat.openai.com",
+    "gemini.google.com",
+    "docs.google.com",
+    "drive.google.com",
+    "notion.so",
+    "www.notion.so",
+    "dropbox.com",
+    "www.dropbox.com",
+    "pastebin.com",
+    "gist.github.com",
+    "codepen.io",
+    "jsfiddle.net"
+  ],
+
+  "allowNote": "検査の説明や、事故の記録として URL を書く場面があります。行に次の注記があれば、その行を除外します。理由の記載を求めます",
+  "allowMarker": "<!-- external-host-ok: (?<reason>.+?) -->"
+}

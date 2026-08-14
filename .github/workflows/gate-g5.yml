@@ -136,6 +136,19 @@ jobs:
       - uses: actions/checkout@v4
       - run: node scripts/gate/license-consistency.mjs
 
+  # 組織の管理外のホストへの参照(#115)
+  #
+  # 2026-08-14、着手決裁の資料を claude.ai の Artifact として発行しました。
+  # 組織が保存期間もアクセス権も制御できないホストに、決裁の入力が置かれました。
+  #
+  # 本検査が見つけるのはリポジトリに残った参照だけです。発行そのものは検出できません。
+  external-host-check:
+    name: external-host-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/gate/external-host-check.mjs
+
   # 基準5 依存関係のライセンス検査(合否条件)
   #
   # 生成物と既存著作物の類似検知は合否条件にしません。「検出されなかった」が
@@ -211,6 +224,7 @@ jobs:
         session-definition-drift,
         pr-base-check,
         license-consistency,
+        external-host-check,
         ip-clearance,
         secret-scan,
       ]
@@ -227,6 +241,7 @@ jobs:
           echo "session-definition-drift: ${{ needs.session-definition-drift.result }}"
           echo "pr-base-check:   ${{ needs.pr-base-check.result }}"
           echo "license-consistency: ${{ needs.license-consistency.result }}"
+          echo "external-host-check: ${{ needs.external-host-check.result }}"
           echo "ip-clearance:    ${{ needs.ip-clearance.result }}"
           echo "secret-scan:     ${{ needs.secret-scan.result }}"
           if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
