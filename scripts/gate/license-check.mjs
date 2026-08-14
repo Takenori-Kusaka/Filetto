@@ -19,20 +19,40 @@
 // 判断記録: context/decisions/0007-allowed-licenses.md
 // 調査記録: docs/platform/PL-0001-ip-clearance-pep639.md
 
-import { readFileSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 const ALLOWED = (process.env.PIT_IN_ALLOWED_LICENSES ?? '')
   .split(';')
   .map((s) => s.trim())
   .filter(Boolean);
 
-// 検査対象から外すパッケージ。既定は空(現行の挙動と同じ)。
-// `pip install -e .` が自分自身を検査対象に含めることへの対処に使えます。
-// allowedLicenses は依存関係に許すライセンスの一覧であり、自プロジェクトのライセンスとは
-// 別の概念です(ADR-0007)。既定を空にしてあるのは、検査範囲の変更が PO の判断だからです。
-const SELF_PACKAGES = (process.env.PIT_IN_SELF_PACKAGES ?? '')
-  .split(';')
+/** pyproject.toml から自プロジェクトの名前を読む。無ければ null */
+export function selfPackageFromPyproject(root = ROOT) {
+  const p = path.join(root, 'pyproject.toml');
+  if (!existsSync(p)) return null;
+  const text = readFileSync(p, 'utf8');
+  const m =
+    text.match(/\[project\][\s\S]*?\bname\s*=\s*["']([^"']+)["']/) ??
+    text.match(/\[tool\.poetry\][\s\S]*?\bname\s*=\s*["']([^"']+)["']/);
+  return m ? m[1].trim() : null;
+}
+
+// 検査対象から外すパッケージ。
+//
+// `pip install -e .` は自分自身を検査対象に含めます。allowedLicenses は依存関係に
+// 許すライセンスの一覧であり、自プロジェクトのライセンスとは別の概念です(ADR-0007)。
+// 自プロジェクトを許可一覧へ入れると、「依存に AGPL を許している」と読めてしまいます。
+//
+// 既定で pyproject.toml から名前を読みます。PIT_IN_SELF_PACKAGES で上書きできます。
+const SELF_PACKAGES = (
+  process.env.PIT_IN_SELF_PACKAGES !== undefined
+    ? process.env.PIT_IN_SELF_PACKAGES.split(';')
+    : [selfPackageFromPyproject() ?? '']
+)
   .map((s) => normalizeName(s))
   .filter(Boolean);
 
