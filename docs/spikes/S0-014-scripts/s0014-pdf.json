@@ -1,0 +1,250 @@
+{
+  "kakei-02.pdf": {
+    "elapsed_sec": 252.44,
+    "declared_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "page_numbers_in_prov": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "items_total": 904,
+    "items_with_prov": 904,
+    "sample_items": [
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/0",
+        "label": "section_header",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 118.81296793619792,
+              "t": 720.6229858398438,
+              "r": 484.1311442057292,
+              "b": 685.398183186849,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              12
+            ]
+          }
+        ],
+        "text_head": "家計調查報告（家計収支編"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/1",
+        "label": "section_header",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 163.6321004231771,
+              "t": 666.7247924804688,
+              "r": 451.9966634114583,
+              "b": 644.65625,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              19
+            ]
+          }
+        ],
+        "text_head": "2025年(令和 7年)平均結果の概要"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/2",
+        "label": "text",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 261.30397542317706,
+              "t": 585.2409261067708,
+              "r": 271.87451171875,
+              "b": 572.5090738932292,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ],
+        "text_head": "目"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/3",
+        "label": "text",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 338.6803792317708,
+              "t": 586.9384969075521,
+              "r": 356.4389241536458,
+              "b": 570.8114827473958,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              1
+            ]
+          }
+        ],
+        "text_head": "次"
+      }
+    ]
+  },
+  "fig-kakei-02.png": {
+    "elapsed_sec": 3.06,
+    "declared_pages": [
+      1
+    ],
+    "page_numbers_in_prov": [
+      1
+    ],
+    "items_total": 46,
+    "items_with_prov": 46,
+    "sample_items": [
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/0",
+        "label": "section_header",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 448.1612955729167,
+              "t": 1152.08949025472,
+              "r": 1233.2923177083333,
+              "b": 1075.1143493652344,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              12
+            ]
+          }
+        ],
+        "text_head": "家計調査結果の最近の動向"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/1",
+        "label": "text",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 1492.17333984375,
+              "t": 1102.1825256347656,
+              "r": 1644.10693359375,
+              "b": 1070.8849487304688,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              6
+            ]
+          }
+        ],
+        "text_head": "総務省統計局"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/2",
+        "label": "section_header",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 1233.2923177083333,
+              "t": 1020.1321004231771,
+              "r": 1539.7057291666667,
+              "b": 971.9169108072916,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              7
+            ]
+          }
+        ],
+        "text_head": "家計の消費支出"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/3",
+        "label": "section_header",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 61.9616953531901,
+              "t": 989.6803995768229,
+              "r": 772.399169921875,
+              "b": 950.7698974609375,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              23
+            ]
+          }
+        ],
+        "text_head": "(%) 対前年同月実質増減率(二人以上の世帯)"
+      }
+    ]
+  }
+}
