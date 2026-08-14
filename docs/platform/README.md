@@ -8,7 +8,9 @@ Platform は検査・リント・CI/CD の装置を作り、維持します。**
 | --- | --- |
 | [PL-0001](PL-0001-ip-clearance-pep639.md) | `ip-clearance` の PEP 639 対応。SPDX 式の評価を自前へ移す |
 | [PL-0002](PL-0002-session-definition-drift.md) | ロール定義の正本と各ランタイム向け生成物の乖離検出 |
+| [PL-0003](PL-0003-merge-target-and-reachability.md) | マージ先が main でない PR の検出と、マージ済み PR の到達検査 |
 | [PL-0004](PL-0004-worktree-freshness.md) | 作業ツリーが古い定義で動いていることの可視化 |
+| [PL-0006](PL-0006-spec-lint-scope.md) | spec-lint の検査範囲を目的に合わせる(判定者の記入欄を外す) |
 | [投入量の台帳](investment-ledger.md) | 稼働・AI 実行費・成果物の内訳の実測(#107) |
 
 ## 強制層に触る変更をどう進めるか
