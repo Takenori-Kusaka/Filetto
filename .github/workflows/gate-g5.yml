@@ -118,6 +118,17 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: node scripts/gate/pr-base-check.mjs
 
+  # ライセンス宣言の整合(#112)
+  #
+  # README が「コードは MIT」と書き、LICENSE と pyproject.toml は AGPL-3.0-or-later
+  # でした。公開後に回収が難しい種類の誤りのため、機械で突き合わせます。
+  license-consistency:
+    name: license-consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/gate/license-consistency.mjs
+
   # 基準5 依存関係のライセンス検査(合否条件)
   #
   # 生成物と既存著作物の類似検知は合否条件にしません。「検出されなかった」が
@@ -192,6 +203,7 @@ jobs:
         double-encoding-check,
         session-definition-drift,
         pr-base-check,
+        license-consistency,
         ip-clearance,
         secret-scan,
       ]
@@ -207,6 +219,7 @@ jobs:
           echo "double-encoding-check: ${{ needs.double-encoding-check.result }}"
           echo "session-definition-drift: ${{ needs.session-definition-drift.result }}"
           echo "pr-base-check:   ${{ needs.pr-base-check.result }}"
+          echo "license-consistency: ${{ needs.license-consistency.result }}"
           echo "ip-clearance:    ${{ needs.ip-clearance.result }}"
           echo "secret-scan:     ${{ needs.secret-scan.result }}"
           if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
