@@ -15,6 +15,7 @@ Platform は検査・リント・CI/CD の装置を作り、維持します。**
 | [PL-0007](PL-0007-pr-base-check-fresh-body.md) | pr-base-check が「いまの本文」を読むようにする(#119) |
 | [PL-0008](PL-0008-spec-lint-quote-exempt.md) | spec-lint の適用範囲に「引用」を加える(#104) |
 | [PL-0009](PL-0009-license-consistency.md) | README を Filetto のものにし、ライセンス宣言の食い違いを検査する(#112) |
+| [PL-0010](PL-0010-reachability-race.md) | 到達検査が自分の起動タイミングで誤検出していた(#118) |
 | [投入量の台帳](investment-ledger.md) | 稼働・AI 実行費・成果物の内訳の実測(#107) |
 
 ## 強制層に触る変更をどう進めるか
