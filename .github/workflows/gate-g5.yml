@@ -202,8 +202,6 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-stack
-        with:
-          install: 'false'
       - run: node scripts/gate/adapter.mjs run secretScan
 
   # 基準8 依存関係の追加・更新の識別。合否は判定せず一覧を出す
