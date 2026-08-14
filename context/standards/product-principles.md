@@ -9,9 +9,11 @@ scope: '**'
 
 **7つあります。これがすべてです。**
 
-**判断に迷ったら、まずここへ戻ります。** それでも決まらないときに、経緯を [`context/decisions/`](../decisions/) の判断記録(ADR)で確認します。
+**判断に迷ったら、ここへ戻ります。** **ここが唯一の立ち戻る先です。**
 
-**本書に「案」は書きません。** 採らなかった選択肢とその理由は ADR にあります。**本書は、決まったことだけを書きます。**
+**本書に「案」は書きません。決まったことだけを書きます。**
+
+**採らなかった選択肢と、そこへ至った経緯は、Issue と PR に残ります。** **2026-08-14、判断記録(ADR)のディレクトリを廃しました。** **設計判断の記録は `specs/<機能ID>/spec.md` と `plan.md`、ゲート判定記録、PR へ寄せます。**
 
 ---
 
@@ -116,14 +118,31 @@ scope: '**'
 
 ---
 
+## 2026-08-14 より前の記録に出てくる ADR について
+
+**判断記録(ADR)のディレクトリを 2026-08-14 に廃しました。** **`context/decisions/` は存在しません。**
+
+| 記録 | 扱い |
+| --- | --- |
+| **ゲート判定記録**(`docs/gates/`) | **書き換えません。** 判定時点の証跡です。**ADR への参照が残りますが、リンク先はありません** |
+| **着手決裁の正本**(`docs/decisions/P-001-kickoff-decision.md`) | 同上 |
+| **D-0**(`docs/D-0-governance.md`) | 同上 |
+| 機能仕様・実装計画・企画書 | **リンクを外しました。** 決定の実体は各仕様へ移してあります |
+
+**廃した理由**: **ADR がポリシー(立ち戻る先)と、設計判断の記録の両方を兼ねていました。** **G-3 が ADR を判定対象にしていたため、設計判断のたびに1本増える構造でした。** **実装10行の時点で20本・3,618行になりました。**
+
+**経緯は Issue と PR に残ります**([process-compass#251](https://github.com/Takenori-Kusaka/process-compass/issues/251) / [#252](https://github.com/Takenori-Kusaka/process-compass/issues/252) / [#253](https://github.com/Takenori-Kusaka/process-compass/issues/253))。
+
 ## 出所
 
 | 軸 | 主な出所 |
 | --- | --- |
-| 1 | [ADR-0003](../decisions/0003-reversible-file-operations.md) / [着手決裁の正本](../../docs/decisions/P-001-kickoff-decision.md) 第2章 |
-| 2 | [ADR-0001](../decisions/0001-license-agpl-3.md) / `specs/F-002/spec.md` 基準11・12 / `specs/F-003/spec.md` 基準12 |
-| 3 | [ADR-0003](../decisions/0003-reversible-file-operations.md) / `specs/F-001/spec.md` |
-| 4 | [ADR-0017](../decisions/0017-one-click-verification-placement.md) / [`docs/ux/F-003-verification-journey.md`](../../docs/ux/F-003-verification-journey.md) |
+| 1 | [着手決裁の正本](../../docs/decisions/P-001-kickoff-decision.md) 第2章 / `specs/F-001/spec.md` 基準1 / `specs/F-002/spec.md` 基準1 |
+| 2 | `LICENSE`(AGPL-3.0)/ `specs/F-002/spec.md` 基準11・12・28 / `specs/F-003/spec.md` 基準12 |
+| 3 | `specs/F-001/spec.md` 基準1〜22 |
+| 4 | [`docs/ux/F-003-verification-journey.md`](../../docs/ux/F-003-verification-journey.md) / `specs/F-003/spec.md` 基準35〜40 |
 | 5 | `specs/F-002/spec.md` 基準13-3・26・27 / `specs/F-003/spec.md` 基準10・11・28・38 |
 | 6 | [`extensibility.md`](extensibility.md) |
-| 7 | [ADR-0002](../decisions/0002-external-interface-contract.md) / [ADR-0004](../decisions/0004-jwt-claims-contract.md) |
+| 7 | `specs/F-003/spec.md` 基準1〜6・19〜23 |
+
+**2026-08-14 まで、出所は判断記録(ADR)を指していました。** **ADR を廃したため、機能仕様と決裁の正本を指すよう改めました。** **経緯は Issue と PR に残ります。**

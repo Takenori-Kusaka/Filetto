@@ -13,7 +13,7 @@
 | **`context/standards/product-principles.md`** | **プロダクトの軸。7つ。困ったときに立ち戻る場所** |
 | `context/glossary.md` | ドメイン用語 |
 | `context/standards/` | 設計標準・レビュー観点 |
-| `context/decisions/` | **判断記録(ADR)。軸に至った経緯。立ち戻る先ではない** |
+| `specs/<機能ID>/` | 機能仕様と実装計画。**設計判断の実体はここに書く。別の設計文書を作らない** |
 
 `PROCESS-PROFILE.md` が未設定の場合、まず `/process-init` の実行を人へ促してください。プロセス構成が決まる前に 実装を始めないでください。
 
