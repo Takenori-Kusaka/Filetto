@@ -16,6 +16,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { ROOT, fail, notice } from './config.mjs';
 
 const args = process.argv.slice(2);
@@ -40,21 +41,60 @@ if (!DEFAULT_BASE || !MARKER) {
   process.exit(1);
 }
 
-const base = argOf('--base', process.env.GITHUB_BASE_REF ?? '');
+// ---- 本文とマージ先をどこから読むか --------------------------------------
+//
+// **イベントのペイロードを当てにしません。**
+//
+// `github.event.pull_request.body` は、そのイベントを起こしたときの本文です。
+// 本文を編集しても `pull_request` の既定の types に `edited` が無いため起動せず、
+// `gh run rerun` は同じペイロードを再生するため、**編集後の本文は永久に読まれません**。
+// 理由を書いても通らない、という状態になります(#119)。
+//
+// そのため、PR 番号が分かるときは **GitHub API から取り直します**。
+// 取り直せないときはイベントの値へ落とし、**どちらを読んだかを必ず出力します**。
+
+export function fetchFromApi(prNumber, exec = execFileSync) {
+  try {
+    const out = exec('gh', ['pr', 'view', String(prNumber), '--json', 'body,baseRefName'], {
+      encoding: 'utf8',
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    const o = JSON.parse(out);
+    return { body: o.body ?? '', base: o.baseRefName ?? '', source: 'GitHub API(いまの本文)' };
+  } catch (e) {
+    return { error: String(e.message).split(String.fromCharCode(10))[0] };
+  }
+}
+
+const prNumber = argOf('--pr', process.env.PR_NUMBER ?? '');
+const bodyFile = argOf('--body-file', null);
+
+let base = argOf('--base', process.env.GITHUB_BASE_REF ?? '');
+let body = bodyFile ? fs.readFileSync(bodyFile, 'utf8') : (process.env.PR_BODY ?? '');
+let source = bodyFile ? `--body-file ${bodyFile}` : 'イベントのペイロード';
+
+if (prNumber && !bodyFile) {
+  const api = fetchFromApi(prNumber);
+  if (api.error) {
+    console.log(`GitHub API から取り直せませんでした(${api.error})。イベントの値を使います`);
+  } else {
+    body = api.body;
+    base = argOf('--base', api.base || base);
+    source = api.source;
+  }
+}
 
 if (!base) {
   fail(
-    'マージ先を特定できません。--base か GITHUB_BASE_REF を渡してください。' +
+    'マージ先を特定できません。--base か GITHUB_BASE_REF か --pr を渡してください。' +
       '特定できないまま通すと、検査を実施していない状態を通過した記録として残ります'
   );
   process.exit(1);
 }
 
-const bodyFile = argOf('--body-file', null);
-const body = bodyFile ? fs.readFileSync(bodyFile, 'utf8') : (process.env.PR_BODY ?? '');
-
 console.log(`既定ブランチ: ${DEFAULT_BASE}`);
 console.log(`この PR のマージ先: ${base}`);
+console.log(`本文の出所: ${source}`);
 
 if (base === DEFAULT_BASE) {
   notice(`pr-base-check: マージ先は ${DEFAULT_BASE} です`);
@@ -75,7 +115,13 @@ if (!reason) {
       `  PR 本文へ次の形で1行書いてください:\n` +
       `    ${MARKER} <なぜ ${DEFAULT_BASE} ベースにできないか>\n` +
       `  親が squash マージされると、子が持つ親のコミットは ${DEFAULT_BASE} のどこにも存在しなくなります。\n` +
-      `  親のマージ後は、必ず本 PR を ${DEFAULT_BASE} へ張り替えてください`
+      `  親のマージ後は、必ず本 PR を ${DEFAULT_BASE} へ張り替えてください。\n` +
+      `\n` +
+      `  **本文を編集しただけでは CI は起動しません。** pull_request の既定の types に edited が\n` +
+      `  含まれないためです(#119)。理由を書いたら、次のどちらかを実行してください。\n` +
+      `    gh run rerun --failed <run-id>\n` +
+      `    (または新しいコミットを積む)\n` +
+      `  再実行では、本検査が GitHub API から「いまの本文」を読み直します`
   );
   process.exit(1);
 }

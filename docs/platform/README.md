@@ -12,6 +12,7 @@ Platform は検査・リント・CI/CD の装置を作り、維持します。**
 | [PL-0004](PL-0004-worktree-freshness.md) | 作業ツリーが古い定義で動いていることの可視化 |
 | [PL-0005](PL-0005-license-check-consolidation.md) | 許可ライセンス一覧を SPDX 7件へ縮め、テンプレートの修正版は取り込まない |
 | [PL-0006](PL-0006-spec-lint-scope.md) | spec-lint の検査範囲を目的に合わせる(判定者の記入欄を外す) |
+| [PL-0007](PL-0007-pr-base-check-fresh-body.md) | pr-base-check が「いまの本文」を読むようにする(#119) |
 | [投入量の台帳](investment-ledger.md) | 稼働・AI 実行費・成果物の内訳の実測(#107) |
 
 ## 強制層に触る変更をどう進めるか
