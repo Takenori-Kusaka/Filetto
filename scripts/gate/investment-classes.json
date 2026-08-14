@@ -1,0 +1,152 @@
+{
+  "note": "投入量の分類規則(#107)。investment-measure.mjs が読みます。先に一致した規則を採ります",
+  "unclassifiedPolicy": "一致しないファイルは未分類として出力し、失敗させます。規則を増やさずに新しい領域が増えると、内訳が実態とずれるためです",
+  "classes": [
+    {
+      "id": "process",
+      "label": "プロセス",
+      "note": "プロセスを回すための装置と規約。プロダクトの価値そのものではない",
+      "patterns": [
+        ".claude/**",
+        ".gemini/**",
+        ".github/**",
+        "scripts/**",
+        "adapters/**",
+        "templates/**",
+        "tests/gate/**",
+        "process.config.json",
+        "PROCESS-PROFILE.md",
+        "CLAUDE.md",
+        "AGENTS.md",
+        "docs/platform/**",
+        "docs/D-0-governance.md",
+        "docs/session-definitions/**",
+        "context/decisions/0007-allowed-licenses.md",
+        "context/decisions/0009-claude-code-permissions-no-ask.md",
+        "context/decisions/0012-line-limit-scope.md",
+        "context/decisions/0013-license-check-spdx-expression.md",
+        "context/decisions/0014-standard-scope-misapplication.md",
+        "context/decisions/0015-enforcement-scope-during-optimization.md"
+      ],
+      "adrNote": "プロセスに関する判断記録は個別に列挙します。context/decisions/ を丸ごとどちらかへ寄せると、プロダクトの技術判断と混ざります。ADR を足したら、この一覧か product 側かを決めてください"
+    },
+    {
+      "id": "gate-record",
+      "label": "ゲート記録",
+      "note": "判定が成立した証拠",
+      "patterns": [
+        "docs/gates/**"
+      ]
+    },
+    {
+      "id": "code",
+      "label": "実装コード",
+      "note": "プロダクトとして動くもの。S1 のゴールに直接効く",
+      "patterns": [
+        "src/**",
+        "tests/**",
+        "pyproject.toml",
+        "uv.lock"
+      ]
+    },
+    {
+      "id": "product",
+      "label": "プロダクト",
+      "note": "何を作るかを決める作業。受入基準・探索・技術調査・企画",
+      "patterns": [
+        "specs/**",
+        "context/**",
+        "docs/spikes/**",
+        "docs/tech-advisor/**",
+        "docs/project-brief.md",
+        "docs/README.md",
+        "README.md",
+        "LICENSE",
+        "LICENSE-docs",
+        "NOTICE",
+        ".gitignore"
+      ]
+    }
+  ],
+  "aiUsage": {
+    "note": "AI 実行費は ccusage(OSS)から取ります。自前で価格表を持ちません。ccusage claude session --json の projectPath で本案件を絞ります",
+    "tool": "ccusage@latest",
+    "command": [
+      "claude",
+      "session",
+      "--json"
+    ],
+    "projectPathPattern": "Filetto"
+  },
+  "lineCountTargets": [
+    {
+      "id": "code",
+      "label": "実装コード",
+      "paths": [
+        "src"
+      ],
+      "extensions": [
+        ".py"
+      ]
+    },
+    {
+      "id": "test",
+      "label": "テスト",
+      "paths": [
+        "tests"
+      ],
+      "extensions": [
+        ".py",
+        ".mjs"
+      ]
+    },
+    {
+      "id": "gate-script",
+      "label": "検査の装置",
+      "paths": [
+        "scripts"
+      ],
+      "extensions": [
+        ".mjs",
+        ".json"
+      ]
+    },
+    {
+      "id": "doc",
+      "label": "文書",
+      "paths": [
+        "docs",
+        "specs",
+        "context",
+        "templates"
+      ],
+      "extensions": [
+        ".md"
+      ]
+    }
+  ],
+  "effort": {
+    "note": "稼働時間は git のコミット間隔から推定します。人の自己申告を求めません。確度は高くありません。値ではなく推移を見ます",
+    "maxCommitGapMinutes": 120,
+    "firstCommitMinutes": 30,
+    "authorAliases": {
+      "takenori-kusaka": "Takenori Kusaka"
+    }
+  },
+  "progress": {
+    "note": "進捗率の代理指標。git と GitHub から取れるものだけで組みます。進捗そのものではありません",
+    "gates": [
+      "G-1",
+      "G-2",
+      "G-3",
+      "G-4",
+      "G-5",
+      "G-6",
+      "G-7",
+      "G-8"
+    ],
+    "gateRecordDir": "docs/gates",
+    "specDir": "specs",
+    "planFile": "plan.md"
+  }
+}

@@ -1,0 +1,88 @@
+# 投入量の測定(#107)
+#
+# 標準 7.7.2 の予算統制の指標を計算するための実測を、時系列で残します。
+# 1回だけ数えて終わると、次に気づくのはまた誰かが手で数えたときです。
+#
+# **誰にも自己申告させません。** ロールに主目的以外の作業をさせないためです。
+# 稼働時間は git のコミット間隔からの推定、成果物の内訳は gh pr list からの分類、
+# AI 実行費は ccusage(OSS)です。**確度は高くありません。推移を見ます。**
+#
+# ccusage は ~/.claude のセッション記録を読むため、**CI では取れません。**
+# CI は AI 実行費を「取得できません」と明示します。黙って 0 円にしません。
+# 金額を含めた行が要るときは、手元で次を実行して台帳へ貼ります。
+#
+#   node scripts/gate/investment-measure.mjs --markdown
+
+name: investment-measure
+
+on:
+  schedule:
+    - cron: '0 21 * * 0' # UTC 日 21:00 = JST 月 06:00
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  measure:
+    name: investment-measure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 測る
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/gate/investment-measure.mjs --markdown --no-ai > /tmp/measure.md
+          cat /tmp/measure.md
+
+      - name: 台帳へ追記する PR を出す
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          today=$(date -u +%F)
+          branch="chore/investment-${today}"
+          ledger="docs/platform/investment-ledger.md"
+
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "::notice::${branch} は既にあります。二重に出しません"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+
+          printf '\n---\n\n## %s\n\n' "$today" >> "$ledger"
+          cat /tmp/measure.md >> "$ledger"
+
+          git add "$ledger"
+          git commit -m "chore: 投入量の実測を台帳へ追記する(${today})" -m "Spec: Issue-107"
+          git push -u origin "$branch"
+
+          cat > /tmp/body.md <<'BODY'
+          定期実行による追記です。**誰も自己申告していません。**
+
+          稼働時間は git のコミット間隔からの推定、成果物の内訳は `gh pr list` からの分類です。
+
+          **AI 実行費だけは CI で取れません。** ccusage が読む `~/.claude` が CI に無いためで、
+          該当行は「取得できません」と入っています。金額が要る場合は手元で次を実行し、貼り替えてください。
+
+          ```
+          node scripts/gate/investment-measure.mjs --markdown
+          ```
+
+          **確度は高くありません。値ではなく推移を見ます。**
+
+          Spec: Issue-107
+          BODY
+          sed -i 's/^          //' /tmp/body.md
+
+          gh pr create --base main --head "$branch" \
+            --title "chore: 投入量の実測を台帳へ追記する(${today})" \
+            --body-file /tmp/body.md
