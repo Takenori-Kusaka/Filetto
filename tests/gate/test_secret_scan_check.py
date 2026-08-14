@@ -107,3 +107,32 @@ def test_方針が理由と除外の扱いを書いている() -> None:
     assert p["why"].strip()
     assert p["excludeFiles"].strip()
     assert isinstance(p["allowed"], list)
+
+
+def test_除外は種別で絞れる(tmp_path: Path) -> None:
+    """同じファイルの他の種別は検査され続けること。"""
+    work = tmp_path / "repo"
+    shutil.copytree(ROOT / "scripts", work / "scripts")
+    pol = work / "scripts/gate/secret-scan-policy.json"
+    p = json.loads(pol.read_text(encoding="utf-8"))
+    p["allowed"] = [{"path": "a.json", "type": "Secret Keyword", "reason": "検査の定義"}]
+    pol.write_text(json.dumps(p, ensure_ascii=False), encoding="utf-8")
+
+    results = {
+        "a.json": [
+            {"type": "Secret Keyword", "line_number": 1},
+            {"type": "AWS Access Key", "line_number": 2},
+        ]
+    }
+    r = _run(_report(results), cwd=work)
+    assert r.returncode == 1
+    assert "AWS Access Key" in r.stdout + r.stderr
+    assert "理由を添えて除外したもの: 1 件" in r.stdout
+
+
+def test_除外に理由が無ければ通さない() -> None:
+    """方針に書いた除外は、必ず理由を持つこと。"""
+    p = json.loads(POLICY.read_text(encoding="utf-8"))
+    for a in p["allowed"]:
+        assert a["path"].strip()
+        assert a["reason"].strip()

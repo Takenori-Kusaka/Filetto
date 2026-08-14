@@ -26,7 +26,12 @@ if (!fs.existsSync(POLICY_PATH)) {
 }
 const policy = JSON.parse(fs.readFileSync(POLICY_PATH, 'utf8'));
 
-const ALLOWED = new Map((policy.allowed ?? []).map((a) => [a.path, a.reason]));
+// 除外は「パス」と、任意で「検出の種別」で指定します。
+// **行番号では指定しません。** 編集のたびにずれ、ずれた先の本物を見逃します。
+// 種別を書けば、同じファイルの他の種別は検査され続けます。
+const ALLOWED = policy.allowed ?? [];
+const allowFor = (file, type) =>
+  ALLOWED.find((a) => a.path === file && (a.type === undefined || a.type === type));
 
 const raw = fs.readFileSync(0, 'utf8').trim();
 
@@ -58,7 +63,8 @@ for (const [file, entries] of Object.entries(report.results)) {
   const rel = file.split(/[\\/]/).join('/');
   for (const e of entries) {
     const row = { file: rel, type: e.type, line: e.line_number };
-    if (ALLOWED.has(rel)) allowed.push({ ...row, reason: ALLOWED.get(rel) });
+    const rule = allowFor(rel, e.type);
+    if (rule) allowed.push({ ...row, reason: rule.reason });
     else detected.push(row);
   }
 }
