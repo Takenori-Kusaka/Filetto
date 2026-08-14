@@ -27,6 +27,7 @@ const argOf = (name, fallback) => {
   const i = args.indexOf(name);
   return i >= 0 && args[i + 1] ? args[i + 1] : fallback;
 };
+const has = (name) => args.includes(name);
 
 const LIMIT = argOf('--limit', '300');
 const JSON_OUT = argOf('--json', null);
@@ -43,6 +44,16 @@ function run(cmd, argv) {
  *  --base-ref は判定の基準を差し替えます。テストが履歴の取得の深さに依存しないためのものです */
 function resolveBaseRef() {
   const override = argOf('--base-ref', null);
+  // 実行時に取り直します。ワークフローの checkout は「起動した push の時点」の
+  // 履歴で固定されるため、その後に入ったマージが履歴に無いまま
+  // `gh pr list` にだけ現れます(#118)。
+  if (!override && !has('--no-fetch')) {
+    try {
+      run('git', ['fetch', '--quiet', 'origin', DEFAULT_BASE]);
+    } catch {
+      /* 取り直せなくても、いまある参照で続けます。締め切り時刻がそれを吸収します */
+    }
+  }
   for (const ref of override ? [override] : [`origin/${DEFAULT_BASE}`, DEFAULT_BASE]) {
     try {
       run('git', ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
@@ -107,10 +118,32 @@ if (!Array.isArray(prs)) {
 // 内容が別経路で到達済みと確認できた PR。件数と理由を必ず出力します
 const RESOLVED = new Map((policy.resolved ?? []).map((r) => [r.pr, r]));
 
+// 判定の締め切り。**基準ブランチの先端より後にマージされた PR は判定しません。**
+//
+// PR の一覧は実行時に取りますが、git の履歴は基準ブランチの先端で止まっています。
+// その間にマージが入ると、一覧にはあるのに履歴には無い、という状態が生まれます。
+// 実際に PR #110 がこれで「未到達」と誤って報告されました(#118)。
+//   04:23:34 PR #103 がマージ → push で本検査が起動(履歴はここで固定)
+//   04:23:40 PR #110 がマージ
+//   その後   検査が gh pr list を引く → #110 は一覧に現れるが、履歴には無い
+//
+// 締め切りより後のものは「判定を保留」として数え上げます。**黙って落としません。**
+const cutoffRaw = argOf('--cutoff', null);
+const cutoff = cutoffRaw
+  ? Date.parse(cutoffRaw)
+  : (() => {
+      try {
+        return Date.parse(run('git', ['log', '-1', '--format=%cI', baseRef]).trim());
+      } catch {
+        return NaN;
+      }
+    })();
+
 const reached = [];
 const unreached = [];
 const resolved = [];
 const unknown = [];
+const pending = [];
 const nonDefaultBase = [];
 
 for (const pr of prs) {
@@ -125,6 +158,12 @@ for (const pr of prs) {
   };
 
   if (pr.baseRefName !== DEFAULT_BASE) nonDefaultBase.push(row);
+
+  const mergedMs = Date.parse(pr.mergedAt);
+  if (Number.isFinite(cutoff) && Number.isFinite(mergedMs) && mergedMs > cutoff) {
+    pending.push(row);
+    continue;
+  }
 
   if (!sha) {
     unknown.push({ ...row, reason: 'マージコミットが取得できません' });
@@ -151,6 +190,14 @@ console.log(`到達している: ${reached.length} 件`);
 console.log(`\nマージ先が ${DEFAULT_BASE} でない PR: ${nonDefaultBase.length} 件`);
 for (const r of nonDefaultBase) console.log(`  #${r.number} base=${r.base}  ${r.title}`);
 
+console.log(
+  `判定の締め切り: ${Number.isFinite(cutoff) ? new Date(cutoff).toISOString() : '不明'}` +
+    `(${baseRef} の先端の時刻)`
+);
+
+console.log(`\n締め切りより後にマージされ、判定を保留した PR: ${pending.length} 件`);
+for (const r of pending) console.log(`  #${r.number} merged=${r.mergedAt}  ${r.title}`);
+
 console.log(`\n別経路で到達済みと確認した PR: ${resolved.length} 件`);
 for (const r of resolved) console.log(`  #${r.number} ${r.resolvedBy}  ${r.reason}`);
 
@@ -172,6 +219,8 @@ if (JSON_OUT) {
         defaultBase: DEFAULT_BASE,
         checked: prs.length,
         reached: reached.length,
+        cutoff: Number.isFinite(cutoff) ? new Date(cutoff).toISOString() : null,
+        pending,
         resolved,
         unreached,
         unknown,
@@ -201,7 +250,8 @@ for (const n of staleResolved) {
 
 notice(
   `merged-reachability: ${prs.length} 件を検査、到達 ${reached.length} 件、` +
-    `別経路で到達済み ${resolved.length} 件、未到達 ${unreached.length} 件、判定不能 ${unknown.length} 件`
+    `別経路で到達済み ${resolved.length} 件、保留 ${pending.length} 件、` +
+    `未到達 ${unreached.length} 件、判定不能 ${unknown.length} 件`
 );
 
 process.exit(unreached.length || unknown.length || staleResolved.length ? 1 : 0);

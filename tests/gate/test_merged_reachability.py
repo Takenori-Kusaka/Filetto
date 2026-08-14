@@ -85,7 +85,7 @@ def _run(tmp_path: Path, prs: list[dict], *argv: str) -> subprocess.CompletedPro
     f = tmp_path / "prs.json"
     f.write_text(json.dumps(prs, ensure_ascii=False), encoding="utf-8")
     return subprocess.run(  # noqa: S603
-        [_node(), SCRIPT, "--pr-json", str(f), "--base-ref", BASE_REF, *argv],
+        [_node(), SCRIPT, "--pr-json", str(f), "--base-ref", BASE_REF, "--no-fetch", *argv],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -144,3 +144,34 @@ def test_方針のresolvedが形を満たす() -> None:
         assert isinstance(r["pr"], int)
         assert r["reason"].strip()
         assert r["resolvedBy"].strip()
+
+
+def test_締め切りより後のマージは保留する(tmp_path: Path, unreached_sha: str) -> None:
+    """PR の一覧は実行時に取るが、git の履歴は基準ブランチの先端で止まっている。
+    その間に入ったマージを「未到達」と誤って報告した(#118)。"""
+    pr = _pr(9100, unreached_sha)
+    pr["mergedAt"] = "2099-01-01T00:00:00Z"
+    r = _run(tmp_path, [pr], "--cutoff", "2026-08-14T00:00:00Z")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "判定を保留した PR: 1 件" in r.stdout
+    assert "到達していない PR: 0 件" in r.stdout
+
+
+def test_締め切りより前のマージは判定する(tmp_path: Path, unreached_sha: str) -> None:
+    """保留の仕組みが、本来落とすべきものまで通さないこと。"""
+    pr = _pr(9101, unreached_sha)
+    pr["mergedAt"] = "2026-08-13T00:00:00Z"
+    r = _run(tmp_path, [pr], "--cutoff", "2026-08-14T00:00:00Z")
+    assert r.returncode == 1
+    assert "到達していない PR: 1 件" in r.stdout
+
+
+def test_保留が0件でも件数を出力する(tmp_path: Path, reached_sha: str) -> None:
+    r = _run(tmp_path, [_pr(1, reached_sha)], "--cutoff", "2099-01-01T00:00:00Z")
+    assert "判定を保留した PR: 0 件" in r.stdout
+
+
+def test_締め切りの時刻を出力する(tmp_path: Path) -> None:
+    """いつ時点の履歴で判定したかが残らないと、保留の妥当性を後から確かめられない。"""
+    r = _run(tmp_path, [], "--cutoff", "2026-08-14T00:00:00Z")
+    assert "判定の締め切り: 2026-08-14T00:00:00" in r.stdout
