@@ -1,0 +1,31 @@
+{
+  "note": "ライセンスの宣言が食い違っていないかの検査(#112)。license-consistency.mjs が読みます",
+  "why": "README が「コードは MIT」と書き、LICENSE と pyproject.toml は AGPL-3.0-or-later だった。公開後に回収が難しい種類の誤り",
+  "sourceOfTruth": {
+    "file": "pyproject.toml",
+    "pattern": "^\\s*license\\s*=\\s*[\"']([^\"']+)[\"']",
+    "note": "コードのライセンスの正本。SPDX 識別子で書かれている"
+  },
+  "readmeMarkerNote": "README には機械可読の宣言を置きます。文章から推測しません。推測は、書き換えの取りこぼしを検出できません",
+  "readmeMarker": "<!-- license: code=(?<code>[^\\s]+) docs=(?<docs>[^\\s]+) -->",
+  "readmeFile": "README.md",
+  "licenseFiles": [
+    {
+      "id": "code",
+      "file": "LICENSE"
+    },
+    {
+      "id": "docs",
+      "file": "LICENSE-docs"
+    }
+  ],
+  "titlesNote": "SPDX 識別子と、ライセンス全文の見出しの対応。全文の差し替え忘れを検出します",
+  "titles": {
+    "AGPL-3.0-or-later": "GNU AFFERO GENERAL PUBLIC LICENSE",
+    "AGPL-3.0-only": "GNU AFFERO GENERAL PUBLIC LICENSE",
+    "GPL-3.0-or-later": "GNU GENERAL PUBLIC LICENSE",
+    "MIT": "MIT License",
+    "Apache-2.0": "Apache License",
+    "CC-BY-4.0": "Creative Commons Attribution 4.0 International"
+  }
+}
