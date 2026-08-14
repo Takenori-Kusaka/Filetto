@@ -10,9 +10,10 @@
 | --- | --- |
 | `PROCESS-PROFILE.md` | このプロジェクトのプロセス構成と、標準からの差分 |
 | `process.config.json` | 機械可読の構成。**有効なゲートはここが正本** |
+| **`context/standards/product-principles.md`** | **プロダクトの軸。7つ。困ったときに立ち戻る場所** |
 | `context/glossary.md` | ドメイン用語 |
 | `context/standards/` | 設計標準・レビュー観点 |
-| `context/decisions/` | 判断記録(ADR) |
+| `context/decisions/` | **判断記録(ADR)。軸に至った経緯。立ち戻る先ではない** |
 
 `PROCESS-PROFILE.md` が未設定の場合、まず `/process-init` の実行を人へ促してください。プロセス構成が決まる前に 実装を始めないでください。
 
