@@ -39,11 +39,13 @@
 | --- | --- |
 | [0007](0007-allowed-licenses.md) 依存関係の許可ライセンス一覧を補正する | **[0013](0013-license-check-spdx-expression.md)** |
 
-**保留中のもの**
+**廃止したもの — 決定の根拠として使いません**
 
-| ADR | 状態 |
-| --- | --- |
-| [0018](0018-terminology-and-wording-source-of-truth.md) 用語と文言の単一正本 | **保留。提示の形が未決**([#150](https://github.com/Takenori-Kusaka/Filetto/issues/150)) |
+| ADR | 理由 | 決定の行き先 |
+| --- | --- | --- |
+| [0018](0018-terminology-and-wording-source-of-truth.md) 用語と文言の単一正本 | **本基準に当たらない。可逆であり、[軸6](../standards/product-principles.md) の実装方式にすぎない** | **`specs/F-003/plan.md`。判定は G-4** |
+
+**廃止した ADR の本文は残します。** **検討の材料としては使えます。** **決定の根拠としては使いません。**
 
 ## ADR にする基準
 
