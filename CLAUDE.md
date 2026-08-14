@@ -10,7 +10,8 @@
 | --- | --- |
 | `PROCESS-PROFILE.md` | このプロジェクトのプロセス構成と、標準からの差分 |
 | `process.config.json` | 機械可読の構成。**有効なゲートはここが正本** |
-| **`context/standards/product-principles.md`** | **プロダクトの軸。7つ。困ったときに立ち戻る場所** |
+| **`docs/decisions/P-001-kickoff-decision.md`** | **着手決裁の正本。なぜやるのか・何を約束したか。原点** |
+| **`context/standards/product-principles.md`** | **プロダクトの軸。7つ。いま何をするかの判断で立ち戻る場所** |
 | `context/glossary.md` | ドメイン用語 |
 | `context/standards/` | 設計標準・レビュー観点 |
 | `specs/<機能ID>/` | 機能仕様と実装計画。**設計判断の実体はここに書く。別の設計文書を作らない** |

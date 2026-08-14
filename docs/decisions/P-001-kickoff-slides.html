@@ -1,0 +1,1018 @@
+<title>Filetto 着手決裁</title>
+<!-- 提示資料。正本は docs/decisions/P-001-kickoff-decision.md。食い違う場合は正本を正とする -->
+
+<style>
+  :root {
+    --paper:#EDF0F2; --card:#FFFFFF; --card-2:#F5F8F9;
+    --ink:#14202B; --ink-2:#3A4A57; --muted:#63737F;
+    --rule:#C4D0D7; --rule-soft:#E0E6EA; --tab:#DAE2E7;
+    --seal:#9E3B31; --good:#2C6553; --open:#86682B;
+    --shadow: 0 1px 0 rgba(20,32,43,.06), 0 12px 28px -18px rgba(20,32,43,.45);
+    --mincho: "Hiragino Mincho ProN","HiraMinProN-W3","Yu Mincho","YuMincho","Noto Serif JP","Songti SC",serif;
+    --gothic: "Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic","YuGothic","Noto Sans JP","Meiryo",system-ui,sans-serif;
+    --mono: ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#0E151B; --card:#151F27; --card-2:#1A2530;
+      --ink:#E7EEF3; --ink-2:#BCCAD4; --muted:#8B9BA7;
+      --rule:#2C3B47; --rule-soft:#1F2B35; --tab:#1D2833;
+      --seal:#DC7B6B; --good:#63AC92; --open:#C6A65E;
+      --shadow: 0 1px 0 rgba(0,0,0,.4), 0 14px 30px -18px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#0E151B; --card:#151F27; --card-2:#1A2530;
+    --ink:#E7EEF3; --ink-2:#BCCAD4; --muted:#8B9BA7;
+    --rule:#2C3B47; --rule-soft:#1F2B35; --tab:#1D2833;
+    --seal:#DC7B6B; --good:#63AC92; --open:#C6A65E;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 14px 30px -18px rgba(0,0,0,.8);
+  }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    background: var(--paper); color: var(--ink); font-family: var(--gothic);
+    font-size: 16px; line-height: 1.85; letter-spacing: .01em; scroll-snap-type: y proximity;
+  }
+
+  .rail {
+    position: fixed; left:0; top:0; bottom:0; width: 238px;
+    padding: 30px 14px 24px 24px; border-right: 1px solid var(--rule-soft);
+    background: var(--paper); display: flex; flex-direction: column; gap: 14px; z-index: 20; overflow-y: auto;
+  }
+  .rail-title { font-family: var(--mincho); font-size: 15px; letter-spacing:.06em; border-bottom: 1px solid var(--rule); padding-bottom: 10px; line-height: 1.5; }
+  .rail-title small { display:block; font-family: var(--mono); font-size: 10px; letter-spacing:.14em; color: var(--muted); margin-top: 4px; }
+  .rail nav { display: flex; flex-direction: column; gap: 1px; }
+  .rail a { display:grid; grid-template-columns: 22px 1fr; gap:8px; align-items: baseline; padding: 4px 8px 4px 4px; border-radius:3px; text-decoration:none; color: var(--muted); font-size: 12.5px; line-height: 1.4; border-left: 2px solid transparent; }
+  .rail a .n { font-family: var(--mono); font-size: 10px; }
+  .rail a:hover { color: var(--ink-2); background: var(--card-2); }
+  .rail a.on { color: var(--ink); border-left-color: var(--seal); font-weight: 600; }
+  .rail a:focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; }
+  .rail-foot { margin-top:auto; font-family: var(--mono); font-size: 10px; letter-spacing:.08em; color: var(--muted); line-height: 1.7; }
+  .topbar { display: none; }
+  main { margin-left: 238px; }
+
+  .slide { min-height: 100vh; scroll-snap-align: start; display: flex; align-items: center; padding: 68px 46px; border-bottom: 1px solid var(--rule-soft); }
+  .inner { width: 100%; max-width: 1000px; margin: 0 auto; }
+  .tab { display: inline-flex; align-items: baseline; gap: 10px; background: var(--tab); color: var(--ink-2); font-family: var(--mono); font-size: 10.5px; letter-spacing:.16em; padding: 5px 14px 4px; border-radius: 3px 3px 0 0; margin-bottom: -1px; }
+  .tab b { color: var(--seal); font-weight: 700; }
+  .sheet { background: var(--card); border: 1px solid var(--rule); border-radius: 0 3px 3px 3px; box-shadow: var(--shadow); padding: 30px 34px 34px; }
+
+  h1 { font-family: var(--mincho); font-size: clamp(26px,3.9vw,45px); line-height:1.35; letter-spacing:.02em; font-weight:600; text-wrap: balance; }
+  h2 { font-family: var(--mincho); font-size: clamp(20px,2.5vw,28px); line-height:1.45; letter-spacing:.03em; font-weight:600; text-wrap: balance; margin-bottom: 17px; }
+  h3 { font-size: 14.5px; font-weight:700; letter-spacing:.04em; margin-bottom: 7px; }
+  p { max-width: 70ch; }
+  .lead { font-size: 17px; color: var(--ink-2); }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; line-height: 1.75; }
+  em { font-style: normal; color: var(--seal); font-weight: 700; }
+  .stack > * + * { margin-top: 13px; }
+  .stack-lg > * + * { margin-top: 22px; }
+  .eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing:.2em; color: var(--muted); margin-bottom: 12px; }
+  hr.rule { border:0; border-top: 1px solid var(--rule-soft); margin: 20px 0; }
+
+  figure { margin: 0; }
+  figure svg { display:block; width:100%; max-width:100%; height:auto; color: var(--ink-2); }
+  figcaption { font-size: 12.5px; color: var(--muted); line-height: 1.7; margin-top: 11px; border-top: 1px solid var(--rule-soft); padding-top: 9px; }
+  figcaption b { color: var(--ink-2); }
+
+  svg .bx   { fill: var(--card-2); stroke: currentColor; stroke-width: 1.2; }
+  svg .bx-a { fill: none; stroke: var(--seal); stroke-width: 1.8; }
+  svg .bx-g { fill: none; stroke: var(--rule); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  svg .ln   { stroke: currentColor; fill: none; stroke-width: 1.2; }
+  svg .ln-a { stroke: var(--seal); fill: none; stroke-width: 1.6; }
+  svg .ln-d { stroke: currentColor; fill: none; stroke-width: 1.1; stroke-dasharray: 4 4; opacity:.7; }
+  svg .t    { fill: currentColor; font-family: var(--gothic); font-size: 12.5px; }
+  svg .t-s  { fill: var(--muted); font-family: var(--gothic); font-size: 11px; }
+  svg .t-m  { fill: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing:.08em; }
+  svg .t-a  { fill: var(--seal); font-family: var(--gothic); font-size: 12.5px; font-weight: 700; }
+  svg .t-b  { fill: currentColor; font-family: var(--gothic); font-size: 13px; font-weight: 700; }
+  svg .t-g  { fill: var(--good); font-family: var(--gothic); font-size: 12.5px; font-weight: 700; }
+  svg .fill-a { fill: var(--seal); } svg .fill-g { fill: var(--good); }
+  svg .fill-n { fill: var(--rule); } svg .fill-i { fill: var(--ink-2); }
+  svg .hollow { fill: none; stroke: var(--rule); stroke-width: 1.2; }
+
+  .cover-meta { display:grid; grid-template-columns: repeat(auto-fit,minmax(146px,1fr)); border-top: 1px solid var(--rule); margin-top: 28px; }
+  .cover-meta div { padding: 12px 16px 12px 0; border-right: 1px solid var(--rule-soft); }
+  .cover-meta div:last-child { border-right: 0; }
+  .cover-meta dt { font-family: var(--mono); font-size: 10px; letter-spacing:.14em; color: var(--muted); margin-bottom: 4px; }
+  .cover-meta dd { font-size: 14px; }
+
+  .asks { display: grid; gap: 12px; }
+  .ask { display:grid; grid-template-columns: 36px 1fr; gap: 14px; border: 1px solid var(--rule); border-left: 3px solid var(--seal); background: var(--card-2); padding: 16px 18px; }
+  .ask .num { font-family: var(--mono); font-size: 19px; color: var(--seal); font-variant-numeric: tabular-nums; }
+  .ask h3 { font-size: 15px; margin-bottom: 4px; }
+  .ask p { font-size: 13px; color: var(--ink-2); max-width: 62ch; }
+
+  .figs { display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:1px; background: var(--rule-soft); border: 1px solid var(--rule-soft); }
+  .fig { background: var(--card); padding: 16px 16px 14px; }
+  .fig .k { font-family: var(--mono); font-size: 10px; letter-spacing:.14em; color: var(--muted); }
+  .fig .v { font-family: var(--mincho); font-size: clamp(22px,2.9vw,33px); line-height:1.15; font-variant-numeric: tabular-nums; margin-top: 6px; }
+  .fig .v span { font-size: 13px; font-family: var(--gothic); color: var(--muted); margin-left: 3px; }
+  .fig .note { font-size: 11.5px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+  .fig.warn .v { color: var(--seal); }
+  .fig.ok .v { color: var(--good); }
+
+  .tw { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 10.5px; letter-spacing:.12em; color: var(--muted); font-weight: 400; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .pill { display:inline-block; font-family: var(--mono); font-size: 10px; letter-spacing:.1em; padding: 3px 8px; border-radius: 2px; white-space: nowrap; }
+  .pill.ok { color: var(--good); border: 1px solid var(--good); }
+  .pill.open { color: var(--open); border: 1px solid var(--open); }
+  .pill.stop { color: var(--seal); border: 1px solid var(--seal); }
+
+  blockquote { border-left: 2px solid var(--seal); padding: 3px 0 3px 18px; color: var(--ink-2); font-size: 14px; max-width: 66ch; }
+  blockquote cite { display:block; font-style: normal; font-family: var(--mono); font-size: 10.5px; letter-spacing:.06em; color: var(--muted); margin-top: 8px; }
+
+  .two { display:grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .three { display:grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+  .panel { border: 1px solid var(--rule); padding: 18px 20px; background: var(--card-2); }
+  .panel.a { border-top: 3px solid var(--seal); }
+  .panel.g { border-top: 3px solid var(--good); }
+
+  ul.ticks { list-style:none; display:grid; gap: 8px; }
+  ul.ticks li { display:grid; grid-template-columns: 15px 1fr; gap: 9px; font-size: 13px; line-height: 1.7; }
+  ul.ticks li::before { content:"—"; color: var(--muted); font-family: var(--mono); }
+  ul.ticks li.y::before { content:"✓"; color: var(--good); }
+  ul.ticks li.n::before { content:"✕"; color: var(--seal); font-weight:700; }
+
+  .decide { display:grid; grid-template-columns: 1fr 176px; gap: 28px; align-items: start; }
+  .entry { border-bottom: 1px solid var(--rule); padding: 13px 0 20px; }
+  .entry:last-child { border-bottom: 0; }
+  .entry .q { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .entry .h { font-size: 12.5px; color: var(--muted); }
+  .entry .line { margin-top: 11px; height: 27px; border-bottom: 1px dashed var(--rule); }
+  .seal-box { border: 1.5px solid var(--seal); aspect-ratio: 1/1.12; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color: var(--seal); }
+  .seal-box .ring { width: 84px; height: 84px; border: 2px solid var(--seal); border-radius: 50%; display:flex; align-items:center; justify-content:center; font-family: var(--mincho); font-size: 24px; letter-spacing:.1em; opacity:.28; }
+  .seal-box .cap { font-family: var(--mono); font-size: 10px; letter-spacing:.16em; }
+
+  .kbd { font-family: var(--mono); font-size: 10.5px; border: 1px solid var(--rule); padding: 1px 6px; border-radius: 3px; color: var(--muted); }
+  .rv { opacity:0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
+  .rv.in { opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce) { .rv { opacity:1; transform:none; transition:none; } }
+
+  .name-block { text-align: center; padding: 22px 0 4px; }
+  .name-block .pname { font-family: var(--mincho); font-size: clamp(36px,5.6vw,60px); letter-spacing: .06em; line-height: 1; }
+  .name-block .tag { font-size: clamp(15px,1.9vw,20px); color: var(--ink-2); margin-top: 14px; }
+  .name-block .sub { font-family: var(--mono); font-size: 10.5px; letter-spacing:.18em; color: var(--muted); margin-top: 12px; }
+
+  @media (max-width: 1020px) {
+    .rail { display:none; }
+    main { margin-left: 0; }
+    .topbar { display:block; position: fixed; top:0; left:0; right:0; height:3px; background: var(--rule-soft); z-index:30; }
+    .topbar i { display:block; height:100%; width:0; background: var(--seal); }
+    .slide { padding: 52px 18px; }
+    .sheet { padding: 22px 18px 26px; }
+    .two, .three, .decide { grid-template-columns: 1fr; }
+    .seal-box { max-width: 186px; }
+  }
+</style>
+
+<div class="topbar" aria-hidden="true"><i id="prog"></i></div>
+
+<aside class="rail">
+  <div class="rail-title">Filetto 着手決裁<small>P-001 / 2026-08-14</small></div>
+  <nav aria-label="アジェンダ">
+    <a href="#s00"><span class="n">00</span><span>表紙</span></a>
+    <a href="#s01"><span class="n">01</span><span>結論</span></a>
+    <a href="#s02"><span class="n">02</span><span>6本の調査</span></a>
+    <a href="#s03"><span class="n">03</span><span>本当の障壁は何だったか</span></a>
+    <a href="#s04"><span class="n">04</span><span>日本は過信していない</span></a>
+    <a href="#s05"><span class="n">05</span><span>何を作るのか</span></a>
+    <a href="#s06"><span class="n">06</span><span>規格が味方している</span></a>
+    <a href="#s07"><span class="n">07</span><span>既存製品で足りるか</span></a>
+    <a href="#s08"><span class="n">08</span><span>三方よし</span></a>
+    <a href="#s09"><span class="n">09</span><span>いくら使うか</span></a>
+    <a href="#s10"><span class="n">10</span><span>3つの案</span></a>
+    <a href="#s11"><span class="n">11</span><span>やめる条件</span></a>
+    <a href="#s12"><span class="n">12</span><span>決裁</span></a>
+    <a href="#s13"><span class="n">附</span><span>出典と、使わなかった数字</span></a>
+    <a href="#s14"><span class="n">訂</span><span>決裁後の訂正</span></a>
+  </nav>
+  <div class="rail-foot"><span class="kbd">↓</span> <span class="kbd">↑</span> で移動<br>起案 takenori-kusaka</div>
+</aside>
+
+<main>
+
+<!-- 00 -->
+<section class="slide" id="s00">
+  <div class="inner">
+    <span class="tab"><b>00</b> 決裁依頼書（再提出）</span>
+    <div class="sheet stack-lg rv">
+      <div>
+        <p class="eyebrow">案件番号 P-001 ／ 起案 2026-08-14 ／ <strong>2026-08-14 決裁済み（B案を承認）</strong></p>
+        <h1>調べ直したところ、<br><em>売る相手も、売り文句も、間違っていました。</em></h1>
+      </div>
+      <p class="lead">「外に出せない層のための製品」として提出し、差し戻していただきました。<br><strong>6本の調査で前提を確かめた結果、狙う相手と訴求の両方が変わります。</strong>作るもの自体は、ほぼそのままです。</p>
+      <dl class="cover-meta">
+        <div><dt>SPENT</dt><dd>推定20万円 ／ 実装0行</dd></div>
+        <div><dt>SURVEYS</dt><dd>6本（競合・需要・政策・障壁・先行事例・信頼設計）</dd></div>
+        <div><dt>FINDING</dt><dd>障壁は「出せない」でも「操作」でもなかった</dd></div>
+        <div><dt>PROPOSAL</dt><dd>訴求を変えて実施</dd></div>
+        <div><dt>DECIDED</dt><dd><strong>承認（2026-08-14）</strong></dd></div>
+      </dl>
+      <div class="note" style="border-left:3px solid var(--good);padding-left:14px;margin-top:8px">
+        <p style="margin:0"><strong>本資料は提示資料です。</strong>決裁の正本は <code>docs/decisions/P-001-kickoff-decision.md</code> です。<strong>食い違う場合は正本を正とします。</strong></p>
+        <p style="margin:6px 0 0"><strong>決裁後（2026-08-14）に、競合12製品の実測（S0-013）で訂正が3件出ています。</strong>末尾の「決裁後の訂正」を参照してください。<strong>いずれも決裁の判定を変えていません。</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 01 -->
+<section class="slide" id="s01">
+  <div class="inner">
+    <span class="tab"><b>01</b> 結論</span>
+    <div class="sheet stack-lg rv">
+      <h2>訴求を入れ替えます。<br><em>作るものは、ほぼ変わりません。</em></h2>
+
+      <figure>
+        <svg viewBox="0 0 900 176" role="img" aria-label="訴求の入れ替え。前回は外に出せない層のための製品で置くだけを主訴求としていた。今回はあなたのフォルダの中だけを見て答え、確認すべき箇所へ1クリックで到達できることを主訴求とし、置くだけとローカル完結は第二訴求へ降ろす。">
+          <text class="t-m" x="0" y="14">主訴求の入れ替え</text>
+
+          <rect class="hollow" x="0" y="30" width="386" height="120" rx="3"/>
+          <text class="t-m" x="20" y="54">前回</text>
+          <text class="t" x="20" y="80">外に出せない層のための製品</text>
+          <text class="t" x="20" y="104">フォルダに置くだけ</text>
+          <line class="ln-a" x1="20" y1="74" x2="252" y2="74"/>
+          <line class="ln-a" x1="20" y1="98" x2="176" y2="98"/>
+          <text class="t-s" x="20" y="132">どちらも調査で根拠が崩れた</text>
+
+          <path class="ln-a" d="M406 90 L468 90" marker-end="url(#arr1)"/>
+          <defs>
+            <marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--seal)"/>
+            </marker>
+          </defs>
+
+          <rect class="bx-a" x="490" y="30" width="410" height="120" rx="3"/>
+          <text class="t-m" x="512" y="54">今回</text>
+          <text class="t-a" x="512" y="80">あなたのフォルダの中だけを見て答える</text>
+          <text class="t-a" x="512" y="104">確かめるべき箇所へ、1クリックで行ける</text>
+          <text class="t-s" x="512" y="132">「置くだけ」「外に出ない」は第二訴求へ降ろす</text>
+        </svg>
+      </figure>
+
+      <div class="asks">
+        <div class="ask"><div class="num">1</div><div>
+          <h3>障壁は「出せない」でも「操作」でもなく、<strong>「信じてよいかわからない」</strong>でした</h3>
+          <p>公的調査で日本 <strong>40.5%</strong>、米独 19.6%。<strong>全10項目のうち、国際差が最大の項目です。</strong>そして本製品は、偶然ながらその設計を持っていました。</p></div></div>
+        <div class="ask"><div class="num">2</div><div>
+          <h3>その設計は、<strong>Unicode 標準規格が同じ結論に到達しています</strong></h3>
+          <p>「紛らわしい文字を自動で置き換えてはならない」——規格の原文と、本製品の受入基準が一致します。<strong>方針ではなく規格準拠として主張できます。</strong></p></div></div>
+        <div class="ask"><div class="num">3</div><div>
+          <h3>提案：訴求を変え、期間・要員・費用はそのままで実施</h3>
+          <p>6週間・1名・追加支出なし。<strong>受入基準を4件だけ手直しします。</strong>「やらない」も並べています（10枚目）。</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="slide" id="s02">
+  <div class="inner">
+    <span class="tab"><b>02</b> 6本の調査</span>
+    <div class="sheet stack-lg rv">
+      <h2>差し戻しをいただいてから、6本回しました。</h2>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:60px">記録</th><th>問い</th><th>結果</th><th style="width:92px">判定</th></tr></thead>
+          <tbody>
+            <tr><td class="num">S0-007</td><td>既存製品（Open WebUI）で足りるか</td><td>足りない。<strong>ファイル監視の実装がコード全体で0ヒット</strong>。ただし理由は当初と違った</td><td><span class="pill ok">作る理由あり</span></td></tr>
+            <tr><td class="num">S0-008</td><td>欲しがっている人はいるか</td><td><strong>「外に出せない」は障壁の首位ではなかった。</strong>弁護士会はクラウドを許容。中小企業の8割が「予定なし」</td><td><span class="pill stop">前提が崩壊</span></td></tr>
+            <tr><td class="num">S0-009</td><td>政策の追い風はあるか</td><td>AX は実在するが<strong>予算の91%は「AIを創る」側</strong>。オンプレは逆風</td><td><span class="pill open">弱い</span></td></tr>
+            <tr><td class="num">S0-010</td><td><strong>「使い方がわからない」の中身は何か</strong></td><td><strong>「誤った回答を信じてしまう」が日本で突出。米独の2.07倍</strong></td><td><span class="pill ok">軸が判明</span></td></tr>
+            <tr><td class="num">S0-011</td><td>「置くだけ」の先行事例はどうなったか</td><td><strong>大手3社が同じ方向へ収斂。ただし採用率は一桁台。</strong>アフォーダンスの証拠が不利</td><td><span class="pill stop">主訴求に不適</span></td></tr>
+            <tr><td class="num">S0-012</td><td><strong>「どこが不確かかを示す」に根拠は付くか</strong></td><td><strong>Unicode 規格・査読論文・商用3社の運用形が支持。</strong>ただし「表示」では足りない</td><td><span class="pill ok">中程度に強い</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="small"><strong>すべての調査に「作る理由が消える」という結論を用意し、それを排除しないことを条件にしました。</strong><span class="muted">S0-008 と S0-011 は、実際に自分の主張を否定する結果を返しています。</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="slide" id="s03">
+  <div class="inner">
+    <span class="tab"><b>03</b> 本当の障壁は何だったか</span>
+    <div class="sheet stack-lg rv">
+      <h2>選択肢の全文を、原本まで遡って確定させました。</h2>
+
+      <figure>
+        <svg viewBox="0 0 900 300" role="img" aria-label="IPA DX動向2025 図表2-12。生成AIを業務で活用する上での課題。日本と米国とドイツの比較。誤った回答を信じて業務に利用してしまうが日本40.5パーセント、米独ともに19.6パーセントで、全10項目中で国際差が最大。">
+          <text class="t-m" x="0" y="14">生成AIを業務で活用する上での課題（IPA『DX動向2025』図表2-12）</text>
+          <text class="t-m" x="900" y="14" text-anchor="end">■日本 ■米国 ■ドイツ</text>
+
+          <!-- rows -->
+          <g>
+            <text class="t" x="0" y="46">効果やリスクの理解が不足</text>
+            <rect class="fill-a" x="330" y="34" width="243" height="8"/>
+            <rect class="fill-i" x="330" y="45" width="188" height="8"/>
+            <rect class="fill-n" x="330" y="56" width="175" height="8"/>
+            <text class="t-s" x="588" y="46">48.6 / 37.5 / 35.0</text>
+          </g>
+
+          <g>
+            <text class="t-a" x="0" y="98">誤った回答を信じて業務に利用してしまう</text>
+            <rect class="fill-a" x="330" y="86" width="203" height="8"/>
+            <rect class="fill-i" x="330" y="97" width="98" height="8"/>
+            <rect class="fill-n" x="330" y="108" width="98" height="8"/>
+            <text class="t-a" x="588" y="98">40.5 / 19.6 / 19.6</text>
+            <text class="t-a" x="720" y="98">← 2.07倍</text>
+          </g>
+
+          <g>
+            <text class="t" x="0" y="150">ルールや基準の作成が難しい</text>
+            <rect class="fill-a" x="330" y="138" width="189" height="8"/>
+            <rect class="fill-i" x="330" y="149" width="148" height="8"/>
+            <rect class="fill-n" x="330" y="160" width="160" height="8"/>
+            <text class="t-s" x="588" y="150">37.8 / 29.5 / 32.0</text>
+          </g>
+
+          <g>
+            <text class="t" x="0" y="202">入力した情報が漏えいするリスク</text>
+            <rect class="fill-a" x="330" y="190" width="158" height="8"/>
+            <rect class="fill-i" x="330" y="201" width="133" height="8"/>
+            <rect class="fill-n" x="330" y="212" width="111" height="8"/>
+            <text class="t-s" x="588" y="202">31.6 / 26.5 / 22.2</text>
+          </g>
+
+          <g>
+            <text class="t" x="0" y="254">活用できそうな業務がない</text>
+            <rect class="fill-a" x="330" y="242" width="130" height="8"/>
+            <rect class="fill-i" x="330" y="253" width="54" height="8"/>
+            <rect class="fill-n" x="330" y="264" width="67" height="8"/>
+            <text class="t-s" x="588" y="254">25.9 / 10.8 / 13.4</text>
+          </g>
+
+          <line class="ln" x1="0" y1="284" x2="900" y2="284" stroke-dasharray="3 5"/>
+          <text class="t-s" x="0" y="298">選択肢は10個。「操作が難しい」に相当するものは、そもそも提示されていない</text>
+        </svg>
+        <figcaption>
+          <b>「操作が障壁」という仮説は、反証されたのではなく未検証です。</b>
+          企業向け3調査すべてで、選択肢として提示されていませんでした。回答者は答えたくても答えられません。
+          <b>ただし、選択肢が与えられた自治体調査では「技術を理解することが難しい」は14項目中10位でした。</b>
+        </figcaption>
+      </figure>
+
+      <hr class="rule">
+
+      <figure>
+        <svg viewBox="0 0 900 148" role="img" aria-label="自治体の生成AI導入における課題の3年経年比較。用途がわからない系は3年で21から41パーセント減少し、正確性への懸念と人材不足は増加している。">
+          <text class="t-m" x="0" y="14">自治体（全1,788団体・回答率100%）の課題 — 3年の推移</text>
+
+          <text class="t-a" x="0" y="42">正確性への懸念</text>
+          <text class="t-s" x="200" y="42">562 → 522 → <tspan class="t-a">608</tspan>　　増加・首位を維持</text>
+
+          <text class="t-a" x="0" y="66">人材がいない</text>
+          <text class="t-s" x="200" y="66">476 → 549 → <tspan class="t-a">558</tspan>　　増加</text>
+
+          <line class="ln" x1="0" y1="82" x2="900" y2="82" stroke-dasharray="3 5"/>
+
+          <text class="t" x="0" y="106">どの業務で使えるか不明</text>
+          <text class="t-s" x="200" y="106">466 → 413 → <tspan class="t-g">369</tspan>　　▲21%</text>
+
+          <text class="t" x="0" y="130">参考となる事例が少ない</text>
+          <text class="t-s" x="200" y="130">193 → 154 → <tspan class="t-g">113</tspan>　　▲41%</text>
+        </svg>
+        <figcaption>
+          <b>用途がわからないは、放っておいても解消していきます。</b>普及が進むと残るのは「信じてよいか」と「人材」です。
+          <b>「用途の発想」を狙うのは、縮小中の市場を追うことになります。</b>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="slide" id="s04">
+  <div class="inner">
+    <span class="tab"><b>04</b> 日本は過信していない</span>
+    <div class="sheet stack-lg rv">
+      <h2>もう一段掘ると、前提が反転しました。</h2>
+
+      <figure>
+        <svg viewBox="0 0 900 240" role="img" aria-label="KPMG メルボルン大学 47か国48000人調査の日本データ。AIを信頼する意思は日本28パーセント世界46パーセント。精度評価せずに依存したは日本56パーセント世界66パーセント。AI起因の業務ミスは日本40パーセント世界56パーセント。">
+          <text class="t-m" x="0" y="14">KPMG / メルボルン大学 47か国・48,000人超（2025）— 日本と世界平均</text>
+
+          <text class="t-b" x="0" y="52">AI を信頼する意思がある</text>
+          <rect class="fill-n" x="380" y="40" width="460" height="16" rx="1"/>
+          <rect class="fill-a" x="380" y="40" width="280" height="16" rx="1"/>
+          <text class="t-a" x="380" y="76">日本 28%</text>
+          <text class="t-s" x="676" y="76">世界 46%</text>
+          <text class="t-a" x="900" y="52" text-anchor="end">低い</text>
+
+          <text class="t-b" x="0" y="126">精度を評価せずに依存した</text>
+          <rect class="fill-n" x="380" y="114" width="460" height="16" rx="1"/>
+          <rect class="fill-g" x="380" y="114" width="391" height="16" rx="1"/>
+          <text class="t-g" x="380" y="150">日本 56%</text>
+          <text class="t-s" x="787" y="150">世界 66%</text>
+          <text class="t-g" x="900" y="126" text-anchor="end">世界より低い</text>
+
+          <text class="t-b" x="0" y="200">AI が原因で業務上のミスをした</text>
+          <rect class="fill-n" x="380" y="188" width="460" height="16" rx="1"/>
+          <rect class="fill-g" x="380" y="188" width="329" height="16" rx="1"/>
+          <text class="t-g" x="380" y="224">日本 40%</text>
+          <text class="t-s" x="725" y="224">世界 56%</text>
+          <text class="t-g" x="900" y="200" text-anchor="end">世界より低い</text>
+        </svg>
+        <figcaption>
+          <b>日本は「AI を過信している」のではありません。</b>検証せずに依存する割合も、AI 起因のミスも、世界平均より低い。
+          <b>低いのは信頼（28% 対 46%）と、リテラシー（研修を受けた 22%、効果的に使える 21%）です。</b>
+        </figcaption>
+      </figure>
+
+      <hr class="rule">
+
+      <div class="two">
+        <div class="stack">
+          <h3>つまり、こういうことです</h3>
+          <p class="small">公的調査が捉えた「誤った回答を信じてしまう 40.5%」は、<strong>実際に起きている過信の頻度ではなく、過信を恐れている度合いです。</strong></p>
+          <p class="small"><strong>日本の症状は、過信ではなく、不安による不採用でした。</strong></p>
+        </div>
+        <div class="stack">
+          <h3>だから訴求はこうなります</h3>
+          <p class="small"><strong>「過信を防ぎます」ではありません。</strong>それは起きていない問題を解く提案です。</p>
+          <p class="small"><em>「不安があるまま、使い始められます」</em></p>
+          <p class="small muted">80% が「オンラインの内容が AI 生成かもしれず信用できない」と答えている国で、信用を前提にしない道具を出す、ということです。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="slide" id="s05">
+  <div class="inner">
+    <span class="tab"><b>05</b> 何を作るのか</span>
+    <div class="sheet stack-lg rv">
+
+      <div class="name-block">
+        <div class="pname">Filetto</div>
+        <div class="tag">あなたのフォルダの中だけを見て答える、手元の書棚</div>
+        <div class="sub">ANSWERS ONLY FROM YOUR FOLDER ／ AGPL-3.0</div>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 900 320" role="img" aria-label="利用者がフォルダに置いたファイルを抽出と索引を経て保管層へ入れ、人向けの画面とAI向けのMCPが同じ保管層を参照する。答えには読み取れなかった箇所と紛らわしい文字が印として付き、そこから元のファイルの該当箇所へ1クリックで到達できる。処理はすべてこのパソコンの中で完結する。">
+          <defs>
+            <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+            <marker id="a2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--seal)"/>
+            </marker>
+          </defs>
+
+          <rect class="bx-g" x="12" y="12" width="700" height="212" rx="3"/>
+          <text class="t-m" x="26" y="34">このパソコンの中</text>
+
+          <rect class="bx-a" x="32" y="92" width="118" height="60" rx="3"/>
+          <text class="t-b" x="91" y="118" text-anchor="middle">フォルダ</text>
+          <text class="t-s" x="91" y="137" text-anchor="middle">原本を置いたまま</text>
+          <path class="ln" d="M150 122 L190 122" marker-end="url(#a2)"/>
+
+          <rect class="bx" x="190" y="92" width="110" height="60" rx="3"/>
+          <text class="t" x="245" y="118" text-anchor="middle">抽出</text>
+          <text class="t-s" x="245" y="137" text-anchor="middle">日本語 OCR</text>
+          <path class="ln" d="M300 122 L340 122" marker-end="url(#a2)"/>
+
+          <rect class="bx" x="340" y="92" width="110" height="60" rx="3"/>
+          <text class="t" x="395" y="118" text-anchor="middle">索引</text>
+          <text class="t-s" x="395" y="137" text-anchor="middle">語と意味</text>
+          <path class="ln" d="M450 122 L490 122" marker-end="url(#a2)"/>
+
+          <rect class="bx-a" x="490" y="86" width="124" height="72" rx="3"/>
+          <text class="t-b" x="552" y="114" text-anchor="middle">保管層</text>
+          <text class="t-s" x="552" y="134" text-anchor="middle">安定した識別子</text>
+
+          <path class="ln" d="M614 106 L676 70 L732 70" marker-end="url(#a2)"/>
+          <path class="ln" d="M614 140 L676 176 L732 176" marker-end="url(#a2)"/>
+          <rect class="bx" x="732" y="44" width="156" height="52" rx="3"/>
+          <text class="t" x="810" y="68" text-anchor="middle">人の入口</text>
+          <text class="t-s" x="810" y="85" text-anchor="middle">エクスプローラ相当</text>
+          <rect class="bx" x="732" y="150" width="156" height="52" rx="3"/>
+          <text class="t" x="810" y="174" text-anchor="middle">AI の入口</text>
+          <text class="t-s" x="810" y="191" text-anchor="middle">MCP で呼ぶ</text>
+          <text class="t-a" x="672" y="128" text-anchor="middle">同じ実体</text>
+
+          <!-- trust loop -->
+          <line class="ln" x1="0" y1="248" x2="900" y2="248" stroke-dasharray="3 5"/>
+          <text class="t-a" x="0" y="274">答えには「読めなかった箇所」「紛らわしい文字」の印が付く</text>
+          <path class="ln-a" d="M470 268 L540 268" marker-end="url(#a2g)"/>
+          <text class="t-a" x="556" y="274">その印から、元のファイルの該当箇所へ 1 クリック</text>
+          <text class="t-s" x="0" y="298">外部サービスへ送信する経路がない。API キー不要・実行時の外部通信ゼロ・月額 0 円</text>
+        </svg>
+        <figcaption>
+          <b>下段が、今回の調査で軸に据え直した部分です。</b>
+          「精度が高い」ではなく「どこが不確かか」を返し、<b>そこから原文へ 1 クリックで行けること</b>を中核にします。
+          研究が支持しているのは「表示すること」ではなく「確かめる手間を下げること」でした。
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="slide" id="s06">
+  <div class="inner">
+    <span class="tab"><b>06</b> 規格が味方している</span>
+    <div class="sheet stack-lg rv">
+      <h2>この設計は、思いつきではありませんでした。<br><em>Unicode 標準規格が、同じ結論に到達しています。</em></h2>
+
+      <blockquote>
+        skeleton は<strong>文字列の混同可能性を検査する内部用途のみを意図しており、結果のテキストは利用者への表示に適さない</strong>。<br>
+        識別子の「正規化」として<strong>使ってはならない（should definitely not be used）</strong>。
+        <cite>Unicode UTS #39 Unicode Security Mechanisms</cite>
+      </blockquote>
+
+      <p><strong>本製品の受入基準 F-002 13-3 は、こう書いています。</strong></p>
+
+      <blockquote>
+        システムは Unicode confusables に該当する文字を<strong>自動で置換してはならない</strong>
+        <cite>2026-08-13 に技術判断者が決定。規格を参照せずに、同じ結論へ到達していた</cite>
+      </blockquote>
+
+      <hr class="rule">
+
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:150px">本製品の受入基準</th><th>研究・規格の裏付け</th><th style="width:110px">判定</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>紛らわしい文字を自動で置き換えない</strong></td>
+              <td><strong>Unicode UTS #39 が明示的に同じ立場。</strong>規格が独立に到達している</td>
+              <td><span class="pill ok">強く妥当</span></td>
+            </tr>
+            <tr>
+              <td>紛らわしい文字を検出して記録する</td>
+              <td>UTS #39 が検出を security screening と位置づけ。CJK 字形の類似度定量化（Vision Transformer）、OCR 信頼度の統合が誤り検出を改善（いずれも査読論文）</td>
+              <td><span class="pill ok">妥当</span></td>
+            </tr>
+            <tr>
+              <td>読めなかった箇所を答えに付記する</td>
+              <td><strong>不確実性の言語的表明が正答率を上げる（FAccT 2024）。</strong>ただし<strong>一人称・具体的な表現のみ有意で、一般表現は非有意</strong></td>
+              <td><span class="pill open">文言次第</span></td>
+            </tr>
+            <tr>
+              <td>未処理の件数を答えに含める</td>
+              <td><strong>直接の先行研究を確認できず。</strong>「件数だけでは確かめる手間が下がらない」と理論上は予測される</td>
+              <td><span class="pill stop">要修正</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="two">
+        <div class="stack">
+          <h3>業界の運用形とも一致します</h3>
+          <p class="small"><strong>Azure / Google / AWS の3社が、抽出の信頼度を出して人手レビューへ回す運用を公式に推奨しています。</strong></p>
+          <p class="small muted">「精度が重要な場面では、自動的に受け入れるか人手レビューへ回すかの判定に confidence を使える」（Azure 公式）</p>
+        </div>
+        <div class="stack">
+          <h3>ただし「表示」だけでは足りません</h3>
+          <ul class="ticks">
+            <li class="n"><strong>引用元へのクリックは訪問の 1%</strong>（実ブラウジングログ・N=900）</li>
+            <li class="n"><strong>引用はランダムでも信頼を上げる。</strong>実際に確認すると信頼は下がる（AAAI 2025）</li>
+            <li class="y"><strong>確かめる手間を実際に下げた設計だけが効く</strong>（CSCW 2023・5実験 N=731）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="slide" id="s07">
+  <div class="inner">
+    <span class="tab"><b>07</b> 既存製品で足りるか</span>
+    <div class="sheet stack-lg rv">
+      <h2>足りません。ただし理由は当初と違いました。</h2>
+
+      <figure>
+        <svg viewBox="0 0 900 244" role="img" aria-label="Open WebUI はディスク上にフォルダ構造を持たず、UUID付きの平坦な名前で保存し、階層はデータベース上の論理ツリーで表現する。ファイル監視の実装はコード全体で0ヒット。外部同期の同一性キーはパスとファイル名なので、ローカルで動かすと削除と新規追加になる。">
+          <rect class="bx" x="0" y="24" width="430" height="182" rx="3"/>
+          <text class="t-b" x="22" y="52">Open WebUI</text>
+          <text class="t-s" x="22" y="72">148,717 ★／この領域で最も近い製品</text>
+
+          <rect class="hollow" x="22" y="90" width="180" height="46" rx="2"/>
+          <text class="t-s" x="112" y="110" text-anchor="middle">画面上のフォルダ</text>
+          <text class="t-s" x="112" y="127" text-anchor="middle">DBの論理ツリー</text>
+
+          <rect class="hollow" x="228" y="90" width="180" height="46" rx="2"/>
+          <text class="t-s" x="318" y="110" text-anchor="middle">ディスク上</text>
+          <text class="t-m" x="318" y="127" text-anchor="middle">{uuid}_{name} が平坦に</text>
+
+          <line class="ln-a" x1="207" y1="102" x2="221" y2="126"/>
+          <line class="ln-a" x1="221" y1="102" x2="207" y2="126"/>
+
+          <text class="t-a" x="22" y="162">ファイル監視の実装 … コード全体で 0 ヒット</text>
+          <text class="t-s" x="22" y="182">外部同期の同一性キーは（パス, ファイル名）</text>
+          <text class="t-s" x="22" y="199">→ ローカルで動かすと「削除＋新規追加」になる</text>
+
+          <rect class="bx-a" x="466" y="24" width="434" height="182" rx="3"/>
+          <text class="t-b" x="488" y="52">Filetto（構想）</text>
+          <text class="t-s" x="488" y="72">実装 0 行</text>
+
+          <rect class="hollow" x="488" y="90" width="390" height="46" rx="2"/>
+          <text class="t-s" x="683" y="110" text-anchor="middle">エクスプローラのフォルダ ＝ そのまま実体</text>
+          <text class="t-m" x="683" y="127" text-anchor="middle">置いた場所を、置いたまま扱う</text>
+
+          <text class="t-a" x="488" y="162">人がエクスプローラで動かしても、AI 側が追従する</text>
+          <text class="t-s" x="488" y="182">← まだ作っていないので未証明。やめる条件6 で測る</text>
+          <text class="t-s" x="488" y="199">AI 向けの入口（MCP）を公開できる製品は 22 中 2 つのみ</text>
+
+          <line class="ln" x1="0" y1="226" x2="900" y2="226" stroke-dasharray="3 5"/>
+          <text class="t-s" x="0" y="242">Open WebUI は「取り込んだコピーを整理する箱」であり、「利用者のファイルそのものを扱う倉庫」ではない</text>
+        </svg>
+      </figure>
+
+      <div class="two">
+        <div class="stack">
+          <h3>正直に：勝てない点</h3>
+          <ul class="ticks">
+            <li class="n">オフライン化は公式対応済み。起動もコマンド1行</li>
+            <li class="n">フォルダ階層・ドラッグ移動・リネームは実在する</li>
+            <li class="n"><strong>upstream へ足す道は使えません。</strong>CLA が無制限の商用化権を要求し、50ユーザ超では製品名も出せない</li>
+          </ul>
+        </div>
+        <div class="stack">
+          <h3>そして「置くだけ」は差別化になりません</h3>
+          <p class="small"><strong>Dropbox は独立 AI 製品を2年やって native 化へ方針転換。Microsoft はエクスプローラの右クリックへ AI を投入。Google は Drive のフォルダ要約を全有料プランへ同梱。</strong></p>
+          <p class="small muted">方向は正しかったが、<strong>すでに踏まれた土俵</strong>です。しかも大手も採用率は伸びていません（Dropbox「露出は限定的」、Microsoft は一桁台）。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="slide" id="s08">
+  <div class="inner">
+    <span class="tab"><b>08</b> 三方よし</span>
+    <div class="sheet stack-lg rv">
+      <h2>買い手を、狙い直しました。</h2>
+
+      <div class="three">
+        <div class="panel a stack">
+          <h3>買い手よし <span class="pill open">狭めた</span></h3>
+          <p class="small"><strong>「外に出せない層」から「不安で使い始められない層」へ。</strong></p>
+          <p class="small">日本は AI を信頼する意思が 28%（世界 46%）、研修を受けた人が 22%、効果的に使えると感じる人が 21%。</p>
+          <p class="small"><strong>確実に存在する買い手は、起案者本人1名です。</strong>市場としての買い手は、公開後に観測します。</p>
+        </div>
+        <div class="panel g stack">
+          <h3>売り手よし <span class="pill ok">維持</span></h3>
+          <p class="small">自社は「AI に実装させながら品質を落とさない開発の進め方」を標準として公開しています。<strong>実装案件で回した実績がありません。</strong></p>
+          <p class="small"><strong>本案件がその1件目です。</strong>すでに標準の不足を12件見つけて起票しました。</p>
+          <p class="small muted">＋ 日本語文書処理の実測知見（他案件へ転用可）</p>
+        </div>
+        <div class="panel stack">
+          <h3>世間よし <span class="pill open">限定</span></h3>
+          <p class="small">AGPL-3.0 で公開し、囲い込みません。</p>
+          <p class="small"><strong>日本語 OCR の中国語字形混入を扱った製品・研究は、調査範囲で確認できませんでした。</strong>ここは空白のままです。</p>
+          <p class="small muted">ただし行政向けは、デジタル庁が「源内」を OSS 公開する方針。そちらの空白は政府が埋めます。</p>
+        </div>
+      </div>
+
+      <hr class="rule">
+
+      <blockquote>
+        引用があると信頼が上がる。<strong>ただしそれは引用がランダムであっても同じだった。</strong>参加者が実際に引用を確認すると、<strong>信頼は有意に低下した。</strong>
+        <cite>Ding et al., Citations and Trust in LLM Generated Responses, AAAI 2025</cite>
+      </blockquote>
+      <p class="small"><strong>この論文が、本案件の立ち位置を決めました。</strong>引用を出すだけの製品は、確かめられないまま信頼だけを水増しします。<span class="muted">確かめる手間を実際に下げるところまでやる製品は、まだ見つかっていません。</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="slide" id="s09">
+  <div class="inner">
+    <span class="tab"><b>09</b> いくら使うか</span>
+    <div class="sheet stack-lg rv">
+      <h2>期間・要員・費用は、一度も変えていません。</h2>
+
+      <div class="figs">
+        <div class="fig warn"><div class="k">これまでに使った</div><div class="v">20<span>万円（推定）</span></div><div class="note">実装0行・調査6本</div></div>
+        <div class="fig"><div class="k">これから</div><div class="v">6<span>週間</span></div><div class="note">2026-09 末まで</div></div>
+        <div class="fig"><div class="k">要員</div><div class="v">1<span>名 + AI</span></div><div class="note">増員しない</div></div>
+        <div class="fig ok"><div class="k">追加の支出</div><div class="v">0<span>円</span></div><div class="note">既契約の範囲内</div></div>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 900 112" role="img" aria-label="仮置き上限100万円のうち20万円を消費済み。残り80万円。">
+          <text class="t-m" x="0" y="14">決裁前に使ってよい上限（仮置き）に対する消費</text>
+          <rect class="fill-n" x="0" y="28" width="900" height="30" rx="2"/>
+          <rect class="fill-a" x="0" y="28" width="180" height="30" rx="2"/>
+          <line class="ln-a" x1="180" y1="20" x2="180" y2="70"/>
+          <text class="t-a" x="0" y="86">20万円 使用済み</text>
+          <text class="t-s" x="196" y="86">残り 80万円</text>
+          <text class="t-m" x="900" y="86" text-anchor="end">仮置き上限 100万円</text>
+          <text class="t-s" x="0" y="106">この上限は「使い切ってよい額」ではなく、超える前に決裁へ持ち込むための目安です</text>
+        </svg>
+      </figure>
+
+      <hr class="rule">
+
+      <div class="two">
+        <div class="stack">
+          <h3>調査6本に使った分について</h3>
+          <p class="small"><strong>これは「6週間の実装を終えてから不要と分かる費用」を先に潰したものです。</strong></p>
+          <p class="small">実際に S0-008 と S0-011 は、私自身の主張を否定する結果を返しました。<strong>作ってから知るより、桁違いに安く済んでいます。</strong></p>
+        </div>
+        <div class="stack">
+          <h3>費用の性質を分けて報告します</h3>
+          <ul class="ticks">
+            <li class="y"><strong>将来の費用を減らした</strong>：調査6本・法令確認・競合22製品</li>
+            <li class="n"><strong>減らさなかった</strong>：装置の整備の手戻り、資料の作り直し</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" id="s10">
+  <div class="inner">
+    <span class="tab"><b>10</b> 3つの案</span>
+    <div class="sheet stack-lg rv">
+      <h2>やる・やらない・訴求を変えてやる。<br><em>B を推します。</em></h2>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:132px">案</th><th>内容</th><th>得るもの</th><th>失うもの</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>A</strong><br>中止</td>
+              <td>ここで止める。調査記録は残す</td>
+              <td>これ以上の支出が発生しない</td>
+              <td><strong>20万円が損失として確定。</strong>開発の進め方の実証が途中で終わる。自分の道具も手に入らない</td>
+            </tr>
+            <tr style="background:var(--card-2)">
+              <td><strong>B</strong><br><strong>訴求を変えて実施</strong><br><span class="pill ok">推奨</span></td>
+              <td><strong>主訴求を「置くだけ」から「フォルダの中だけを見て答える／確かめる箇所へ1クリック」へ。</strong>受入基準を4件手直しし、公開して観測する</td>
+              <td><strong>規格に裏付けられた差別化／実証の完遂／自分の道具／市場仮説を公開後に無料で検証</strong></td>
+              <td>「市場を取る」という説明は使えない。買い手は当面1名</td>
+            </tr>
+            <tr>
+              <td><strong>C</strong><br>現行のまま</td>
+              <td>「外に出せない層」「置くだけ」のまま進める</td>
+              <td>—</td>
+              <td><strong>根拠が崩れた主張で進むことになる。</strong>大手3社と同じ土俵で戦うことになる</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="rule">
+
+      <div class="two">
+        <div class="stack">
+          <h3>B を推す理由</h3>
+          <ul class="ticks">
+            <li class="y"><strong>費用が変わりません。</strong>6週間・1名・追加支出なし</li>
+            <li class="y"><strong>訴求が、測って分かった一位の障壁を狙います。</strong>前回は二位以下を狙っていました</li>
+            <li class="y"><strong>Unicode 規格が設計を裏付けています。</strong>後付けではなく、既に決めていた基準と一致</li>
+            <li class="y">技術的な空白は、コードで確認済みです</li>
+          </ul>
+        </div>
+        <div class="stack">
+          <h3>B のリスク</h3>
+          <ul class="ticks">
+            <li class="n"><strong>過信を減らす設計は、最も嫌われるという研究があります</strong>（CHI 2021・N=199）</li>
+            <li class="n"><strong>示しても人は確かめない</strong>（クリック率 1%）。1クリック導線が効くかは未検証</li>
+            <li class="n">「エクスプローラで動かしても追従する」も未検証です</li>
+            <li>3つとも、やめる条件で観測します</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide" id="s11">
+  <div class="inner">
+    <span class="tab"><b>11</b> やめる条件</span>
+    <div class="sheet stack-lg rv">
+      <h2>止める線を、8つに増やしました。</h2>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:32px">#</th><th>止める条件</th><th>どう見るか</th><th style="width:96px">時期</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td>起案者自身が日常的に使っていない</td><td>直近4週間で検索の実行が0件</td><td>毎月末</td></tr>
+            <tr><td class="num">2</td><td>9月末までに動く状態にならない</td><td>1コマンドで起動しない、または検索が動かない</td><td>9月末</td></tr>
+            <tr><td class="num">3</td><td>AI 利用料が枠を超える</td><td>週あたり枠を2週続けて使い切る、または上限を超える</td><td>毎週金曜</td></tr>
+            <tr><td class="num">4</td><td>ライセンス上の支障が残る</td><td>公開ライセンスと両立しない部品が混入し、代替が見つからない</td><td>都度</td></tr>
+            <tr><td class="num">5</td><td>責任者が4週間以上不在になる</td><td>—</td><td>毎月末</td></tr>
+            <tr><td class="num">6</td><td><strong>「エクスプローラで動かしても AI 側が追従する」が実装できない</strong></td><td>これが技術的な唯一の差。成立しないと分かった時点で中止</td><td>実装の途中</td></tr>
+            <tr><td class="num">7</td><td>公開後3か月で、起案者以外の利用が0件</td><td>スター・フォーク・Issue のいずれも0</td><td>公開後3か月</td></tr>
+            <tr style="background:var(--card-2)"><td class="num"><strong>8</strong></td><td><strong>「確かめる箇所へ1クリック」が、実際に確かめられていない</strong></td><td><strong>起案者自身が、印から原文へ飛ぶ操作を1か月で1度も使わなかった場合</strong></td><td><strong>公開後1か月</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="small"><strong>8 を今回追加しました。</strong>研究が示す最大の落とし穴（示しても人は確かめない）を、自分たちで踏んでいないかを測ります。<span class="muted">起案者すら使わない導線は、他人も使いません。</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide" id="s12">
+  <div class="inner">
+    <span class="tab"><b>12</b> 決裁</span>
+    <div class="sheet rv">
+      <div class="decide">
+        <div>
+          <h2 style="margin-bottom:5px">お決めいただくこと</h2>
+          <p class="small muted" style="margin-bottom:16px">条件付きでも構いません。条件は記録に残します。</p>
+          <div class="entry"><div class="q">1. A（中止）／ B（訴求を変えて実施）／ C（現行のまま）</div><div class="h">PO の推奨は B</div><div class="line"></div></div>
+          <div class="entry"><div class="q">2. 主訴求の入れ替えを認めるか</div><div class="h">「外に出せない層／置くだけ」→「フォルダの中だけを見て答える／確かめる箇所へ1クリック」</div><div class="line"></div></div>
+          <div class="entry"><div class="q">3. 決裁前に使ってよい上限</div><div class="h">仮置き100万円。現在20万円</div><div class="line"></div></div>
+        </div>
+        <div class="seal-box"><div class="ring">決裁</div><div class="cap">2026 . 08 . __</div></div>
+      </div>
+      <hr class="rule">
+      <div class="two">
+        <div>
+          <h3>B を選ばれた場合、次に起きること</h3>
+          <ul class="ticks">
+            <li class="y">企画書を改訂し、崩れた主張を取り下げる</li>
+            <li class="y"><strong>受入基準を4件手直しする</strong>（未処理件数→どのファイルがなぜ／付記の文言／1クリック導線の新設）</li>
+            <li class="y">残り2機能の実装計画を作り、承認を経て実装へ</li>
+            <li class="y">実装前に、テスト書き換えの禁止を機械的に戻す</li>
+          </ul>
+        </div>
+        <div>
+          <h3>A を選ばれた場合</h3>
+          <ul class="ticks">
+            <li class="n">20万円は損失として確定します</li>
+            <li class="y"><strong>調査6本と、標準への起票12件は残ります。</strong>それは将来の開発費用をゼロにした投資です</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide" id="s13">
+  <div class="inner">
+    <span class="tab"><b>附</b> 出典と、使わなかった数字</span>
+    <div class="sheet stack-lg rv">
+      <h2>数字はすべて出典に当たっています。</h2>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:210px">記述</th><th>出典</th><th style="width:70px">種別</th></tr></thead>
+          <tbody>
+            <tr><td>「誤った回答を信じてしまう」40.5%</td><td>IPA『DX動向2025』図表2-12（本文 p.41 の定性記述は確認済み。<strong>数値は図表画像内のため未検証</strong>）</td><td><span class="pill open">一次・要確認</span></td></tr>
+            <tr><td>日本の信頼 28%・研修 22%</td><td>Gillespie et al., KPMG / メルボルン大学『Trust, attitudes and use of AI: A global study 2025』47か国・48,000人超</td><td><span class="pill ok">一次</span></td></tr>
+            <tr><td>自治体の3年推移</td><td>総務省「地方自治体におけるAI・RPAの導入状況等調査」1,788団体・回答率100%</td><td><span class="pill ok">一次</span></td></tr>
+            <tr><td>「自動で置換してはならない」</td><td>Unicode UTS #39 Unicode Security Mechanisms</td><td><span class="pill ok">一次・規格</span></td></tr>
+            <tr><td>不確実性の表明が正答率を上げる</td><td>Kim et al., FAccT 2024（arXiv:2405.00623）</td><td><span class="pill ok">査読</span></td></tr>
+            <tr><td>引用はランダムでも信頼を上げる</td><td>Ding et al., AAAI 2025（arXiv:2501.01303）</td><td><span class="pill ok">査読</span></td></tr>
+            <tr><td>引用クリックは訪問の1%</td><td>Chapekis et al., IC2S2 2026。米国成人900名の実ブラウジングログ</td><td><span class="pill ok">査読</span></td></tr>
+            <tr><td>確かめる手間を下げた設計だけが効く</td><td>Vasconcelos et al., CSCW 2023（5実験・N=731）</td><td><span class="pill ok">査読</span></td></tr>
+            <tr><td>過信を減らす設計は最も嫌われる</td><td>Buçinca et al., CHI 2021（N=199）</td><td><span class="pill ok">査読</span></td></tr>
+            <tr><td>Open WebUI の実装</td><td>ソースコード実測（<code>open-webui/open-webui</code> @ <code>01f4282</code>）</td><td><span class="pill ok">一次</span></td></tr>
+            <tr><td>Dropbox の方針転換</td><td>Dropbox Q2 2026 決算コール</td><td><span class="pill ok">一次</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="rule">
+      <div class="two">
+        <div class="stack">
+          <h3>使わなかった数字</h3>
+          <ul class="ticks">
+            <li class="n">「情シス専任がいない中小企業は約3割」<br><span class="muted">一次統計が存在しない。上位はすべてベンダー自主調査</span></li>
+            <li class="n">総務省 通信利用動向調査のクラウド利用率<br><span class="muted">企業編が従業者100人以上限定。想定顧客の値ではない</span></li>
+            <li class="n">「日本人はプロンプトが書けない」<br><span class="muted">論拠の OECD 調査では、<strong>日本は上位</strong>。逆向きの証拠だった</span></li>
+            <li class="n">政府の AX 予算 5,027億円<br><span class="muted">91%は「AIを創る」側。本製品の位置づけには使えない</span></li>
+          </ul>
+        </div>
+        <div class="stack">
+          <h3>確かめられなかったこと</h3>
+          <ul class="ticks">
+            <li>日税連 第7回税理士実態調査の AI 項目<br><span class="muted">会員限定。士業の判定が変わりうる唯一のデータ</span></li>
+            <li>Open WebUI の実機検証6項目<br><span class="muted">ソースコードでの判定に留めた</span></li>
+            <li>「未処理件数の表示」の先行研究<br><span class="muted">直接の研究・事例が見つからず。受入基準を修正する根拠</span></li>
+            <li>日本語 OCR の字形混入を扱った製品・研究<br><span class="muted">確認できず。空白である可能性</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 14 決裁後の訂正 -->
+<section class="slide" id="s14">
+  <div class="inner">
+    <span class="tab"><b>訂</b> 決裁後の訂正（S0-013 / S0-014）</span>
+    <div class="sheet stack-lg rv">
+      <h2>決裁の後、実測で3件を訂正しました。</h2>
+      <p class="lead"><strong>いずれも決裁の判定を変えていません。</strong>資料の主張のうち、実測と食い違った箇所を記録します。<br><strong>訂正を消して整えるより、訂正が残っているほうが後から使えます。</strong></p>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th style="width:230px">決裁時の記述</th><th>実測（2026-08-14 以降）</th><th style="width:90px">判定への影響</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>自機能を MCP サーバとして公開する製品は 22中2つのみ</strong></td>
+              <td><strong>一致しました。</strong>12製品の実測で <code>RAGFlow</code> と <code>Onyx</code> の2件。名指ししていた2製品と同一（S0-013）</td>
+              <td><span class="pill ok">変えない</span></td>
+            </tr>
+            <tr>
+              <td><strong>Open WebUI は22製品中で唯一「UI × ローカル RAG」を両立</strong></td>
+              <td><strong>誤りでした。</strong><code>RAGFlow</code> も入れ子フォルダ・リネーム・削除を持ちます（Apache-2.0 / star 87,989）。<strong>残る差分は3点まで狭まりました</strong>——日本語 OCR の既定・ファイル監視・1クリック導線</td>
+              <td><span class="pill open">狭まる</span></td>
+            </tr>
+            <tr>
+              <td><strong>Open WebUI のライセンスは MIT</strong></td>
+              <td><strong>誤りでした。</strong>Open WebUI License（BSD-3 + ブランディング保持条項、CLA 必須）。<strong>ただしエンドユーザ50人未満は例外</strong>であり、本案件は範囲内です</td>
+              <td><span class="pill ok">変えない</span></td>
+            </tr>
+            <tr>
+              <td><strong>抽出の工程が原文内の位置を返せる（前提）</strong></td>
+              <td><strong>5経路を実際に動かしました（S0-014）。</strong><code>.xlsx</code> <code>.xls</code> <code>.pptx</code> <code>.pdf</code>／画像は取れます。<strong><code>.docx</code> はページ上の位置を持たず、<code>.doc</code> は位置情報そのものがありません</strong></td>
+              <td><span class="pill open">仕様へ反映</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="rule">
+      <div class="two">
+        <div class="stack">
+          <h3>決裁で確定した数字</h3>
+          <ul class="ticks">
+            <li class="y"><strong>着手決裁前の累計投入量の上限 — 140時間</strong><br><span class="muted">仮置きの100万円から、時間へ改めました。<strong>金額は本人の申告であり検証を経ていません。時間は機械で数えられます</strong></span></li>
+            <li class="y"><strong>やめる条件 — 8件</strong><br><span class="muted">5件から増やしました。追加の3件は「追従が実装できない」「公開後3か月で利用0件」「1クリック導線が実際に使われない」</span></li>
+            <li class="y"><strong>期間・要員・費用 — 変えていません</strong><br><span class="muted">6週間 ／ 1名+AI ／ 追加支出0円。企画書 v1.0 から一度も変えていません</span></li>
+          </ul>
+        </div>
+        <div class="stack">
+          <h3>確かめられていないこと</h3>
+          <ul class="ticks">
+            <li class="n"><strong>1クリック導線が実際に使われるか</strong><br><span class="muted">クリック率1%（Chapekis）は検索エンジンの引用リンクの測定であり、本製品の利用者と同一の母集団ではありません。<strong>やめる条件8 が観測します</strong></span></li>
+            <li class="n"><strong>「エクスプローラで動かしても追従する」</strong><br><span class="muted">決裁時点で未実装かつ未証明。<strong>12製品すべてでファイル監視の実装は0件です。空白であることと、実装できることは別です</strong></span></li>
+            <li class="n"><strong>競合22製品のうち10製品分は未取得</strong><br><span class="muted">実測できたのは12製品です</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="rule">
+      <p class="muted" style="font-size:13px">この資料は提示資料です。決裁の正本は <code>docs/decisions/P-001-kickoff-decision.md</code>、判定記録は <code>docs/gates/g1-P-001-2026-08-13-rejudge.md</code> です。</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var links  = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+    var prog   = document.getElementById('prog');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var rv = e.target.querySelector('.rv');
+        if (rv) rv.classList.add('in');
+        var i = slides.indexOf(e.target);
+        links.forEach(function (a, j) { a.classList.toggle('on', j === i); });
+        if (prog) prog.style.width = ((i + 1) / slides.length * 100) + '%';
+      });
+    }, { threshold: 0.3 });
+    slides.forEach(function (s) { io.observe(s); });
+
+    function current() {
+      var best = 0, bestTop = Infinity;
+      slides.forEach(function (s, i) {
+        var t = Math.abs(s.getBoundingClientRect().top);
+        if (t < bestTop) { bestTop = t; best = i; }
+      });
+      return best;
+    }
+    document.addEventListener('keydown', function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+      var i = current(), n = null;
+      if (ev.key === 'ArrowDown' || ev.key === 'PageDown' || ev.key === ' ') n = i + 1;
+      if (ev.key === 'ArrowUp'   || ev.key === 'PageUp')  n = i - 1;
+      if (n === null || n < 0 || n >= slides.length) return;
+      ev.preventDefault();
+      slides[n].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  })();
+</script>
