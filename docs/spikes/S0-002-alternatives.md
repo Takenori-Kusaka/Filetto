@@ -90,6 +90,8 @@ MIT で商用制約がなく、Filetto が必要とする形式をほぼ単体�
 | LightRAG | MIT | 必須 | GraphRAG より軽量。未検証 |
 | Graphify | Apache-2.0 / MIT | 必須(またはホストエージェント) | S0-001 の対象 |
 
+> **【2026-08-14 是正】** 上表に **RAGFlow(infiniflow/ragflow)が含まれていない。** S0-013 の実測では、RAGFlow は Apache-2.0(LICENSE 本文に追加条項なし)、star 87,989、最終 push 2026-08-13 の活動中プロジェクトで、**MCP サーバ / クライアントの両対応**と**入れ子フォルダ・リネーム・削除のファイル操作**を持つ。**ただし v0.22.0 以降は埋め込みモデル同梱版を廃止したため、既定ではローカル完結しない**(`docker/.env` に "v0.22+ doesn't include embedding models." と明記)。**本表の「LLM 依存」欄の観点では、RAGFlow は外部モデルプロバイダの設定を要する側に入る。** 詳細は [S0-013](./S0-013-competitor-matrix.md) を参照。
+
 ### Microsoft GraphRAG は、この企画とは逆を向いています
 
 MIT ライセンスで、35k stars、活発に開発されています。ただし README 冒頭に次の警告があります。
