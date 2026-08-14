@@ -1,0 +1,202 @@
+{
+  "inashiki-06.docx": {
+    "elapsed_sec": 0.13,
+    "num_pages": 0,
+    "page_numbers_seen": [],
+    "items_total": 68,
+    "items_with_prov": 0,
+    "sample_items": [],
+    "top_level_keys": [
+      "body",
+      "form_items",
+      "furniture",
+      "groups",
+      "key_value_items",
+      "name",
+      "origin",
+      "pages",
+      "pictures",
+      "schema_name",
+      "tables",
+      "texts",
+      "version"
+    ]
+  },
+  "chisou-01.pptx": {
+    "elapsed_sec": 0.32,
+    "num_pages": 32,
+    "page_numbers_seen": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "items_total": 434,
+    "items_with_prov": 434,
+    "sample_items": [
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/0",
+        "label": "paragraph",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 267242.0,
+              "t": 418012.0,
+              "r": 1567543.0,
+              "b": 152986.0,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              7
+            ]
+          }
+        ],
+        "text_head": "（様式1-1）"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/1",
+        "label": "title",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 681038.0,
+              "t": 3509963.0,
+              "r": 9224963.0,
+              "b": 1122363.0,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              9
+            ]
+          }
+        ],
+        "text_head": "【計画のタイトル】"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/2",
+        "label": "paragraph",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 1238250.0,
+              "t": 6534363.0,
+              "r": 8667750.0,
+              "b": 3923584.0,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              79
+            ]
+          }
+        ],
+        "text_head": "令和６年度地方大学・地域産業創生交付金 実施計画　本体（展開枠） "
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/3",
+        "label": "paragraph",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 1238250.0,
+              "t": 6534363.0,
+              "r": 8667750.0,
+              "b": 3923584.0,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              79
+            ]
+          }
+        ],
+        "text_head": "【申請地方公共団体名】"
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/4",
+        "label": "paragraph",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 1238250.0,
+              "t": 6534363.0,
+              "r": 8667750.0,
+              "b": 3923584.0,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              79
+            ]
+          }
+        ],
+        "text_head": ""
+      },
+      {
+        "kind": "texts",
+        "self_ref": "#/texts/5",
+        "label": "paragraph",
+        "prov": [
+          {
+            "page_no": 1,
+            "bbox": {
+              "l": 1238250.0,
+              "t": 6534363.0,
+              "r": 8667750.0,
+              "b": 3923584.0,
+              "coord_origin": "BOTTOMLEFT"
+            },
+            "charspan": [
+              0,
+              79
+            ]
+          }
+        ],
+        "text_head": "※原則として既存の計画から発展・変更した部分を下線等により明示。"
+      }
+    ],
+    "top_level_keys": [
+      "body",
+      "form_items",
+      "furniture",
+      "groups",
+      "key_value_items",
+      "name",
+      "origin",
+      "pages",
+      "pictures",
+      "schema_name",
+      "tables",
+      "texts",
+      "version"
+    ]
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "inashiki-01.xls": {
+    "library": "xlrd",
+    "version": "2.0.2",
+    "sheets": [
+      {
+        "name": "入札（見積）書",
+        "nrows": 45,
+        "ncols": 30,
+        "text_cells": 22
+      }
+    ],
+    "sample_cells": [
+      {
+        "sheet": "入札（見積）書",
+        "row": 0,
+        "col": 0,
+        "text": "様式第１０号（第１７条第１項関係）"
+      },
+      {
+        "sheet": "入札（見積）書",
+        "row": 3,
+        "col": 0,
+        "text": "入札書"
+      },
+      {
+        "sheet": "入札（見積）書",
+        "row": 8,
+        "col": 25,
+        "text": "年"
+      },
+      {
+        "sheet": "入札（見積）書",
+        "row": 8,
+        "col": 27,
+        "text": "月"
+      },
+      {
+        "sheet": "入札（見積）書",
+        "row": 8,
+        "col": 29,
+        "text": "日"
+      }
+    ]
+  },
+  "inashiki-08.xls": {
+    "library": "xlrd",
+    "version": "2.0.2",
+    "sheets": [
+      {
+        "name": "工程表",
+        "nrows": 38,
+        "ncols": 78,
+        "text_cells": 66
+      }
+    ],
+    "sample_cells": [
+      {
+        "sheet": "工程表",
+        "row": 0,
+        "col": 0,
+        "text": "別記様式第１号"
+      },
+      {
+        "sheet": "工程表",
+        "row": 2,
+        "col": 0,
+        "text": "工　　　　程　　　　表"
+      },
+      {
+        "sheet": "工程表",
+        "row": 5,
+        "col": 27,
+        "text": "工事名"
+      },
+      {
+        "sheet": "工程表",
+        "row": 5,
+        "col": 57,
+        "text": "着手年月日"
+      },
+      {
+        "sheet": "工程表",
+        "row": 5,
+        "col": 68,
+        "text": "年"
+      }
+    ]
+  },
+  "inashiki-07.doc": {
+    "library": "olefile",
+    "version": "0.47",
+    "streams": [
+      "\u0001CompObj",
+      "\u0001Ole",
+      "\u0005DocumentSummaryInformation",
+      "\u0005SummaryInformation",
+      "1Table",
+      "WordDocument"
+    ],
+    "stream_sizes": {
+      "\u0001CompObj": 106,
+      "\u0001Ole": 20,
+      "\u0005DocumentSummaryInformation": 116,
+      "\u0005SummaryInformation": 344,
+      "1Table": 1891,
+      "WordDocument": 4658
+    },
+    "has_WordDocument_stream": true,
+    "paragraph_index_available": false,
+    "note": "olefile は OLE 複合ドキュメントのストリームを列挙・読み出すライブラリ。段落・ページ・文字位置を表す API は存在しない"
+  },
+  "inashiki-09.doc": {
+    "library": "olefile",
+    "version": "0.47",
+    "streams": [
+      "\u0001CompObj",
+      "\u0001Ole",
+      "\u0005DocumentSummaryInformation",
+      "\u0005SummaryInformation",
+      "1Table",
+      "WordDocument"
+    ],
+    "stream_sizes": {
+      "\u0001CompObj": 106,
+      "\u0001Ole": 20,
+      "\u0005DocumentSummaryInformation": 116,
+      "\u0005SummaryInformation": 356,
+      "1Table": 1947,
+      "WordDocument": 8242
+    },
+    "has_WordDocument_stream": true,
+    "paragraph_index_available": false,
+    "note": "olefile は OLE 複合ドキュメントのストリームを列挙・読み出すライブラリ。段落・ページ・文字位置を表す API は存在しない"
+  }
+}
