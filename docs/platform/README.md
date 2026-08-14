@@ -17,6 +17,7 @@ Platform は検査・リント・CI/CD の装置を作り、維持します。**
 | [PL-0009](PL-0009-license-consistency.md) | README を Filetto のものにし、ライセンス宣言の食い違いを検査する(#112) |
 | [PL-0010](PL-0010-reachability-race.md) | 到達検査が自分の起動タイミングで誤検出していた(#118) |
 | [PL-0011](PL-0011-publication-host.md) | 決裁資料・レビュー資料の置き場を決める(#115) |
+| [PL-0012](PL-0012-record-integrity.md) | 記録を落としても検出される検査を置く(#145) |
 | [投入量の台帳](investment-ledger.md) | 稼働・AI 実行費・成果物の内訳の実測(#107) |
 
 ## 強制層に触る変更をどう進めるか
