@@ -109,13 +109,20 @@ jobs:
   #
   # 積み上げ PR を禁じません。理由の記載を求めます。親が squash マージされると
   # 子が持つ親のコミットは main のどこにも存在しなくなり、内容が失われます(#87)。
+  #
+  # PR_NUMBER を渡し、検査が GitHub API から「いまの本文」を読み直します(#119)。
+  # github.event.pull_request.body はイベント発火時の本文で固定されるため、
+  # 本文を編集しても再実行しても読まれません。理由を書いても通らない状態になります。
+  # PR_BODY は API を引けなかったときの控えとして残します。
   pr-base-check:
     name: pr-base-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_BODY: ${{ github.event.pull_request.body }}
+          GH_TOKEN: ${{ github.token }}
         run: node scripts/gate/pr-base-check.mjs
 
   # ライセンス宣言の整合(#112)
