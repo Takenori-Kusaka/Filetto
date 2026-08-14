@@ -17,6 +17,7 @@
 //   3 承認欄と判定記録の整合  spec が「通過」と書くのに判定記録が無い/結果が空欄
 //   4 判定値の語彙          「通過」「差し戻し」以外の語
 //   5 期限超過              期限を過ぎた行が未返却のまま
+//   6 判定待ちの放置         判定待ちの記録が判定期限を過ぎている
 //
 // 出力の原則: すべての検査で、0件のときも0件であることを出力します。
 
@@ -61,6 +62,26 @@ export function fieldsOf(text) {
 const EMPTY = new Set(config.gateRecords?.emptyValues ?? ['']);
 export const isEmpty = (v) => v === undefined || EMPTY.has(v.trim());
 
+// 判定前の記録を PR で用意する運用があります。**空欄のままだと書き忘れと区別できません。**
+// 判定待ちであることを明示させ、明示されたものは落としません。ただし件数を必ず出力し、
+// 提示から判定期限を過ぎたものは落とします。
+//
+// 事例1(判定記録が空欄のまま main に1日残った)は、空欄を許すのではなく
+// **放置を検出する**ことで防ぎます。
+const PENDING = config.gateRecords?.pendingPattern
+  ? new RegExp(config.gateRecords.pendingPattern)
+  : null;
+
+export function pendingDate(v) {
+  if (!PENDING || v === undefined) return null;
+  const m = v.trim().match(PENDING);
+  return m ? m[1].replace(/\//g, '-') : null;
+}
+
+function todayArg() {
+  return argOf('--today', new Date().toISOString().slice(0, 10));
+}
+
 const results = [];
 const say = (name, items, describe) => {
   console.log(`\n## ${name}: ${items.length} 件`);
@@ -98,19 +119,48 @@ for (const n of notRecords) console.log(`  判定記録として扱わない: ${
 // ---- 1 判定記録の空欄 ------------------------------------------------------
 
 const blanks = [];
+const pending = [];
 for (const r of records) {
   for (const key of [...(gr.requiredFields ?? []), r.resultField]) {
-    if (isEmpty(r.fields.get(key))) blanks.push({ ...r, key });
+    const v = r.fields.get(key);
+    const d = pendingDate(v);
+    if (d) {
+      pending.push({ ...r, key, date: d });
+      continue;
+    }
+    if (isEmpty(v)) blanks.push({ ...r, key });
   }
 }
 say('検査1 判定記録の空欄', blanks, (b) => `${b.rel} の「${b.key}」が空欄です(ゲート ${b.gate})`);
+
+// 判定待ちは落としません。ただし件数を必ず出します
+const pendingFiles = [...new Set(pending.map((p) => p.rel))];
+console.log(`
+判定待ちの記録: ${pendingFiles.length} 件`);
+for (const f of pendingFiles) {
+  const first = pending.find((p) => p.rel === f);
+  console.log(`  ${f}  ${first.date} 提示(ゲート ${first.gate})`);
+}
+
+// 検査6 判定待ちの期限超過
+const slaDefault = gr.pendingSlaDays ?? 2;
+const slaByGate = gr.pendingSlaByGate ?? {};
+const stale = [];
+for (const f of pendingFiles) {
+  const p = pending.find((x) => x.rel === f);
+  const rule = Object.entries(slaByGate).find(([k]) => new RegExp(k).test(p.gate));
+  const days = rule ? rule[1] : slaDefault;
+  const due = new Date(Date.parse(`${p.date}T00:00:00Z`) + days * 86400000).toISOString().slice(0, 10);
+  if (due < todayArg()) stale.push({ ...p, days, due });
+}
+say('検査6 判定待ちの放置', stale, (s2) => `${s2.rel} ${s2.date} 提示。判定期限 ${s2.due}(${s2.days}日)を過ぎています`);
 
 // ---- 4 判定値の語彙 --------------------------------------------------------
 
 const vocab = config.resultVocabulary ?? [];
 const badWords = [];
 for (const r of records) {
-  if (isEmpty(r.result)) continue;
+  if (isEmpty(r.result) || pendingDate(r.result)) continue;
   const rule = vocab.find((v) => new RegExp(v.gatePattern).test(r.gate));
   if (!rule) {
     badWords.push({ ...r, reason: `ゲート「${r.gate}」に対応する語彙が resultVocabulary にありません` });
@@ -156,6 +206,10 @@ for (const s of specs) {
     const rec = records.find((r) => r.rel.endsWith(`/${target}`));
     if (!rec) {
       approvalIssues.push({ rel, line: i + 1, reason: `参照先 ${target} が判定記録として見つかりません` });
+      return;
+    }
+    if (pendingDate(rec.result)) {
+      approvalIssues.push({ rel, line: i + 1, reason: `参照先 ${target} は判定待ちです。「通過」とは書けません` });
       return;
     }
     if (isEmpty(rec.result)) {
@@ -242,7 +296,7 @@ if (issues) {
 
 // ---- 5 期限超過 ------------------------------------------------------------
 
-const today = argOf('--today', new Date().toISOString().slice(0, 10));
+const today = todayArg();
 const overdue = [];
 const unparsable = [];
 
@@ -274,6 +328,7 @@ for (const b of blanks) fail(`${b.rel} の「${b.key}」が空欄です。判定
 for (const b of badWords) fail(`${b.rel} ${b.reason}`);
 for (const a of approvalIssues) fail(`${a.rel}:${a.line} ${a.reason}`);
 for (const o of overdue) fail(`${o.id} 期限 ${o.date} を過ぎて「${o.status}」のままです`);
+for (const s2 of stale) fail(`${s2.rel} ${s2.date} 提示。判定期限 ${s2.due} を過ぎています`);
 for (const m of results.find((r) => r.name.startsWith('検査2'))?.items ?? []) fail(`${m.id} ${m.reason}`);
 
 notice(
