@@ -1,6 +1,6 @@
 # S0 探索記録 索引
 
-Issue [#114](https://github.com/Takenori-Kusaka/Filetto/issues/114) を起点とする調査記録 S0-007〜S0-012(製品判断系)と、S0-001〜S0-006(技術検証系)の索引です。
+Issue [#114](https://github.com/Takenori-Kusaka/Filetto/issues/114) を起点とする調査記録 S0-007〜S0-013(製品判断系)と、S0-001〜S0-006・S0-014(技術検証系)の索引です。
 
 ## 1. S0-007〜S0-012 一覧
 
@@ -93,6 +93,9 @@ Issue [#114](https://github.com/Takenori-Kusaka/Filetto/issues/114) を起点と
 | S0-004 | [S0-004-rag-fitness.md](./S0-004-rag-fitness.md) | RAG適合性 15/15。中核構成を確定。ローカル完結を満たす |
 | S0-005 | [S0-005-lore.md](./S0-005-lore.md) | 条件付きで採用できる |
 | S0-006 | [S0-006-ocr-glyph.md](./S0-006-ocr-glyph.md) | 推奨は RapidOCR 既定 + 字形正規化。混入0%・速度そのまま・到達可能性9/9を同時に満たす |
+| **S0-014** | [S0-014-position-mapping.md](./S0-014-position-mapping.md) | **5経路のうち3経路で原文内の位置が取れる。`.docx` はページ番号と座標を持たず本文中の通し番号のみ。`.doc` は位置に相当する情報が無い** |
+
+**S0-014 は S1 の途中で生じた技術検証です。** 標準は技術検証を S0 探索ステージに置いており、**S1 で生じた検証の置き場を定義していません**([process-compass#250](https://github.com/Takenori-Kusaka/process-compass/issues/250))。**標準の改訂を待たず、S0 の記録形式を踏襲しています**([#146](https://github.com/Takenori-Kusaka/Filetto/issues/146) の指示)。
 
 ## 7. 記録間の矛盾
 

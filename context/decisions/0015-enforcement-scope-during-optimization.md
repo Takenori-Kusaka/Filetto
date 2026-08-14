@@ -54,6 +54,12 @@ $ 実際の protectedPatterns          $ 実際の permissions.deny
 
 ### 1. 遮断範囲は現状のまま。戻さない
 
+> **置き換え(2026-08-14 / → [ADR-0019](0019-block-what-diffs-cannot-show.md))**
+>
+> **本決定の「`permissions.deny` は空のままとする」は成立しなくなりました。** 2026-08-14、事業決裁者の判断により `deny` へ `Artifact` を入れました([#115](https://github.com/Takenori-Kusaka/Filetto/issues/115))。
+>
+> **本文は書き換えません。** 置き換えの理由と新しい基準は ADR-0019 にあります。**決定2・3・4 は有効です。**
+
 **遮断されるのは次の4パターンのみである。**
 
 ```
