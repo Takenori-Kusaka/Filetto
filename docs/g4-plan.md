@@ -95,6 +95,6 @@ F-002 の plan.md(#136 / Dev) ────────────────�
 | --- | --- |
 | 受入基準の内容 | **G-2。F-002 は 2026-08-13、F-003 は 2026-08-14 に通過済み** |
 | 実装そのものの品質 | G-5 / G-6 |
-| **テスト書き換え禁止の機械的復帰** | **[ADR-0015](../context/decisions/0015-enforcement-scope-during-optimization.md) が見直しの条件を「G-4 を通過し、実装が始まっている」と定めている。[#75](https://github.com/Takenori-Kusaka/Filetto/issues/75) は `status:on-hold`** |
+| **テスト書き換え禁止の機械的復帰** | **ADR-0015 が見直しの条件を「G-4 を通過し、実装が始まっている」と定めている。[#75](https://github.com/Takenori-Kusaka/Filetto/issues/75) は `status:on-hold`** |
 | 独立レビュー(G-6)の未達 | **`unmet`。ゲート判定で解消しない** |
 | 投資を続けるかどうか | SG-1 |
