@@ -129,7 +129,8 @@
       "MPL-2.0",
       "PSF-2.0"
     ],
-    "strengthened": true
+    "strengthened": true,
+    "coverageMinStatements": 50
   },
   "review": {
     "requiredApprovals": 0,

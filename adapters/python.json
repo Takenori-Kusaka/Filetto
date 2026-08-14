@@ -10,7 +10,7 @@
     "lint": "ruff check .",
     "audit": "pip-audit",
     "licenses": "pip-licenses --format=json --from=all | node scripts/gate/license-check.mjs",
-    "secretScan": ""
+    "secretScan": "detect-secrets scan --all-files --exclude-files '(^|[\\\\/])\\.(git|pytest_cache|ruff_cache|venv|mypy_cache)([\\\\/]|$)' | node scripts/gate/secret-scan-check.mjs"
   },
   "coverageSummary": "coverage.json",
   "note": "coverage.json は pytest-cov の JSON 形式です。totals.percent_covered を読みます"
