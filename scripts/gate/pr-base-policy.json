@@ -1,0 +1,29 @@
+{
+  "note": "PR のマージ先に関する方針(#95)。merged-reachability.mjs と pr-base-check.mjs が読みます",
+
+  "defaultBase": "main",
+
+  "justificationMarker": "積み上げの理由:",
+
+  "justificationNote": "マージ先が defaultBase でない PR は、本文へ justificationMarker で始まる行を書きます。書かれていない場合は落とします。積み上げそのものは禁じません。理由の記載を求めます",
+
+  "resolvedNote": "マージコミットは defaultBase の祖先でないが、内容が別経路で到達済みと確認できた PR。件数と理由を必ず出力します。ここへ書かずに通す経路は作りません",
+
+  "resolved": [
+    {
+      "pr": 6,
+      "resolvedBy": "PR #11",
+      "reason": "S0-003 の記録は PR #11(docs(spike): S0-003 の記録を復旧する)として main ベースで出し直し済み。#95 の調査(2026-08-13)で到達を確認"
+    },
+    {
+      "pr": 73,
+      "resolvedBy": "PR #74",
+      "reason": "5.7.3 の巻き戻しは PR #74 として main ベースで出し直し済み"
+    },
+    {
+      "pr": 87,
+      "resolvedBy": "PR #94",
+      "reason": "F-001〜F-003 の是正は PR #94 として main ベースで出し直し済み。本 Issue #95 の発端"
+    }
+  ]
+}
