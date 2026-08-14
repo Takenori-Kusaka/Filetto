@@ -119,7 +119,7 @@ date: 2026-08-14
 
 | 製品 | サーバ | クライアント | 実測した中身 |
 | --- | --- | --- | --- |
-| **Onyx** | **対応** | **対応** | サーバは `backend/onyx/mcp_server/`(`api.py` / `auth.py` / `tools/search.py` / `mcp.json.template`)。README 原文「The Onyx MCP server allows LLMs to connect to your Onyx instance and access its knowledge base and search capabilities through MCP.」**Transport は HTTP POST、Port 8090、Framework は FastMCP with FastAPI wrapper、Database は None(全処理を API サーバへ委譲)。** 認証は Personal Access Token または API キーを Bearer で。**設定キー `MCP_SERVER_ENABLED=true` / `MCP_SERVER_PORT`(既定 8090)。** 起動エントリ `backend/onyx/mcp_server_main.py`、nginx テンプレートも同梱。**コードは `ee/` 配下ではないため MIT 側と判断。ただしエディション要件の明示は公式ドキュメントに無し。** クライアントは `backend/onyx/tools/tool_implementations/mcp/mcp_tool.py`、OAuth 対応、**SSRF 対策の実装あり**(`server/features/mcp/ssrf.py`) |
+| **Onyx** | **対応** | **対応** | サーバは `backend/onyx/mcp_server/`(`api.py` / `auth.py` / `utils.py` / `tools/search.py` / `mcp.json.template`)。`backend/onyx/mcp_server/README.md` 原文「The Onyx MCP server allows LLMs to connect to your Onyx instance and access its knowledge base and search capabilities through the Model Context Protocol (MCP).」**公開ツールは knowledge base 検索(Confluence / Google Drive / Slack / GitHub / Jira を含む40以上のソース横断)、web 検索、full page content の取得。** "Depending on usage, the MCP Server may support OAuth and stdio in the future." **nginx テンプレート `deployment/data/nginx/mcp.conf.inc.template` も OSS 配布物に同梱。****Transport は HTTP POST、Port 8090、Framework は FastMCP with FastAPI wrapper、Database は None(全処理を API サーバへ委譲)。** 認証は Personal Access Token または API キーを Bearer で。**設定キー `MCP_SERVER_ENABLED=true` / `MCP_SERVER_PORT`(既定 8090)。** 起動エントリ `backend/onyx/mcp_server_main.py`。**コードは `ee/` 配下ではないため MIT 側と判断。ただしエディション要件の明示は公式ドキュメントに無し。** クライアントは `backend/onyx/tools/tool_implementations/mcp/mcp_tool.py`、OAuth 対応、**SSRF 対策の実装あり**(`server/features/mcp/ssrf.py`) |
 | **RAGFlow** | **対応** | **対応** | 公開ツールは `retrieve` / `ragflow_list_datasets` / `ragflow_list_chats`。トランスポートはレガシー SSE(`/sse`)と streamable-HTTP(`/mcp`)。self-host mode と host mode の2動作モード。起動フラグ `--enable-mcpserver` |
 | **Open WebUI** | **確認できず** | **対応(Streamable HTTP のみ)** | stdio / SSE は公式プロキシ `mcpo` を挟む。**サーバ公開の記載は公式ドキュメントに確認できず。** 第三者製 `troylar/open-webui-mcp-server` は非公式(二次情報) |
 | **AnythingLLM** | **確認できず** | **対応** | `anythingllm_mcp_servers.json` で外部サーバを追加。コード実測でも `server/utils/MCP/hypervisor/`、`server/endpoints/mcpServers.js`、`frontend/src/pages/Admin/Agents/MCPServers/` のみ。外部提供は REST Developer API |
@@ -415,6 +415,7 @@ date: 2026-08-14
 | 17 | GPT4All の enterprise ページの現存 | **接続拒否(ECONNREFUSED)。確認できず** |
 | 18 | Jan の商用版・クラウド版の有無 | **一次情報で確認できず** |
 | 19 | LocalGPT / GPT4All / Jan の日本語 OCR と旧バイナリ形式 | **3件とも一次情報が存在しない** |
+| **19-2** | **12製品の `.doc` / `.xls` の実パース品質** | **拡張子の受理可否のみ確認。実際に読めるかは12製品とも測っていない** |
 | 20 | Verba の (b)〜(h) | アーカイブ済みのため未取得 |
 | **21** | **12製品いずれも実機を起動していない** | **本書はすべて文書・ソース・API からの判定** |
 
