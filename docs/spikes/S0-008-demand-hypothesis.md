@@ -71,7 +71,9 @@ https://www.soumu.go.jp/main_content/001070295.pdf
 
 **自治体AI zevo**(https://www.lgsta.jp/zevo/)
 
+<!-- spec-lint-ignore start: 総務省の自治体調査に掲載された事業者の記述の逐語引用。原文を書き換えると引用が原典と一致しなくなる -->
 > クラウド型サービス(**LGWAN回線で動作**)／職員専用ナレッジAI、過去事業集約AIなど、独自の情報に基づいた回答が可能となる**RAG機能を搭載**
+<!-- spec-lint-ignore end -->
 
 **汎用のオンプレ RAG も存在します。**
 
@@ -111,9 +113,11 @@ https://www.toben.or.jp/message/libra/pdf/2026_06/P25-27.pdf
 
 https://www.nichizeiren.or.jp/datalibrary/system/survey/250221b/
 
+<!-- spec-lint-ignore start: 調査票の項目名の逐語引用。原文を書き換えると引用が原典と一致しなくなる -->
 - 令和6年4月実施、**回答数38,607件・回答率44.8%**
 - **AI活用や電子化などの新規項目あり**
 - **報告書 PDF は会員限定。直接アクセスで HTTP 401**
+<!-- spec-lint-ignore end -->
 
 **本案件で唯一、入手できれば判定が変わりうる未検証データです。**
 

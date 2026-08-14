@@ -141,6 +141,7 @@ https://www.unicode.org/reports/tr39/
 Gillespie, N., Lockey, S., Ward, T., Macdade, A., & Hassed, G. (2025). *Trust, attitudes and use of artificial intelligence: A global study 2025.*
 https://assets.kpmg.com/content/dam/kpmgsites/xx/pdf/2025/05/trust-attitudes-and-use-of-ai-japan-snapshot.pdf
 
+<!-- spec-lint-ignore start: KPMG 47か国調査の設問文の逐語引用。原文を書き換えると引用が原典と一致しなくなる -->
 | 指標 | 日本 | 世界平均 |
 | --- | --- | --- |
 | **AI を信頼する意思がある** | **28%** | **46%** |
@@ -151,6 +152,7 @@ https://assets.kpmg.com/content/dam/kpmgsites/xx/pdf/2025/05/trust-attitudes-and
 | **AI の正式／非公式な研修を受けた** | **22%** | — |
 | **AI ツールを効果的に使えると感じる** | **21%** | — |
 | オンラインコンテンツが AI 生成かもしれず信用できない | 80% | — |
+<!-- spec-lint-ignore end -->
 
 ### この表が、訴求の前提を一部覆す
 
