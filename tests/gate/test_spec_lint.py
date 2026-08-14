@@ -199,3 +199,91 @@ def test_本物の判定記録が通る() -> None:
         check=False,
     )
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_引用ブロックは検査しない(docs: Path) -> None:
+    """閣議決定文書の条文や調査票の選択肢は、こちらの都合で書き換えられない(#104)。"""
+    _write(docs, "spike.md", "> 社内情報の漏洩などのセキュリティリスクがある\n")
+    r = _run(docs)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_引用として外した行を必ず出力する(docs: Path) -> None:
+    _write(docs, "spike.md", "> AI を適切に使うスキル・知識があると感じる\n")
+    r = _run(docs)
+    assert "引用ブロックとして検査から外した行: 1 行" in r.stdout
+    assert "spike.md" in r.stdout
+
+
+def test_引用が0行でも件数を出力する(docs: Path) -> None:
+    _write(docs, "a.md", "システムは 3 秒以内に応答すること\n")
+    r = _run(docs)
+    assert "引用ブロックとして検査から外した行: 0 行" in r.stdout
+
+
+def test_否定_引用の外は検査する(docs: Path) -> None:
+    _write(docs, "spike.md", "> 引用: など\n\n本文は適切に処理する\n")
+    r = _run(docs)
+    assert r.returncode == 1
+    assert "適切に" in r.stdout + r.stderr
+
+
+def test_否定_specs配下では引用も検査する(tmp_path: Path) -> None:
+    """受入基準の正本。引用の形にすれば禁止語を書ける抜け道を作らない。"""
+    work = tmp_path / "repo"
+    shutil.copytree(ROOT / "scripts", work / "scripts")
+    spec = work / "specs" / "F-999"
+    spec.mkdir(parents=True)
+    (spec / "spec.md").write_text("> システムは適切に応答すること\n", encoding="utf-8")
+    (work / "docs").mkdir()
+    (work / "docs" / "spike.md").write_text("> 調査票の選択肢は適切に選ぶ\n", encoding="utf-8")
+
+    r = subprocess.run(  # noqa: S603
+        [_node(), SCRIPT],
+        cwd=work,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    assert r.returncode == 1, r.stdout + r.stderr
+    out = r.stdout + r.stderr
+    # specs 配下の引用は落ちる
+    assert "specs/F-999/spec.md:1" in out
+    # docs 配下の引用は落ちず、外した行として数え上げられる
+    assert "docs/spike.md:1" not in out
+    assert "引用ブロックとして検査から外した行: 1 行" in out
+
+
+def test_方針が禁止語と引用の扱いを持つ() -> None:
+    import json
+
+    policy = json.loads((ROOT / "scripts/gate/spec-lint-policy.json").read_text(encoding="utf-8"))
+    assert policy["bannedWords"]
+    assert policy["quoteBlock"]["exempt"] is True
+
+
+def test_否定_禁止語が0語なら落ちる(tmp_path: Path) -> None:
+    """0語のまま通すと、検査を実施していない状態を通過した記録として残る。"""
+    import json
+
+    work = tmp_path / "repo"
+    shutil.copytree(ROOT / "scripts", work / "scripts")
+    pol = work / "scripts/gate/spec-lint-policy.json"
+    policy = json.loads(pol.read_text(encoding="utf-8"))
+    policy["bannedWords"] = []
+    pol.write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
+    (work / "docs").mkdir()
+    (work / "docs/a.md").write_text("本文\n", encoding="utf-8")
+    r = subprocess.run(  # noqa: S603
+        [_node(), SCRIPT],
+        cwd=work,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    assert r.returncode == 1
+    assert "bannedWords" in r.stdout + r.stderr
