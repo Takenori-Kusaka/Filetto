@@ -31,24 +31,65 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, fail, notice } from './config.mjs';
 
-/** 第4章 G-2 の禁止語(初期値)。組織で追加してよい */
-const BANNED = [
-  '適切に',
-  '柔軟に',
-  '可能な限り',
-  'など',
-  '必要に応じて',
-  '基本的に',
-  '原則として',
-  '速やかに',
-  '十分に',
-  'なるべく',
-];
+const POLICY_PATH = path.join(ROOT, 'scripts/gate/spec-lint-policy.json');
+
+if (!fs.existsSync(POLICY_PATH)) {
+  fail('scripts/gate/spec-lint-policy.json がありません。禁止語と方針を書いてください');
+  process.exit(1);
+}
+const policy = JSON.parse(fs.readFileSync(POLICY_PATH, 'utf8'));
+
+const BANNED = policy.bannedWords ?? [];
+if (!BANNED.length) {
+  fail('spec-lint-policy.json の bannedWords が空です。0語のまま通すと、検査を実施していない状態を通過した記録として残ります');
+  process.exit(1);
+}
+
+// 引用ブロック(行頭 `>`)は既定で検査しません。閣議決定文書の条文や調査票の
+// 選択肢は、こちらの都合で書き換えられないためです。書き換えると引用が原文と
+// 一致しなくなります(#104)。
+//
+// ただし enforcedPaths の配下では引用も検査します。**受入基準の正本であり、
+// 引用の形にすれば禁止語を書けるという抜け道を作らないため**です。
+const QUOTE = policy.quoteBlock ?? {};
+const QUOTE_LINE = /^\s*>/;
+
+/** glob をごく小さな部分集合で照合する(`**` `*` のみ) */
+function globToRegExp(glob) {
+  const SPECIAL = '.+^${}()|[]';
+  let re = '';
+  for (let i = 0; i < glob.length; i++) {
+    const c = glob[i];
+    if (c === '*') {
+      if (glob[i + 1] === '*') {
+        if (glob[i + 2] === '/') {
+          re += '(?:.*/)?';
+          i += 2;
+        } else {
+          re += '.*';
+          i += 1;
+        }
+      } else {
+        re += '[^/]*';
+      }
+    } else if (SPECIAL.includes(c)) {
+      re += String.fromCharCode(92) + c;
+    } else {
+      re += c;
+    }
+  }
+  return new RegExp('^' + re + '$');
+}
+
+export function isQuoteEnforced(rel, q = QUOTE) {
+  if (!q.exempt) return true;
+  return (q.enforcedPaths ?? []).some((p) => globToRegExp(p).test(rel));
+}
 
 const IGNORE_START = /<!--\s*spec-lint-ignore\s+start\s*:?\s*(.*?)\s*-->/;
 const IGNORE_END = /<!--\s*spec-lint-ignore\s+end\s*-->/;
 
-const targets = process.argv.slice(2).length ? process.argv.slice(2) : ['specs', 'docs'];
+const targets = process.argv.slice(2).length ? process.argv.slice(2) : (policy.targets ?? ['specs', 'docs']);
 
 function walk(dir, out) {
   if (!fs.existsSync(dir)) return;
@@ -70,6 +111,8 @@ if (!files.length) {
 
 let hits = 0;
 let malformed = 0;
+let quoteSkipped = 0;
+const quoteFiles = new Set();
 const ignored = [];
 
 for (const f of files) {
@@ -125,6 +168,15 @@ for (const f of files) {
     if (ignoreFrom !== null) return;
     if (/<!--\s*spec-lint-ok/.test(line)) return;
 
+    // 引用ブロック。一次資料の逐語引用を書き換えさせないため
+    if (QUOTE_LINE.test(line) && !isQuoteEnforced(rel)) {
+      if (BANNED.some((w) => line.includes(w))) {
+        quoteSkipped++;
+        quoteFiles.add(rel);
+      }
+      return;
+    }
+
     for (const w of BANNED) {
       let idx = line.indexOf(w);
       while (idx >= 0) {
@@ -150,6 +202,16 @@ for (const f of files) {
 }
 console.log('検査した範囲:');
 for (const [dir, n] of [...byDir].sort()) console.log(`  ${dir}  ${n} ファイル`);
+
+if (quoteSkipped) {
+  console.log('');
+  console.log(`引用ブロックとして検査から外した行: ${quoteSkipped} 行(${quoteFiles.size} ファイル)`);
+  for (const f of [...quoteFiles].sort()) console.log(`  ${f}`);
+  console.log(`  ${(QUOTE.enforcedPaths ?? []).join(' / ')} の配下では引用も検査します`);
+} else {
+  console.log('');
+  console.log('引用ブロックとして検査から外した行: 0 行');
+}
 
 if (ignored.length) {
   const totalLines = ignored.reduce((a, b) => a + b.lines, 0);
