@@ -1,0 +1,73 @@
+{
+  "note": "記録の整合検査(#145)。record-integrity.mjs が読みます。AI が記録を落としても検出されるようにするためのものです",
+  "why": "2026-08-14 の1日で、記録を落とした事例が4件あった。判定記録の空欄・Issue の閉じ忘れ・承認欄とゲートの取り違え・標準に無い判定値。いずれも「忘れないようにする」では解決しない",
+  "principle": "**記述の実質性を判定しません**(標準 5.7.4)。空欄かどうか、語が一致するかどうか、参照先が存在するかどうかだけを見ます",
+  "gateRecords": {
+    "dir": "docs/gates",
+    "recordMarkerNote": "判定記録かどうかは、見出しの表に「ゲート」と結果欄の両方があることで判定します。パスでは判定しません(CLAUDE.md)。提示資料(-projection)は結果欄を持たないため自然に外れます",
+    "gateField": "ゲート",
+    "resultFields": [
+      "結果",
+      "判定"
+    ],
+    "requiredFields": [
+      "判定日時"
+    ],
+    "emptyValues": [
+      "",
+      "—",
+      "-",
+      "未記入",
+      "TBD",
+      "(空欄)"
+    ]
+  },
+  "resultVocabularyNote": "標準 ADR-0036 決定2。ゲートの種別ごとに、書いてよい語を定めます。これ以外の語(「条件付き通過」など)を落とします",
+  "resultVocabulary": [
+    {
+      "gatePattern": "^G-",
+      "allowed": [
+        "通過",
+        "差し戻し"
+      ]
+    },
+    {
+      "gatePattern": "^SG-",
+      "allowed": [
+        "S1 へ移行",
+        "S1へ移行",
+        "継続検証",
+        "中止"
+      ]
+    }
+  ],
+  "specApproval": {
+    "dir": "specs",
+    "file": "spec.md",
+    "headingPattern": "^##\\s*承認",
+    "passWord": "通過",
+    "recordLinkPattern": "\\(([^)]*docs/gates/[^)]+\\.md)\\)",
+    "note": "承認欄が「通過」と書いているなら、対応する判定記録が存在し、その結果欄が空欄でないことを求めます"
+  },
+  "debtLedger": {
+    "file": "docs/debt-ledger.md",
+    "rowPattern": "^\\|\\s*\\*{0,2}(D-\\d+)\\*{0,2}\\s*\\|",
+    "openStatuses": [
+      "未返却",
+      "記録済み"
+    ],
+    "closedStatuses": [
+      "返却済み"
+    ],
+    "issuePattern": "issues/(\\d+)",
+    "deadlineColumnNote": "対処の期限は自由記述の場合があります(例: `plan.md` の作成前)。日付として読めない行は、読めなかったこととして数え上げます。黙って飛ばしません",
+    "issueConsistencyNote": "台帳の状態語と Issue の開閉は、次の対応であるべきです。未返却=対処していない→Issue は開いている。記録済み/返却済み=成果物は main にある→Issue は閉じている。食い違いは、台帳が古いか Issue の閉じ忘れかのどちらかです",
+    "issueMustBeOpen": [
+      "未返却"
+    ],
+    "issueMustBeClosed": [
+      "記録済み",
+      "返却済み"
+    ]
+  }
+}
