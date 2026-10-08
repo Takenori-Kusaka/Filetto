@@ -1,46 +1,91 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
-    "deny": [
-      "Artifact"
-    ],
-    "ask": [],
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
-      "Bash(git show:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git switch:*)",
       "Bash(git branch:*)",
-      "Bash(git checkout:*)",
-      "Bash(git fetch:*)",
-      "Bash(git pull:*)",
-      "Bash(git push:*)",
       "Bash(gh issue list:*)",
       "Bash(gh issue view:*)",
-      "Bash(gh issue create:*)",
-      "Bash(gh issue edit:*)",
-      "Bash(gh issue comment:*)",
-      "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr diff:*)",
-      "Bash(gh pr create:*)",
-      "Bash(gh pr edit:*)",
-      "Bash(gh pr comment:*)",
-      "Bash(gh pr checks:*)",
-      "Bash(gh run list:*)",
-      "Bash(gh run view:*)",
-      "Bash(gh api:*)",
-      "Bash(npm publish:*)",
-      "Bash(curl:*)",
-      "Bash(wget:*)",
       "Bash(node scripts/gate/:*)",
-      "Bash(node scripts/init/:*)"
+      "Bash(node scripts/init/:*)",
+      "Bash(npx -y @nanonets/graft@0.12.1 ask:*)",
+      "Bash(npx -y @nanonets/graft@0.12.1 grep:*)",
+      "Bash(npx -y @nanonets/graft@0.12.1 skeleton:*)",
+      "Bash(npx -y @nanonets/graft@0.12.1 callers:*)",
+      "Bash(npx -y @nanonets/graft@0.12.1 map:*)",
+      "Bash(npx -y @nanonets/graft@0.12.1 blast:*)",
+      "Bash(npx -y @nanonets/graft@0.12.1 check:*)",
+      "Bash(npx -y @nanonets/graft@0.12.1 build:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Read(./**/id_rsa*)",
+      "Read(./**/.aws/**)",
+      "Read(./**/.ssh/**)",
+      "Edit(./.claude/settings.json)",
+      "Edit(./.claude/guard.json)",
+      "Edit(./.claude/hooks/**)",
+      "Edit(./process.config.json)",
+      "Edit(./.github/rulesets/**)",
+      "Edit(./.github/workflows/**)",
+      "Edit(./adapters/**)",
+      "Edit(./scripts/gate/**)",
+      "Edit(./scripts/vendor/**)",
+      "Write(./scripts/vendor/**)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(gh pr review:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh api repos/*/rulesets:*)"
+    ],
+    "ask": [
+      "Bash(npm publish:*)",
+      "Bash(wget:*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Read(./**/id_rsa*)",
+      "Read(./**/.aws/**)",
+      "Read(./**/.ssh/**)",
+      "Edit(./.claude/settings.json)",
+      "Edit(./.claude/guard.json)",
+      "Edit(./.claude/hooks/**)",
+      "Edit(./.github/rulesets/**)",
+      "Edit(./.github/workflows/**)",
+      "Edit(./process.config.json)",
+      "Edit(./adapters/**)",
+      "Edit(./scripts/gate/**)",
+      "Edit(./scripts/vendor/**)",
+      "Write(./scripts/vendor/**)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh api repos/*/rulesets:*)"
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/gate/next.mjs --brief",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit|NotebookEdit",
@@ -49,18 +94,6 @@
             "type": "command",
             "command": "node .claude/hooks/guard-write.mjs",
             "timeout": 15
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/worktree-freshness.mjs",
-            "timeout": 20
           }
         ]
       }
