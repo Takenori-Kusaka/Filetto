@@ -52,6 +52,8 @@ PoC へ戻すと G-1 が簡略化され、G-2 が G-4 へ統合される。dry-r
 
 これは「統制の弱化」に当たるが、手順上は置き換えの副作用として現れ、警告が出なかった。
 
+もう1件。独自のライセンス検査が消えた後、テンプレート側の `licenses`(`ip-clearance-python.mjs`)が、許可リストの `MPL-2.0`・`PSF-2.0` に対して、pip-licenses が返す正式名称(`Mozilla Public License 2.0 (MPL 2.0)`、`Python Software Foundation License`)を一致させられず、許可済みのパッケージ(certifi、defusedxml)を違反と判定した。許可リストの SPDX 表記と pip-licenses の表記の正規化が要る。
+
 希望: 再準拠の手順に「独自の統制の棚卸し」を加える。置き換え対象のうち、テンプレートに無いファイルの一覧を出し、廃止・移植・保持を選ばせる。
 
 ## 3. 段階表の案(たたき台。採否は策定チームが決める)
