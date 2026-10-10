@@ -40,31 +40,11 @@
     {
       "pattern": ".github/CODEOWNERS",
       "reason": "PR の自動アサインと承認ルール"
-    },
-    {
-      "pattern": ".github/rulesets/**",
-      "reason": "ブランチ保護ルール。書き換えられると独立レビューの強制力が失われます"
-    },
-    {
-      "pattern": ".github/workflows/**",
-      "reason": "CI ワークフロー定義。書き換えられると自動検証がバイパスされます"
-    },
-    {
-      "pattern": "adapters/**",
-      "reason": "スタック別アダプタ定義。書き換えられると検査コマンドの偽装が可能です"
-    },
-    {
-      "pattern": "scripts/gate/**",
-      "reason": "ゲート検証コード。書き換えられると合否判定ロジックの書き換えが可能です"
-    },
-    {
-      "pattern": "scripts/vendor/**",
-      "reason": "テーラリング規則。書き換えられると不変条件の無効化が可能です"
     }
   ],
   "protectedReason": "プロセスの強制層です。変更は人間の操作で行い、判断記録を残してください。エージェントが自分を縛る設定を変えられる構成では、遮断が成立しません",
   "selfHealLockFile": ".claude/.self-heal",
   "selfHealReason": "自己修正ループの書き込み範囲にテストを含めません。渡された失敗をテスト側の変更で解消する経路が残るためです。テストの修正を要すると判明した場合、ループを終了して受入基準へ戻ってください",
   "denyLog": ".claude/denied.log",
-  "enabled": true
+  "enabled": false
 }

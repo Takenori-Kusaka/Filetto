@@ -3,7 +3,7 @@
   "configured": true,
   "profileName": null,
   "projectId": "P-001",
-  "generatedAt": "2026-10-08T20:21:33+09:00",
+  "generatedAt": "2026-10-11T08:33:33+09:00",
   "answers": {
     "q-team-size": "size-1-2",
     "q-biz-phase": "mvp",
@@ -706,6 +706,40 @@
       "prevHash": "b4726eaa7876bb732bf0b1924d7668bcddb873657031dfd155be06045ef89729",
       "stateHash": "7b2c879b1dcb9e25a37ffc48c84b021b56c1ffbbd27483335cae3d7573eafddb",
       "chainStart": true
+    },
+    {
+      "date": "2026-10-11",
+      "at": "2026-10-11T08:33:33+09:00",
+      "kind": "settings",
+      "changePoint": null,
+      "summary": "強制層の遮断を緩和する(ADR-0015「序盤フェーズは遮断しない」を維持する)",
+      "result": "changed",
+      "direction": "loosen",
+      "d0Before": "1.4",
+      "d0After": "1.4",
+      "diff": [
+        "強制層の緩和設定(guard): なし → {\"enabled\":false,\"reviewBy\":\"2027-01-08\",\"reason\":\"ADR-0015: 序盤フェーズは遮断しない。1名体制・企画段階であり、見直しは D-0 の次回見直し日と同じ 2027-01-08\"}"
+      ],
+      "arising": [],
+      "separationRecheck": "兼務禁止への抵触 0 件 / 代償措置つきの例外 1 件 / 逸脱として記録した兼務 2 件 / 同一人物のため独立が成立しない組 1 件 / 責任者が未記入の席 0 席",
+      "invalidatedChecks": [],
+      "expired": [],
+      "recheckDue": null,
+      "decidedBy": "Takenori Kusaka",
+      "reason": "利用者が 2026-10-11 のセッションで緩めてよいと明示した(ADR-0015 の維持)",
+      "ruleApprovedBy": null,
+      "ruleApproval": null,
+      "nameOverrides": [],
+      "sgRecord": null,
+      "outage": null,
+      "notice": null,
+      "prevHash": "3415d52c9249b3011d6f71f9c275bf375f85a8e5b26b1a7e2b91807cce2e7b1d",
+      "stateHash": "5f41fd2a560e277328bc184d8e5355ca62d46e389da1875d89992330af680fe7"
     }
-  ]
+  ],
+  "guard": {
+    "enabled": false,
+    "reviewBy": "2027-01-08",
+    "reason": "ADR-0015: 序盤フェーズは遮断しない。1名体制・企画段階であり、見直しは D-0 の次回見直し日と同じ 2027-01-08"
+  }
 }
