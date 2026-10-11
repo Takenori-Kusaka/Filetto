@@ -222,7 +222,10 @@ process.stdin.on('end', () => {
     }
 
     const lic = (pkg.License || pkg.license || '').trim();
-    if (!evaluateSPDX(lic, checkSingleLicense)) {
+    // 複合式(AND / OR / WITH)でない1語の表記は、括弧つきの別名(例: "Mozilla Public License 2.0 (MPL 2.0)")を
+    // 式の括弧と誤読させないため、式として分解せずに照合する。複合式は従来どおり分解して照合する
+    const isCompound = /\b(and|or|with)\b/i.test(lic);
+    if (!(!isCompound && checkSingleLicense(lic)) && !evaluateSPDX(lic, checkSingleLicense)) {
       violations.push({ name, version: pkg.Version || pkg.version || 'unknown', license: lic });
     }
   }
