@@ -3,7 +3,7 @@
   "configured": true,
   "profileName": null,
   "projectId": "P-001",
-  "generatedAt": "2026-10-11T08:37:41+09:00",
+  "generatedAt": "2026-10-11T09:09:22+09:00",
   "answers": {
     "q-team-size": "size-1-2",
     "q-biz-phase": "mvp",
@@ -584,7 +584,8 @@
       "BSD-3-Clause",
       "ISC",
       "MPL-2.0",
-      "PSF-2.0"
+      "PSF-2.0",
+      "Python-2.0"
     ],
     "strengthened": true
   },
@@ -768,6 +769,35 @@
       "notice": null,
       "prevHash": "805275ab9805b4328a7f8ba74027b882eeaef4e8158e0c455807e8ed1b6cb8fa",
       "stateHash": "9275a4087bd2292a32b89604f203cce4ff726af9e4f26cbf855e6f99dc1a5c41"
+    },
+    {
+      "date": "2026-10-11",
+      "at": "2026-10-11T09:09:22+09:00",
+      "kind": "settings",
+      "changePoint": null,
+      "summary": "ライセンスの許可リストへ Python-2.0 を足す(typing_extensions・defusedxml が該当)",
+      "result": "changed",
+      "direction": "loosen",
+      "d0Before": "1.5",
+      "d0After": "1.5",
+      "diff": [
+        "許可するライセンス: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0, PSF-2.0 → MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0, PSF-2.0, Python-2.0"
+      ],
+      "arising": [],
+      "separationRecheck": "兼務禁止への抵触 0 件 / 代償措置つきの例外 1 件 / 逸脱として記録した兼務 2 件 / 同一人物のため独立が成立しない組 1 件 / 責任者が未記入の席 0 席",
+      "invalidatedChecks": [],
+      "expired": [],
+      "recheckDue": null,
+      "decidedBy": "Takenori Kusaka",
+      "reason": "ip-clearance が、PSF 系の表記を python-2.0 へ正規化して照合するため、許可済みの PSF-2.0 と一致せず違反になる。テンプレートの導出初期値は Python-2.0。利用者が 2026-10-11 に許可リストの修正を承認した",
+      "ruleApprovedBy": null,
+      "ruleApproval": null,
+      "nameOverrides": [],
+      "sgRecord": null,
+      "outage": null,
+      "notice": null,
+      "prevHash": "bef0d2347770d29c270cd3a5d670f1558e243ac43c8bf2484a5e9a0f5a86d3e1",
+      "stateHash": "36f68da01a32b9c3499991aae9cb165c1bc225664c182fe4e115606e4c2af3f6"
     }
   ],
   "guard": {
