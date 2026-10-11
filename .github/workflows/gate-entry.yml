@@ -12,7 +12,9 @@ on:
   pull_request:
     paths:
       - 'docs/D-0-governance.md'
+      - 'docs/project-brief.md'
       - 'process.config.json'
+      - 'CLAUDE.md'
   schedule:
     - cron: '0 0 * * 1'
   workflow_dispatch:
@@ -30,6 +32,10 @@ jobs:
       - id: check
         run: node scripts/gate/check-d0.mjs
 
+      # エージェントが起動時に読む文書が構成から乖離していないか(ADR-0035)
+      - name: check-process-rules
+        run: node scripts/gate/check-process-rules.mjs
+
       - name: 期限切れを Issue で通知する
         if: failure() && github.event_name == 'schedule'
         env:
@@ -43,3 +49,11 @@ jobs:
             gh label create d0-review --description "D-0 体制図の見直し" --color FBCA04 || true
             gh issue create --title "D-0 体制図の見直しが必要です" --label d0-review --body "$body"
           fi
+
+  g1-check:
+    name: g1-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: node scripts/gate/check-g1.mjs
