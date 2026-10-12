@@ -31,6 +31,7 @@ def repo(tmp_path: Path) -> Path:
     shutil.copytree(ROOT / "scripts", work / "scripts")
     shutil.copytree(ROOT / "adapters", work / "adapters")
     shutil.copy(ROOT / "process.config.json", work / "process.config.json")
+    shutil.copy(ROOT / "pyproject.toml", work / "pyproject.toml")
     return work
 
 

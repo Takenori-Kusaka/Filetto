@@ -1,0 +1,41 @@
+{
+  "checkedAt": "2026-10-11T09:48:09+09:00",
+  "checkedBy": "Takenori Kusaka",
+  "repo": "Takenori-Kusaka/Filetto",
+  "repoUrl": "https://github.com/Takenori-Kusaka/Filetto",
+  "branch": "main",
+  "commit": "fec413e7c978b0923046812b2ef344149fb399ad",
+  "config": {
+    "reviewerCount": 1,
+    "ruleset": null,
+    "g6": "unmet"
+  },
+  "items": {
+    "ruleset": {
+      "status": "confirmed",
+      "notApplicable": true,
+      "detail": "構成がブランチ保護を要しない(G-6 無効。ルールセット なし)。確かめる項目なし"
+    },
+    "prReviews": {
+      "status": "unconfirmed",
+      "detail": "PR #164 のレビューが 0 件(承認のある PR で確かめる。--pr N)"
+    },
+    "shipEvidence": {
+      "status": "confirmed",
+      "detail": "gate-g5 の実行 38097995123 に license-scan と test-results がある(ship-evidence が gh run download で取り込む形)",
+      "evidence": {
+        "runId": 38097995123,
+        "runUrl": "https://github.com/Takenori-Kusaka/Filetto/actions/runs/38097995123",
+        "runCreatedAt": "2026-10-11T00:18:45Z",
+        "artifactIds": [
+          11686962085,
+          11686441718,
+          11686162082
+        ],
+        "api": "repos/Takenori-Kusaka/Filetto/actions/runs/38097995123/artifacts",
+        "fetchedAt": "2026-10-11T09:48:08+09:00"
+      }
+    }
+  },
+  "note": "実環境の gh で読んだ結果。項目が確認済みでない記録は、導入前の検証の記録と出荷の集約に「実環境の統制 未確認」と出続ける(附属書I I.11 要件⑦)。各項目の evidence は API の応答の識別(査察で GitHub の画面と突合する鍵)であり、識別の無い確認済みは読む側で未確認に倒れる"
+}

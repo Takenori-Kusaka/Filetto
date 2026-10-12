@@ -1,0 +1,224 @@
+{
+  "startedAt": "2026-10-11T09:53:32+09:00",
+  "finishedAt": "2026-10-11T09:53:44+09:00",
+  "head": "75bd3d3a02d82edfe6fce6c9cafd6d811725c5a6",
+  "criteriaDigest": "0c0e41b8fa03fb58d8ab047160a1725104e0052080cbd194f9bf26c440a2cc01",
+  "criteriaCommitAt": "2026-10-11T09:53:31+09:00",
+  "notAdopter": [],
+  "reworked": [],
+  "baseline": {
+    "code": 1,
+    "gaps": [
+      "運用引き継ぎ文書(docs/handover.md)がありません",
+      "当該出荷の範囲(75bd3d3a02d82edfe6fce6c9cafd6d811725c5a6..HEAD)で追加されたゲート判定記録(docs/gates/)が1件もありません。過去の出荷の記録は、今回の出荷の記録に数えません",
+      "知財潔白性の検査記録がありません。判定するのは検査を実施し記録したことです",
+      "欠陥の台帳(docs/defect-ledger.md)がありません。基準2(未解決の欠陥)を確かめられないため、記載の欠落です。既知の欠陥が無い場合も「既知の欠陥なし」と書いた台帳を置きます(templates/defect-ledger.md)"
+    ]
+  },
+  "scenes": [
+    {
+      "id": 1,
+      "label": "判定記録の欠落した出荷",
+      "where": "G-7 の基準9",
+      "result": "止まった",
+      "detail": "欄の欠落した G-8 の判定記録を、出荷の集約が記載の欠落にした",
+      "evidence": [
+        "docs/gates/pit-trial-g8.md: リリース決裁(G-8)の決断の記録の「照らした層1 の版」が未記入です。受容を照らした層1 の版(層1 が無い組織は「層1 なし」)を書きます(第4章 G-8)",
+        "docs/gates/pit-trial-g8.md: リリース決裁(G-8)の決断の記録の「上申」が未記入です。届けた先と日付、または「該当なし」を書きます(第4章 G-8)"
+      ]
+    },
+    {
+      "id": 2,
+      "label": "作成を指示した者だけが承認した変更",
+      "where": "G-7 の基準5",
+      "result": "止まった",
+      "detail": "作成を指示した者だけが承認した R1 の変更を、出荷の集約が欠落にした",
+      "evidence": [
+        "PR #9001: リスク区分 R1 の変更が、独立した人の確認を経ていません(承認者が、作成を指示した者である)。例外承認の記録(第7章 7.3)が対応づきません。技術負債台帳の区分「例外」の行の「対象」へ「PR #9001」を書き、状態(未返却)・承認した者・理由・期限を記入してください"
+      ]
+    },
+    {
+      "id": 3,
+      "label": "AI の名義の記名・解除",
+      "where": "G-8、7.11 の解除、D-0 の改訂",
+      "result": "止まった",
+      "detail": "停止の申し立ての AI の名義の解除: 止まった / 構成の変化点の AI の名義の記名: 止まった / 層1 の AI の名義の記名: 止まった"
+    },
+    {
+      "id": 4,
+      "label": "未解除の停止の申し立てがある PR と出荷",
+      "where": "G-5、出荷の証跡の集約",
+      "result": "止まった",
+      "detail": "PR(G-5): 止まった / 出荷の集約: 止まった",
+      "evidence": null
+    },
+    {
+      "id": 5,
+      "label": "統制を緩める向きの変更で、決定した者の記名が無いもの",
+      "where": "構成の変更記録",
+      "result": "止まった",
+      "detail": "記名の無い緩める向きの変化点(変更規模の上限の引き上げ)を、構成の変更が拒否した",
+      "evidence": null
+    },
+    {
+      "id": 6,
+      "label": "区分の下限より低いリスク区分の記載",
+      "where": "G-5",
+      "result": "止まらなかった",
+      "detail": "区分の下限の規則(構成の riskFloor)が無い。規則に当たる変更が無いため、低い区分の記載は通る"
+    },
+    {
+      "id": 7,
+      "label": "確定者の記名が無い R1・R2 の変更",
+      "where": "G-5",
+      "result": "止まらなかった",
+      "detail": "作成を指示した者以外の人が名簿にいないため、確定していない区分として表示するだけ(1名体制の扱い)"
+    },
+    {
+      "id": 8,
+      "label": "層1 の必須行の空欄",
+      "where": "成立判定の成立条件1",
+      "result": "止まった",
+      "detail": "必須行(停止の申し立ての解除)の受容者が空欄の層1 を、有効にしなかった(成立条件1 を満たさない)",
+      "evidence": null
+    },
+    {
+      "id": 9,
+      "label": "D-0 表4 の有事の決定者の空欄",
+      "where": "G-7 の基準9",
+      "result": "止まった",
+      "detail": "有事の決定者の空欄を、出荷の集約が記載の欠落にした",
+      "evidence": null
+    },
+    {
+      "id": 10,
+      "label": "層1 の受容しない条件に当たる事実のある出荷",
+      "where": "G-7 の基準9 の (b)",
+      "result": "止まった",
+      "detail": "受容しない条件「個人データの取り扱いに当たる未達」に当たる事実を、成立判定が条件6 の不成立として出した(G-7 の基準9 の (b) で差し戻す材料)",
+      "evidence": [
+        "技術負債台帳の未返却の行 D-9999(「個人データ」を含む)"
+      ]
+    },
+    {
+      "id": 11,
+      "label": "期限を過ぎた組織継続の側の受容",
+      "where": "G-7 の基準9",
+      "result": "止まった",
+      "detail": "期限を過ぎた受容(代替の無い依存先: claude-sonnet-5-5)を、出荷の集約が記載の欠落にした",
+      "evidence": null
+    }
+  ],
+  "injection": null,
+  "drills": {
+    "E": 0,
+    "F": 0,
+    "counted": {
+      "E": 0,
+      "F": 0
+    }
+  },
+  "transcribe": [
+    {
+      "seat": "開発者(検証者)",
+      "fallback": "未記入",
+      "quantity": "未確認",
+      "measured": false,
+      "from": []
+    }
+  ],
+  "claim": {
+    "policyValid": true,
+    "policyProblems": [],
+    "requiredBlank": [],
+    "emergencyMissing": []
+  },
+  "judge": [
+    {
+      "item": "欠陥注入: 人の層の検出率の下限",
+      "criterion": "60%",
+      "result": "測定なし(tally の記録が無い、または目隠しを確かめられない)",
+      "pass": null
+    },
+    {
+      "item": "欠陥注入: AI の層の扱い(下限、または「検出の層に数えない」)",
+      "criterion": "検出の層に数えない",
+      "result": "測定なし",
+      "pass": true
+    },
+    {
+      "item": "場面集: 止まるべき11場面のうち止まる数",
+      "criterion": "11",
+      "result": "9 / 11",
+      "pass": false
+    },
+    {
+      "item": "類型E: 人へ戻したときに処理できる量の下限",
+      "criterion": "1週 5件",
+      "result": "記録なし",
+      "pass": false
+    },
+    {
+      "item": "類型F: 別の提供者での差分の許容の範囲",
+      "criterion": "基準集合の失敗の増加が 2 件以内",
+      "result": "記録なし",
+      "pass": false
+    },
+    {
+      "item": "成立判定: 層1・D-0 の全行記入で成立条件1 が成立する",
+      "criterion": "成立",
+      "result": "成立(層1 が有効で、D-0 表4 の空欄なし)",
+      "pass": true
+    },
+    {
+      "item": "実環境の統制の確認(ルールセットの適用・PR のレビューの取得・ship-evidence の成果物の取得)",
+      "criterion": "3項目とも確認済み(採用者のリポジトリの実環境の gh で env-check を実行し、記録をコミットする)",
+      "result": "**未確認**(PR のレビューの取得)",
+      "pass": false
+    }
+  ],
+  "envCheck": {
+    "present": true,
+    "confirmed": false,
+    "items": [
+      {
+        "id": "ruleset",
+        "label": "ルールセットの適用(要求する承認の数・最後の push の後の承認・コードオーナー・必須チェック)",
+        "status": "confirmed",
+        "detail": "構成がブランチ保護を要しない(G-6 無効。ルールセット なし)。確かめる項目なし",
+        "evidence": null,
+        "notApplicable": true
+      },
+      {
+        "id": "prReviews",
+        "label": "PR のレビューの取得(gate-g5 が PR_REVIEWS に渡す gh api …/pulls/N/reviews)",
+        "status": "unconfirmed",
+        "detail": "PR #164 のレビューが 0 件(承認のある PR で確かめる。--pr N)",
+        "evidence": null,
+        "notApplicable": false
+      },
+      {
+        "id": "shipEvidence",
+        "label": "ship-evidence の成果物の取得(gate-g5 の実行の license-scan・test-results)",
+        "status": "confirmed",
+        "detail": "gate-g5 の実行 38097995123 に license-scan と test-results がある(ship-evidence が gh run download で取り込む形)",
+        "evidence": {
+          "runId": 38097995123,
+          "runUrl": "https://github.com/Takenori-Kusaka/Filetto/actions/runs/38097995123",
+          "runCreatedAt": "2026-10-11T00:18:45Z",
+          "artifactIds": [
+            11686962085,
+            11686441718,
+            11686162082
+          ],
+          "api": "repos/Takenori-Kusaka/Filetto/actions/runs/38097995123/artifacts",
+          "fetchedAt": "2026-10-11T09:48:08+09:00"
+        },
+        "notApplicable": false
+      }
+    ],
+    "problems": [
+      "docs/adoption-trial/env-check.json がコミットされていない"
+    ]
+  }
+}

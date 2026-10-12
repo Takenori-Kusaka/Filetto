@@ -159,3 +159,9 @@ $ ruff / spec-lint / record-integrity / ip-clearance → 緑
 - `docs/platform/README.md` — 検査を足すときの原則
 - [#58](https://github.com/Takenori-Kusaka/Filetto/issues/58) 運用上の注意1 — `secretScan` が空である記録
 - [PL-0001](PL-0001-ip-clearance-pep639.md)〜[PL-0012](PL-0012-record-integrity.md) — 本案件が足した記録の検査
+
+## 8. 後日談 (2026-10-11 の再準拠)
+
+本文書で記録した `secret-scan` の `detect-secrets` による暫定対応は、2026-10-11 の **pit-in-template aab3b7a への再準拠(PR #162 / ADR-0001)** において、テンプレート標準の `secretlint`(`.secretlintrc.json`)へと統合・標準化された。
+
+一方、カバレッジ判定の開始下限(`coverageMinStatements: 50`)および測定対象が下限未満のときの未実施記録化(`measured: false`)の仕組みは、再準拠後も継続して維持・運用されている。
