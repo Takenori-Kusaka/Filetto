@@ -587,7 +587,8 @@
       "PSF-2.0",
       "Python-2.0"
     ],
-    "strengthened": true
+    "strengthened": true,
+    "coverageMinStatements": 50
   },
   "review": {
     "requiredApprovals": 0,
@@ -798,6 +799,35 @@
       "notice": null,
       "prevHash": "bef0d2347770d29c270cd3a5d670f1558e243ac43c8bf2484a5e9a0f5a86d3e1",
       "stateHash": "36f68da01a32b9c3499991aae9cb165c1bc225664c182fe4e115606e4c2af3f6"
+    },
+    {
+      "date": "2026-10-12",
+      "at": "2026-10-12T23:12:14+09:00",
+      "kind": "settings",
+      "changePoint": null,
+      "summary": "カバレッジ判定の開始下限を 50 文に設定する(PL-0013)",
+      "result": "changed",
+      "direction": "strict",
+      "d0Before": "1.5",
+      "d0After": "1.5",
+      "diff": [
+        "カバレッジ判定の開始下限: 未設定 → 50文"
+      ],
+      "arising": [],
+      "separationRecheck": "兼務禁止への抵触 0 件 / 代償措置つきの例外 1 件 / 逸脱として記録した兼務 2 件 / 同一人物のため独立が成立しない組 1 件 / 責任者が未記入の席 0 席",
+      "invalidatedChecks": [],
+      "expired": [],
+      "recheckDue": null,
+      "decidedBy": "Takenori Kusaka",
+      "reason": "PL-0013: statements が極小の間(2文)はカバレッジ100%が無意味であるため、50文未満は判定を実施しない",
+      "ruleApprovedBy": null,
+      "ruleApproval": null,
+      "nameOverrides": [],
+      "sgRecord": null,
+      "outage": null,
+      "notice": null,
+      "prevHash": "06a17354c527968f78ae22722710cd42729d05e05a69bf6014f483e7c090088c",
+      "stateHash": "77f6728179c0de047dc37f1a0a4bbfde75a89999e023b05d1ab31f9020427d53"
     }
   ],
   "guard": {
