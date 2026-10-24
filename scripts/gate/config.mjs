@@ -1172,9 +1172,11 @@ export function readGateRecords() {
   const dir = path.join(ROOT, 'docs/gates');
   if (!fs.existsSync(dir)) return [];
   const raw = (text, key) => text.match(new RegExp(`^\\|\\s*${key}\\s*\\|\\s*(.*?)\\s*\\|\\s*$`, 'm'))?.[1]?.trim() ?? null;
+  const plain = (v) => v?.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\*\*|__|`/g, '').trim() ?? null;
   const cell = (text, key) => {
-    const v = raw(text, key) ?? '';
-    return v && !v.includes(' / ') && !v.startsWith('<') ? v : null;
+    const v = plain(raw(text, key)) ?? '';
+    if (!v || v.startsWith('<')) return null;
+    return key === '対象' || !v.includes(' / ') ? v : null;
   };
   return fs
     .readdirSync(dir)
