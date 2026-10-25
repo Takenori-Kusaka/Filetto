@@ -28,6 +28,15 @@ runs:
       with:
         python-version: ${{ fromJSON(steps.rt.outputs.json).runtimeVersion }}
 
+    # WebUI(ADR-0003)。SvelteKit 3 は Node 22.17 以上を要する。アダプタの実行環境と別に、web/ がある場合だけ用意する
+    - name: Node.js(WebUI)
+      if: fromJSON(steps.rt.outputs.json).runtime != 'node' && hashFiles('web/package.json') != ''
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: ${{ (inputs.install == 'true' && hashFiles('web/package-lock.json') != '') && 'npm' || '' }}
+        cache-dependency-path: web/package-lock.json
+
     - name: Go
       if: fromJSON(steps.rt.outputs.json).runtime == 'go'
       uses: actions/setup-go@v5
