@@ -2,27 +2,45 @@
 
 削除は WebUI と同じゴミ箱へ入れる(経路で可逆性の水準を変えない)。物理削除のツールは置かない。
 AI が呼ぶ経路には確認の UI が無いため、可逆性は実装で担保する。
+リネーム・移動も WebUI と同じ操作履歴へ記録し、呼び出し経路を mcp とする(受入基準13・14)。
 """
 
 from __future__ import annotations
 
 from mcp.server import MCPServer
 
+from filetto.history import HistoryStore
 from filetto.trash import TrashStore
 
 
-def create_mcp(trash: TrashStore) -> MCPServer:
+def create_mcp(trash: TrashStore, history: HistoryStore | None = None) -> MCPServer:
+    """history を渡すと、リネーム・移動のツールを置き、削除も操作履歴へ記録する"""
     server = MCPServer("Filetto")
 
     @server.tool()
     def delete_file(path: str) -> dict[str, str]:
         """ファイルをゴミ箱へ移す。原本の実体は削除しない。ゴミ箱からは復元できる"""
-        entry = trash.trash(path)
+        entry = trash.trash(history.resolve(path) if history else path)
+        if history:
+            history.record_delete(path, "mcp")
         return {"path": entry.path, "trashed_at": entry.trashed_at.isoformat()}
 
     @server.tool()
     def list_trash() -> list[dict[str, str]]:
         """ゴミ箱の一覧(削除前のパスと、ゴミ箱へ入れた時刻)"""
         return [{"path": e.path, "trashed_at": e.trashed_at.isoformat()} for e in trash.list()]
+
+    if history is None:
+        return server
+
+    @server.tool()
+    def rename_file(path: str, name: str) -> dict[str, str]:
+        """ファイルの名前を変える。原本の実体は変えず、変更前の名前を操作履歴へ残す"""
+        return {"path": history.rename(path, name, "mcp")}
+
+    @server.tool()
+    def move_file(path: str, to: str) -> dict[str, str]:
+        """ファイルを別のディレクトリへ移す。原本の実体は動かさず、変更前のパスを操作履歴へ残す"""
+        return {"path": history.move(path, to, "mcp")}
 
     return server
