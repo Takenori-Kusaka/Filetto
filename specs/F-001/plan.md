@@ -125,7 +125,7 @@ Task-6 の着手時点で WebUI の技術が決まっていなかったため、
 
 **土台だけのタスクは作らない。** 画面の土台(`web/` の SvelteKit の雛形、`StaticFiles` での配信)は、最初の画面であるゴミ箱の一覧(基準11・12)と同じ Task-12 に入れる。Task-12 の見込みは雛形の設定ファイルを含み、ロックファイル(`package-lock.json`)を除く。上限を超えた場合は本計画へ差し戻す。
 
-**WebUI の配信の準備(タスク外。`Spec: setup` の変更)**: CI への Node の段(`npm ci --ignore-scripts`・ビルド・画面の検査)、npm の依存へのライセンスと脆弱性の検査の拡張、Docker のマルチステージ。検査と強制層に関わるため、製品のコードと別の変更にし、AI維持管理者へ引き渡す(`state:needs-platform`)。
+**WebUI の配信の準備(タスク外。`Spec: setup` の変更)**: CI への Node の段(`npm ci --ignore-scripts`・ビルド・画面の検査)、npm の依存へのライセンスと脆弱性の検査の拡張。検査と強制層に関わるため、製品のコードと別の変更にし、AI維持管理者へ引き渡す(`state:needs-platform`)。Docker のマルチステージ(ADR-0003)は、`docker-compose.yml` と Dockerfile がまだ無いため、それらを作る変更([#113](https://github.com/Takenori-Kusaka/Filetto/issues/113))で行う。
 
 ## テストの方針
 
