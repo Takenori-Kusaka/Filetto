@@ -2,7 +2,7 @@
 	import type { TrashItem } from './api';
 
 	// 残日数は一覧の中の文字だけで示す。完全削除の予告をトースト・ポップアップ・バッジで出さない(受入基準12)
-	let { items }: { items: TrashItem[] } = $props();
+	let { items, onrestore }: { items: TrashItem[]; onrestore?: (path: string) => void } = $props();
 
 	const remaining = (days: number | null) => (days === null ? '無期限' : `残り ${days} 日`);
 </script>
@@ -15,6 +15,9 @@
 			<li>
 				<span>{item.path}</span>
 				<span>{remaining(item.remaining_days)}</span>
+				{#if onrestore}
+					<button type="button" onclick={() => onrestore(item.path)}>復元</button>
+				{/if}
 			</li>
 		{/each}
 	</ul>
