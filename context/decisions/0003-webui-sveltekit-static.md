@@ -25,14 +25,14 @@ F-001 Task-6(ゴミ箱の一覧に完全削除までの残日数を表示する�
 
 ## 検討した選択肢
 
-各案の性質は調査報告書のとおり。
+各案の性質は調査報告書のとおり。採らなかった理由の欄は、判定者 Takenori Kusaka の指示により AI の担い手が代理記入した(2026-10-25。判定者が PR のマージをもって承認する)。
 
 | 案 | 性質(調査の要約) | 採らなかった理由 |
 | --- | --- | --- |
-| Jinja2 + htmx 2.0.x | 依存は Python の jinja2 と MarkupSafe だけ。npm を使わない。HTML を返すルートを FastAPI に足し、テストは pytest の TestClient で書ける | <技術判断者が記入> |
-| 素の HTML + JS(必要な所だけ Lit) | ビルドも依存も不要。既存の JSON API をそのまま使う。一覧・フォーム・エラー表示を自前で書く量が最も多い | <技術判断者が記入> |
-| React + Vite | npm 最小 65 パッケージ(ルーター等で増える)。情報量と AI の生成例が最も多い。更新への追随が重い | <技術判断者が記入> |
-| Vue 3 / Preact / SolidJS / Datastar / FastHTML | 報告書の比較では、上の案と同等かそれ以下(Vue 3.6・Solid 2.0 は RC、Datastar は配布が CDN 中心、FastHTML は FastAPI と別のフレームワーク) | <技術判断者が記入> |
+| Jinja2 + htmx 2.0.x | 依存は Python の jinja2 と MarkupSafe だけ。npm を使わない。HTML を返すルートを FastAPI に足し、テストは pytest の TestClient で書ける | 画面ごとに HTML を返すルートを FastAPI に足すことになり、画面と JSON API の2系統を保守することになる。画面を JSON API の利用者にすれば、WebUI と MCP が同じ API を通り、経路で挙動が分かれにくい。ドラッグでの移動や大量の一覧など、画面内の対話が増えたときに作り直しになりやすい |
+| 素の HTML + JS(必要な所だけ Lit) | ビルドも依存も不要。既存の JSON API をそのまま使う。一覧・フォーム・エラー表示を自前で書く量が最も多い | 依存が無い利点はあるが、一覧・フォーム・状態の表示を部品として持てず、画面が増えるほど自前で書く量と重複が増える。保守者1人では、部品の仕組みを持つ方式の方が負担が小さい |
+| React + Vite | npm 最小 65 パッケージ(ルーター等で増える)。情報量と AI の生成例が最も多い。更新への追随が重い | SvelteKit と同じく npm とビルドを持ち込むうえ、ルーターやデータ取得を別のライブラリで足す必要があり、依存が増え更新への追随も重い。記述量も Svelte より多い。情報量の多さはこれらを上回らない |
+| Vue 3 / Preact / SolidJS / Datastar / FastHTML | 報告書の比較では、上の案と同等かそれ以下(Vue 3.6・Solid 2.0 は RC、Datastar は配布が CDN 中心、FastHTML は FastAPI と別のフレームワーク) | Vue 3.6 と SolidJS 2.0 は RC で、採用直後に移行が控える。Preact は React と同じ道具立てを要し、記述量で Svelte を上回らない。Datastar は配布が CDN 中心で SSE 前提、FastHTML は FastAPI と別のフレームワークで ADR-0002 と重なる |
 
 ## 可逆性
 
