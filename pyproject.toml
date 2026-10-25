@@ -11,12 +11,17 @@ requires-python = ">=3.12"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 authors = [{ name = "Takenori Kusaka" }]
-dependencies = []
+dependencies = [
+  # 版の揺れが大きいため、マイナー版まで固定する(ADR-0002)
+  "fastapi>=0.162,<0.163",
+  "starlette>=1.10,<1.11",
+]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8",
   "pytest-cov>=5",
+  "httpx2>=2.16",
   "ruff>=0.6",
   "pip-audit>=2.7",
   "pip-licenses>=5",
