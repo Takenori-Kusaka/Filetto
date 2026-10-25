@@ -57,6 +57,7 @@ def test_api_lists_unlimited_as_null(
 def test_no_mail_or_notification_is_sent_anywhere() -> None:
     """メール送信・通知の仕組みをソースと画面に持たない"""
     pattern = re.compile(r"smtplib|email\.mime|new Notification|showNotification", re.I)
-    files = [*(ROOT / "src").rglob("*.py"), *(ROOT / "web").rglob("*")]
+    # 画面は手で書いたソース(web/src)だけを見る。node_modules・build は依存と生成物
+    files = [*(ROOT / "src").rglob("*.py"), *(ROOT / "web" / "src").rglob("*")]
     hits = [str(p) for p in files if p.is_file() and pattern.search(p.read_text("utf-8"))]
     assert hits == []
