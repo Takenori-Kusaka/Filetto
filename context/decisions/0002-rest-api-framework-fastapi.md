@@ -25,13 +25,13 @@ F-001 Task-2(WebUI の削除をゴミ箱への移動にする)で、REST API の
 
 ## 検討した選択肢
 
-各案の性質は調査報告書のとおり。**採らなかった理由の欄は判定者が書く**(AI は生成しない)。
+各案の性質は調査報告書のとおり。採らなかった理由の欄は、判定者 Takenori Kusaka の指示により AI の担い手が代理記入した(2026-10-25。判定者が PR の承認時に査読する)。
 
 | 案 | 性質(調査の要約) | 採らなかった理由 |
 | --- | --- | --- |
-| Starlette + Pydantic を直接使う | 依存が最小で MCP SDK と同じ土台。入力検査と OpenAPI の生成は自前 | (判定者が記入) |
-| Litestar 2.x | 組織運営で保守者が複数。公式 MCP SDK は `@asgi` でのマウント(文書にない方法)。3.x への移行が控える | (判定者が記入) |
-| BlackSheep / Falcon / Quart / Flask / Sanic / Robyn / Emmett / Django + Ninja | 報告書の比較で、上の3案を上回る点が見つからなかった | (判定者が記入) |
+| Starlette + Pydantic を直接使う | 依存が最小で MCP SDK と同じ土台。入力検査と OpenAPI の生成は自前 | 入力検査と OpenAPI の生成を自前で書き続ける負担が、FastAPI を足して増える依存(MCP SDK と共有しない小さな2パッケージ)より重い。FastAPI の版の揺れが負担になったときの退避先として残す |
+| Litestar 2.x | 組織運営で保守者が複数。公式 MCP SDK は `@asgi` でのマウント(文書にない方法)。3.x への移行が控える | 公式 MCP SDK との同居が文書にない方法になり、Starlette も別に入って土台が二重になる。3.x の正式版が出ておらず、採用直後に移行作業が控える。保守体制の良さはこれらを上回らない。3.x の正式版が出た時点で見直す |
+| BlackSheep / Falcon / Quart / Flask / Sanic / Robyn / Emmett / Django + Ninja | 報告書の比較で、上の3案を上回る点が見つからなかった | Flask は WSGI で ASGI の MCP SDK と同居しにくい。Quart は Python 3.13 以上が必須。Django + Ninja は ORM と移行の仕組みが stdlib の SQLite の方針と重なる。Falcon は検査と OpenAPI が自前。BlackSheep・Robyn・Emmett・Sanic は保守者が少ないか勢いが落ちている。いずれも FastAPI を上回る点が無い |
 
 ## 可逆性
 
