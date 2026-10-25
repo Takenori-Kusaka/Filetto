@@ -17,7 +17,13 @@ from pydantic import BaseModel
 
 from filetto.mcp import create_mcp
 from filetto.storage import OriginalStore, OutsideOriginalError
-from filetto.trash import AlreadyTrashedError, TrashEntry, TrashStore
+from filetto.trash import (
+    AlreadyTrashedError,
+    NotTrashedError,
+    RestoreConflictError,
+    TrashEntry,
+    TrashStore,
+)
 
 
 class TrashItem(BaseModel):
@@ -58,6 +64,18 @@ def create_app(original_root: str | Path, db_path: str | Path) -> FastAPI:
     @app.get("/api/trash")
     def list_trash() -> list[TrashItem]:
         return [TrashItem.of(e) for e in trash.list()]
+
+    @app.post("/api/trash/{path:path}/restore")
+    def restore_file(path: str) -> TrashItem:
+        """ゴミ箱のファイルを削除前のパスへ戻す。同名の別ファイルがあれば 409 で、復元しない"""
+        try:
+            return TrashItem.of(trash.restore(path))
+        except NotTrashedError as e:
+            raise HTTPException(status_code=404, detail="ゴミ箱に入っていない") from e
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail="削除前のパスに実体が無い") from e
+        except RestoreConflictError as e:
+            raise HTTPException(status_code=409, detail="復元先に同名のファイルがある") from e
 
     app.mount("/mcp", mcp_app)
     return app
