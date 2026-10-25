@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import math
 import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -143,6 +144,13 @@ class TrashStore:
                 raise RestoreConflictError(f"復元先に同名の別ファイルがある: {path}")
             conn.execute("DELETE FROM trash WHERE path = ?", (path,))
         return TrashEntry(path=path, trashed_at=datetime.fromisoformat(trashed_at))
+
+    def remaining_days(self, entry: TrashEntry) -> int | None:
+        """完全削除までの残日数(受入基準11)。日の途中は切り上げる。無期限なら None"""
+        if self._retention is None:
+            return None
+        left = entry.trashed_at + self._retention - self._clock()
+        return max(0, math.ceil(left / timedelta(days=1)))
 
     def contains(self, rel: str) -> bool:
         with self._connect() as conn:
