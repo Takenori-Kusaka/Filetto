@@ -29,10 +29,16 @@ from filetto.trash import (
 class TrashItem(BaseModel):
     path: str
     trashed_at: datetime
+    # 完全削除までの残日数。無期限なら null(受入基準11)
+    remaining_days: int | None
 
     @classmethod
-    def of(cls, entry: TrashEntry) -> TrashItem:
-        return cls(path=entry.path, trashed_at=entry.trashed_at)
+    def of(cls, entry: TrashEntry, trash: TrashStore) -> TrashItem:
+        return cls(
+            path=entry.path,
+            trashed_at=entry.trashed_at,
+            remaining_days=trash.remaining_days(entry),
+        )
 
 
 def create_app(original_root: str | Path, db_path: str | Path) -> FastAPI:
@@ -53,7 +59,7 @@ def create_app(original_root: str | Path, db_path: str | Path) -> FastAPI:
     def delete_file(path: str) -> TrashItem:
         """ファイルをゴミ箱へ移す。原本の実体は削除しない"""
         try:
-            return TrashItem.of(trash.trash(path))
+            return TrashItem.of(trash.trash(path), trash)
         except FileNotFoundError as e:
             raise HTTPException(status_code=404, detail="ファイルが見つからない") from e
         except OutsideOriginalError as e:
@@ -63,13 +69,13 @@ def create_app(original_root: str | Path, db_path: str | Path) -> FastAPI:
 
     @app.get("/api/trash")
     def list_trash() -> list[TrashItem]:
-        return [TrashItem.of(e) for e in trash.list()]
+        return [TrashItem.of(e, trash) for e in trash.list()]
 
     @app.post("/api/trash/{path:path}/restore")
     def restore_file(path: str) -> TrashItem:
         """ゴミ箱のファイルを削除前のパスへ戻す。同名の別ファイルがあれば 409 で、復元しない"""
         try:
-            return TrashItem.of(trash.restore(path))
+            return TrashItem.of(trash.restore(path), trash)
         except NotTrashedError as e:
             raise HTTPException(status_code=404, detail="ゴミ箱に入っていない") from e
         except FileNotFoundError as e:
