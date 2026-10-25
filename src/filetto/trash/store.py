@@ -7,6 +7,10 @@
 復元(受入基準5)は記録を外すことで、ファイルを削除前のパスへ戻す。ゴミ箱へ入れた時点の
 実体の識別(大きさと更新時刻)も記録し、復元の時点で同じパスに別のファイルが置かれていれば、
 同名の衝突として復元しない(受入基準6)。
+
+保持期間(受入基準7)を過ぎた項目は、ゴミ箱を読むたびに完全削除する。完全削除は Filetto の
+管理から外すことであり、原本の実体は消さない(受入基準1)。完全削除したパスは purged に残し、
+ゴミ箱へ戻すことも復元することもできない。
 """
 
 from __future__ import annotations
@@ -15,9 +19,10 @@ import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from filetto.config import load_retention
 from filetto.storage import OriginalStore
 
 _SCHEMA = """
@@ -26,6 +31,10 @@ CREATE TABLE IF NOT EXISTS trash (
     trashed_at TEXT NOT NULL,
     size INTEGER NOT NULL,
     mtime_ns INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS purged (
+    path TEXT PRIMARY KEY,
+    purged_at TEXT NOT NULL
 )
 """
 
@@ -54,13 +63,18 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+_FROM_ENV = object()
+
+
 class TrashStore:
     def __init__(
         self,
         db_path: str | Path,
         original: OriginalStore,
         clock: Callable[[], datetime] = _now,
+        retention: timedelta | None | object = _FROM_ENV,
     ) -> None:
+        """retention は保持期間。None は無期限。省略すると環境変数から読む"""
         db = Path(db_path).resolve()
         if db.is_relative_to(original.root):
             raise ValueError(f"ゴミ箱の記録は原本ディレクトリの外に置く: {db_path}")
@@ -68,17 +82,34 @@ class TrashStore:
         self._db = db
         self._original = original
         self._clock = clock
-        with self._connect() as conn:
-            conn.execute(_SCHEMA)
+        self._retention = load_retention() if retention is _FROM_ENV else retention
+        conn = sqlite3.connect(self._db)
+        try:
+            conn.executescript(_SCHEMA)
+        finally:
+            conn.close()
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
         conn = sqlite3.connect(self._db)
         try:
             with conn:
+                self._purge_expired(conn)
                 yield conn
         finally:
             conn.close()
+
+    def _purge_expired(self, conn: sqlite3.Connection) -> None:
+        if self._retention is None:
+            return
+        now = self._clock()
+        cutoff = (now - self._retention).isoformat()
+        conn.execute(
+            "INSERT OR REPLACE INTO purged (path, purged_at) "
+            "SELECT path, ? FROM trash WHERE trashed_at < ?",
+            (now.isoformat(), cutoff),
+        )
+        conn.execute("DELETE FROM trash WHERE trashed_at < ?", (cutoff,))
 
     def trash(self, rel: str) -> TrashEntry:
         """ゴミ箱へ入れる。原本に無いパスは FileNotFoundError、原本の外は OutsideOriginalError"""
@@ -87,6 +118,8 @@ class TrashStore:
         entry = TrashEntry(path=path, trashed_at=self._clock())
         try:
             with self._connect() as conn:
+                if conn.execute("SELECT 1 FROM purged WHERE path = ?", (path,)).fetchone():
+                    raise FileNotFoundError(f"完全削除済み: {path}")
                 conn.execute(
                     "INSERT INTO trash (path, trashed_at, size, mtime_ns) VALUES (?, ?, ?, ?)",
                     (entry.path, entry.trashed_at.isoformat(), stat.size, stat.mtime_ns),
