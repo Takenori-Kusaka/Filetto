@@ -12,6 +12,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+
 from filetto.config import RETENTION_ENV, load_retention
 
 SRC = Path(__file__).resolve().parents[2] / "src" / "filetto"
