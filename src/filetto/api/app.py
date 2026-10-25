@@ -3,6 +3,7 @@
 削除は物理削除ではなくゴミ箱への移動にする(F-001 受入基準2)。ハンドラは同期関数にして、
 stdlib の sqlite3 とファイルの stat をスレッドプールで動かす(イベントループを塞がない)。
 MCP サーバ(受入基準3)は同じゴミ箱を使い、同じ ASGI アプリの /mcp へマウントする。
+WebUI は SvelteKit の静的出力を / へマウントし、データは /api/** から取る(ADR-0003)。
 """
 
 from __future__ import annotations
@@ -14,6 +15,10 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import Response
+from starlette.staticfiles import StaticFiles
+from starlette.types import Scope
 
 from filetto.mcp import create_mcp
 from filetto.storage import OriginalStore, OutsideOriginalError
@@ -41,7 +46,21 @@ class TrashItem(BaseModel):
         )
 
 
-def create_app(original_root: str | Path, db_path: str | Path) -> FastAPI:
+class _SpaFiles(StaticFiles):
+    """画面の経路(例: /trash)を直接開いたときも index.html を返す。/api/** は戻さない"""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as e:
+            if e.status_code != 404 or path == "api" or path.startswith("api/"):
+                raise
+            return await super().get_response("index.html", scope)
+
+
+def create_app(
+    original_root: str | Path, db_path: str | Path, web_dir: str | Path | None = None
+) -> FastAPI:
     trash = TrashStore(db_path, OriginalStore(original_root))
     mcp = create_mcp(trash)
     mcp_app = mcp.streamable_http_app(streamable_http_path="/")
@@ -84,4 +103,7 @@ def create_app(original_root: str | Path, db_path: str | Path) -> FastAPI:
             raise HTTPException(status_code=409, detail="復元先に同名のファイルがある") from e
 
     app.mount("/mcp", mcp_app)
+    if web_dir is not None:
+        # 経路の照合は登録順のため、/api/** と /mcp の後に置く
+        app.mount("/", _SpaFiles(directory=web_dir, html=True), name="web")
     return app
