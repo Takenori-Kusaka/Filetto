@@ -17,6 +17,9 @@ dependencies = [
   "starlette>=1.10,<1.11",
   # 公式 MCP Python SDK。2.x の間も API の改名があるため、マイナー版まで固定する
   "mcp>=2.3,<2.4",
+  # Lore の公式 Python SDK(版の保管。F-001 受入基準15〜22)。0.x の間は API が非互換に変わりうるため、
+  # マイナー版まで固定する(S0-005 の採用条件4)
+  "lore-vcs>=0.11,<0.12",
 ]
 
 [project.optional-dependencies]
