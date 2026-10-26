@@ -4,6 +4,7 @@
 stdlib の sqlite3 とファイルの stat をスレッドプールで動かす(イベントループを塞がない)。
 MCP サーバ(受入基準3)は同じゴミ箱を使い、同じ ASGI アプリの /mcp へマウントする。
 WebUI は SvelteKit の静的出力を / へマウントし、データは /api/** から取る(ADR-0003)。
+過去の版は VersionStore の背後から読む(受入基準16・17)。版は原本のパスで保管されている。
 """
 
 from __future__ import annotations
@@ -31,6 +32,7 @@ from filetto.trash import (
     TrashEntry,
     TrashStore,
 )
+from filetto.version import Version, VersionNotFoundError, VersionStore
 
 
 class TrashItem(BaseModel):
@@ -69,6 +71,16 @@ class HistoryItem(BaseModel):
     via: str
 
 
+class VersionItem(BaseModel):
+    id: str
+    path: str
+    saved_at: datetime
+
+    @classmethod
+    def of(cls, version: Version) -> VersionItem:
+        return cls(id=version.id, path=version.path, saved_at=version.saved_at)
+
+
 class _SpaFiles(StaticFiles):
     """画面の経路(例: /trash)を直接開いたときも index.html を返す。/api/** は戻さない"""
 
@@ -82,7 +94,10 @@ class _SpaFiles(StaticFiles):
 
 
 def create_app(
-    original_root: str | Path, db_path: str | Path, web_dir: str | Path | None = None
+    original_root: str | Path,
+    db_path: str | Path,
+    web_dir: str | Path | None = None,
+    versions: VersionStore | None = None,
 ) -> FastAPI:
     original = OriginalStore(original_root)
     trash = TrashStore(db_path, original)
@@ -153,6 +168,30 @@ def create_app(
     @app.get("/api/history")
     def list_history() -> list[HistoryItem]:
         return [HistoryItem(**asdict(e)) for e in history.list()]
+
+    def _original_path(path: str) -> str:
+        try:
+            return history.resolve(path)
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail="ファイルが見つからない") from e
+        except OutsideOriginalError as e:
+            raise HTTPException(status_code=400, detail="原本ディレクトリの外は扱わない") from e
+
+    if versions is not None:
+
+        @app.get("/api/files/{path:path}/versions")
+        def list_versions(path: str) -> list[VersionItem]:
+            """ファイルの過去の版を古い順に返す。リネーム・移動の後は、いまのパスで引く"""
+            return [VersionItem.of(v) for v in versions.versions(_original_path(path))]
+
+        @app.get("/api/files/{path:path}/versions/{version_id}")
+        def read_version(path: str, version_id: str) -> Response:
+            """指定した版の内容を返す(受入基準16)"""
+            try:
+                content = versions.read(_original_path(path), version_id)
+            except VersionNotFoundError as e:
+                raise HTTPException(status_code=404, detail="指定の版が無い") from e
+            return Response(content, media_type="application/octet-stream")
 
     app.mount("/mcp", mcp_app)
     if web_dir is not None:
