@@ -22,7 +22,7 @@ from lore.types.args import (
 )
 from lore.types.enums import LoreEventTag
 
-from filetto.version.store import Version, VersionNotFoundError
+from filetto.version.store import Version, VersionNotFoundError, VersionStoreError
 
 
 class LoreVersionStore:
@@ -66,9 +66,13 @@ class LoreVersionStore:
         if not (self._root / path).exists():
             return []
         args = LoreFileHistoryArgs(path=str(self._root / path))
+        try:
+            events = self._events(Lore.file_history(self._globals, args))
+        except LoreError:
+            raise VersionStoreError(f"版の履歴を読めない: {path}") from None
         found: list[Version] = []
         number = None
-        for tag, data in self._events(Lore.file_history(self._globals, args)):
+        for tag, data in events:
             if tag == "FILE_HISTORY":
                 number = data["number"]
             elif number is not None:
@@ -88,7 +92,8 @@ class LoreVersionStore:
             try:
                 Lore.file_write(self._globals, args).wait()
             except LoreError:
-                raise VersionNotFoundError(f"版を読めない: {path} @ {version_id}") from None
+                # 一覧にある版が取り出せないのは保管領域の破損(Lore は誤った内容を返さない。S0-005)
+                raise VersionStoreError(f"版を読めない: {path} @ {version_id}") from None
             return output.read_bytes()
 
 

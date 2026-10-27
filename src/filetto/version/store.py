@@ -14,6 +14,10 @@ class VersionNotFoundError(LookupError):
     """指定されたパスに、指定された版が無い"""
 
 
+class VersionStoreError(RuntimeError):
+    """保管領域が読めない(破損など)。版があるはずなのに取り出せない"""
+
+
 @dataclass(frozen=True)
 class Version:
     """1つの版。id は保管の実装が振る識別子。path は原本ディレクトリからの相対パス"""
@@ -29,9 +33,9 @@ class VersionStore(Protocol):
         ...
 
     def versions(self, path: str) -> list[Version]:
-        """パスの版を古い順に返す。版が無ければ空"""
+        """パスの版を古い順に返す。版が無ければ空。履歴が読めなければ VersionStoreError"""
         ...
 
     def read(self, path: str, version_id: str) -> bytes:
-        """版の内容を返す。無ければ VersionNotFoundError"""
+        """版の内容を返す。無ければ VersionNotFoundError、壊れていれば VersionStoreError"""
         ...
