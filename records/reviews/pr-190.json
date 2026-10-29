@@ -1,0 +1,24 @@
+{
+  "repository": "Takenori-Kusaka/Filetto",
+  "pr": 190,
+  "title": "chore: pit-in-template 7e82973 へ再準拠する(判定を PR のレビューで記録する)",
+  "body": "## 対応タスク\n\npit-in-template 7e82973(2026-10-24)への再準拠。前回の再準拠は #162(aab3b7a)。\n\n## 変更の概要\n\n**目的: ゲートの判定を、人が PR にレビューを出すだけで記録できるようにする**(process-compass #321 / ADR-0070)。\n\n- 判定の受け皿が「判定者本人の PR のレビュー」になった。G-2・G-3・G-4・G-6 で対象が PR のとき、レビュー本文の 1 行目に `G-4: 通過` のような宣言行と確認した項目を書けば判定が成立する。様式(`docs/gates/`)を別に書く必要は無い\n- マージを契機に `record-copy.yml` がレビューの写しを記録用ブランチ `records` へ置く。`next.mjs` と出荷の証跡の集約は `records.mjs` で読む。`records` ブランチは最初のマージで自動で作られる\n- G-1・G-7・G-8 などの様式は、記名者本人が `records/gates/` へ直接 push する(PR も他者の承認も要らない)\n\n取り込みの方法:\n\n- 上流で変わり Filetto が手を入れていない 76 ファイルは上流の版で置き換え、新規 29 ファイルを足した\n- `.gitignore`・`CLAUDE.md`・`templates/06-project-brief.md`・`scripts/gate/config.mjs` は 3 方向で統合した。`config.mjs` と `.gitignore` の競合は上流側を採った(Filetto の手直しと同じ趣旨の修正が上流に入ったため)\n- `README.md` は Filetto の製品の説明なので取り込まない\n- `process.config.json` は手で編集しない。上流の差分はライセンスの許可リストの既定値だけで、Filetto には適用しない\n\n**統制の弱化を含む**(差分が主張と一致することまでを確かめた。許容してよいかは判断していない):\n\n| 変わった点 | 前 | 後 |\n| --- | --- | --- |\n| PR の規模の上限の超過 | G-5(`pr-rules`)が失敗させ、台帳の例外承認の行があるときだけ通す | 失敗にしない。`size:over` を付け、区分の下限を R2 へ上げ、PR 本文の「規模の確認」の欄(人が書く)が無いときだけ失敗させる |\n| 禁止事項 2 | AI が生成した受入基準をそのまま承認する | AI が生成した受入基準を、人の G-2・G-4 の判定を経ずに確定とする(読まずに承認しないことは推奨へ) |\n| 判定の草案を作らない主体 | 起案した主体(ロールの組み合わせに依らない) | 起案したセッション(文脈の単位。人の単位では課さない) |\n\n人の手が要る残作業(この PR の外):\n\n- 記録用ブランチのルールセットの適用: `gh api repos/{owner}/{repo}/rulesets --input .github/rulesets/records.json`(リポジトリの管理者の操作。私有リポジトリの無料のプランでは適用できない)\n- 適用の後、実環境の統制の確認: `node scripts/gate/adoption-trial.mjs env-check --by <氏名>`\n\n## 検証方法と結果\n\n<!-- 人が書く欄 -->\n\n参考(AI が観測した事実。Windows 11 の worktree で実行):\n\n- `node scripts/gate/check-process-rules.mjs` → CLAUDE.md の構成依存部分は構成と一致、常駐の規則の節 16 節が揃う\n- `node scripts/gate/g5-local.mjs --no-install` → contract(verify-gate-contract・test-check-delegation・test-check-pr・test-records・test-next-records・test-aggregate-records・test-env-findings・test-init-g5)・spec-lint・secret-scan が通過。test・lint・audit・licenses は Windows の cmd が `if [ -f … ]` を解釈できず失敗(main でも同じ。CI は Linux)\n- `pytest -q` → 110 通過、4 失敗(シンボリックリンク・読み取り専用・web のビルドに関わる Windows 固有の試験。製品のコードはこの PR で変えていない)\n- `node scripts/gate/test-roster-rules.mjs` → 69 件が期待と一致\n- `node scripts/gate/next.mjs` → 動作する。「記録用ブランチ records が手元に無い」と出る(最初のマージで作られる)\n\n## AI 関与範囲\n\n- 生成: 全差分の取り込みと統合(Claude Opus 5.5)\n- 人の確認: 未\n\n## 作成を指示した者\n\nTakenori Kusaka\n\n## リスク区分\n\nR2\n\n確定した者:\n\n## トレーラ(スカッシュのメッセージの末尾になる。この節を末尾に保つ)\n\nSpec: setup\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n",
+  "head_ref": "chore/pit-in-reconform-7e82973",
+  "merge_commit_sha": "2cf1c77f2e94c1ebc235667601c08ddab08ea619",
+  "head_sha": "299d516434ebda1b684c8ffb80d5982eb2fee7b1",
+  "author": {
+    "id": 22556919,
+    "login": "Takenori-Kusaka"
+  },
+  "merged_at": "2026-10-29T21:40:50Z",
+  "merged_by": {
+    "login": "Takenori-Kusaka"
+  },
+  "base": {
+    "ref": "main"
+  },
+  "copied_at": "2026-10-29T21:41:00Z",
+  "copied_by": "record-copy workflow (GITHUB_TOKEN)",
+  "reviews": [],
+  "audit_log": "取れない(組織の監査ログ API は Enterprise Cloud に限る。bypass・保護の変更の記録は、この写しに含まれない)"
+}
