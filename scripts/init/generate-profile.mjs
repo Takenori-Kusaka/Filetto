@@ -32,6 +32,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { evaluate, visibleQuestions } from '../vendor/tailoring-engine.mjs';
 import { readPolicy } from '../gate/org-assurance.mjs';
+import { recalibrationState, recalibrationNote } from '../gate/recalibration.mjs';
 import {
   reviewersRequiredOf,
   corePathsOf,
@@ -245,28 +246,45 @@ export function checkConstraints(answers, { reflectBelowMinimum = false } = {}) 
  * 1〜2名で、作成を指示した本人以外の確認者がいない場合、この条件を満たす構成が存在しない。
  * 標準は AI の確認を独立した人の確認に数えないため、省略ではなく未達として扱う。
  */
-export function detectUnmet(answers, gates, stack, { reviewerIsAuthor = null, soleAuthor = null } = {}) {
+export function detectUnmet(answers, gates, stack, { reviewerIsAuthor = null, soleAuthor = null, seatBlank = null } = {}) {
   const unmet = [];
   const small = answers['q-team-size'] === 'size-1-2';
   const noReviewer = small && answers['q-external-reviewer'] === 'reviewer-no';
+  // 確認者を置けるかどうかは、人の名簿と席から導く。設問への回答は判定の根拠にしない(標準 第4章 G-6。#302 / ADR-0065 決定5)。
+  // 未達は体制の表示であり、事業ステージで変わらない。G-6 を省略する構成(S0)にも当てる(同 決定2)。
+  // 「いない」と回答して省略になった構成は、従来どおり未達にする(byAnswer)。この構成で席へ別の人を記入する変更は、
+  // 回答と名簿の矛盾として拒否される(answersRosterProblems)ので、受け付けた構成では回答と名簿が食い違わない
+  const state = gates.g6.state;
+  const counts = isActiveState(state) || state === 'omitted';
+  const byAnswer = noReviewer && state === 'omitted';
   // 確認者がいると回答していても、独立レビュアの席の責任者が開発者の席と同一人物なら、
   // 1〜2名の体制では確認者がいないことが確定する。人の離脱で生じた場合も、決定を待たずに
   // 未達として反映する(第3章 3.13.3)
-  const sameReviewer = small && reviewerIsAuthor && isActiveState(gates.g6.state);
+  const sameReviewer = small && !byAnswer && reviewerIsAuthor && counts;
   // 名簿に、開発者の席の責任者のほかに人がいない(外部の確認者も含めて)。独立レビュアの席を空けたままでも、
   // 確認者を置けないことが確定する
-  const noConfirmer = small && !sameReviewer && soleAuthor && isActiveState(gates.g6.state);
+  const noConfirmer = small && !byAnswer && !sameReviewer && soleAuthor && counts;
+  // 開発者の席または独立レビュアの席の責任者が未記入で、確認者を名簿と席から確かめられない。未記入のあいだは未達の側へ倒す
+  const unshown = small && !byAnswer && !sameReviewer && !noConfirmer && Boolean(seatBlank) && counts;
+  // 回答が「いる」のまま、名簿と席からは確認者を確かめられない(回答と名簿の食い違い)。拒否はせず、未達の理由に出す
+  const answerNote =
+    (sameReviewer || noConfirmer || unshown) && answers['q-external-reviewer'] === 'reviewer-yes'
+      ? '。設問への回答は「確認者がいる」(q-external-reviewer: reviewer-yes)だが、回答は判定の根拠にしない'
+      : '';
 
-  if ((noReviewer && gates.g6.state === 'omitted') || sameReviewer || noConfirmer) {
+  if (byAnswer || sameReviewer || noConfirmer || unshown) {
     gates.g6.state = 'unmet';
     unmet.push({
       gate: 'g6',
       label: 'G-6 独立レビュー',
-      reason: sameReviewer
-        ? `作成を指示した本人以外が挙動を確認する条件を満たす構成が存在しない(独立レビュアの席の責任者が、開発者の席の責任者と同一人物: ${reviewerIsAuthor})`
-        : noConfirmer
-          ? `作成を指示した本人以外が挙動を確認する条件を満たす構成が存在しない(人の名簿に、開発者の席の責任者(${soleAuthor})のほかに確認できる人がいない)`
-          : '作成を指示した本人以外が挙動を確認する条件を満たす構成が存在しない(最小体制3名未満、かつ作成を指示した本人以外の確認者がいない)',
+      reason:
+        (sameReviewer
+          ? `作成を指示した本人以外が挙動を確認する条件を満たす構成が存在しない(独立レビュアの席の責任者が、開発者の席の責任者と同一人物: ${reviewerIsAuthor})`
+          : noConfirmer
+            ? `作成を指示した本人以外が挙動を確認する条件を満たす構成が存在しない(人の名簿に、開発者の席の責任者(${soleAuthor})のほかに確認できる人がいない)`
+            : unshown
+              ? `作成を指示した本人以外が挙動を確認する構成を、人の名簿と席から確かめられない(${seatBlank}の席の責任者が未記入。別の人が記入されるまで未達として表示する)`
+              : '作成を指示した本人以外が挙動を確認する条件を満たす構成が存在しない(最小体制3名未満、かつ作成を指示した本人以外の確認者がいない)') + answerNote,
       whyNotAi:
         '独立は責任者(人)の単位で定義する。責任者が同一人物なら、AI を何体に分けても、モデルの系統を変えても独立は成立しない。AI の確認は検出の層であり、判定に数えない。生成物の確認を生成器へ委ねる構成は自動化バイアスによって見落としを増やす',
       compensation: ['ci-strict', 'post-release-audit'],
@@ -274,6 +292,9 @@ export function detectUnmet(answers, gates, stack, { reviewerIsAuthor = null, so
       source: 'ADR-0028(未達と省略の区別)',
       sourceUrl: 'https://takenori-kusaka.github.io/process-compass/adr/0028-unmet-gate-distinct-from-omitted/',
       howToResolve: [
+        ...(unshown
+          ? ['確認できる人がいるなら、/process-change(種別 accountable)で人の名簿へ記入し、開発者の席と独立レビュアの席の責任者を別の人にする。設問への回答だけでは、確認者を置いたことにならない']
+          : []),
         '2名体制では、作成を指示していない側の人が確認する(相手も作成の指示に関与した変更は除く)',
         'リポジトリを公開し、コミュニティのレビューを受ける',
         '他の個人開発者と相互レビューの取り決めをする',
@@ -391,7 +412,6 @@ export function buildRoles(gates, separations = KB.separations ?? []) {
         exception: s.exception ?? 'none',
       })),
       mustNotJudge,
-      selfApproval: 'forbidden',
       notes: notes[r.id] ?? [],
     };
   });
@@ -592,7 +612,10 @@ export function buildConfig(answers, opts = {}) {
   // 人の離脱で確認者を置けなくなった場合も、席の入力を待たずに未達へ反映する(K70 / 第3章 3.13.3)
   const authorRow = people.find((p) => p.id === author);
   const soleAuthor = authorRow && !people.some((p) => p.id !== author && p.appointer !== true) ? authorRow.name : null;
-  const unmet = detectUnmet(answers, gates, opts.stack ?? 'none', { reviewerIsAuthor, soleAuthor });
+  // 開発者の席・独立レビュアの席の責任者が未記入なら、確認者を名簿と席から確かめられない(未達の側へ倒す。#302 / ADR-0065 決定5)
+  const reviewerKeyNow = personKey({ people }, accountableOf('independent-reviewer'));
+  const seatBlank = !author || !reviewerKeyNow ? [!author ? '開発者' : null, !reviewerKeyNow ? '独立レビュア' : null].filter(Boolean).join('・') : null;
+  const unmet = detectUnmet(answers, gates, opts.stack ?? 'none', { reviewerIsAuthor, soleAuthor, seatBlank });
   // 記入済みの調達先は再生成で失わない
   for (const u of unmet) u.reviewSourcing = opts.reviewSourcing?.[u.gate] ?? u.reviewSourcing;
   const deviations = detectDeviations(answers, gates);
@@ -631,7 +654,10 @@ export function buildConfig(answers, opts = {}) {
     answers['q-quality'] === 'quality-regulated' ||
     ['cl2', 'cl3'].includes(answers['q-criticality']) ||
     reviewerCount >= 2;
-  const ruleset = gates.g6.state === 'required' ? (strict ? 'regulated' : 'team') : null;
+  // 強制する承認の数は、構成の承認者の数(review.reviewerCount)から導く。CL2 の独立レビューは1名(標準 第8章 軸E の表が正。
+  // #305 / ADR-0067 決定5)。CL2 が足すのは独立した安全性の評価であり、承認の数ではない。コードオーナー・署名・最後の push の
+  // 後の承認は、2名の構成(regulated)と同じに保つ(safety)
+  const ruleset = gates.g6.state === 'required' ? (strict ? (reviewerCount >= 2 ? 'regulated' : 'safety') : 'team') : null;
 
   const derivedCoverage = ciStrengthened ? 90 : 80;
   // 較正していない下限(導出値のまま引き継いだ値)は、導出値が上がれば追随する。厳しくする向きであり、
@@ -652,7 +678,8 @@ export function buildConfig(answers, opts = {}) {
     console.log(`[較正引き継ぎ] 既存の較正設定（ci.coverageThreshold: ${opts.coverageThreshold}%）を検出し、引き継ぎました（標準の導出初期値: ${derivedCoverage}%）`);
   }
 
-  const derivedAllowedLicenses = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', 'Python-2.0', 'MPL-2.0'];
+  // 許容的な SPDX(CC0-1.0・Unlicense・0BSD・BlueOak-1.0.0)を含む(#295 T-18)。法務方針は組織が変える。恒久の追加は種別 settings で行う
+  const derivedAllowedLicenses = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', 'Python-2.0', 'MPL-2.0', 'CC0-1.0', 'Unlicense', '0BSD', 'BlueOak-1.0.0'];
   const allowedLicenses = opts.allowedLicenses ?? derivedAllowedLicenses;
   if (opts.allowedLicenses !== undefined && JSON.stringify(opts.allowedLicenses) !== JSON.stringify(derivedAllowedLicenses)) {
     console.log(`[較正引き継ぎ] 既存の較正設定（ci.allowedLicenses: ${JSON.stringify(opts.allowedLicenses)}）を検出し、引き継ぎました（標準の導出初期値: ${JSON.stringify(derivedAllowedLicenses)}）`);
@@ -665,13 +692,14 @@ export function buildConfig(answers, opts = {}) {
   }
 
   const derivedMaxChangedLines = 400;
-  const maxChangedLines = opts.maxChangedLines ?? derivedMaxChangedLines;
+  // null は「基準なし」(#295 / ADR-0058)。?? で既定値へ戻さない
+  const maxChangedLines = opts.maxChangedLines === undefined ? derivedMaxChangedLines : opts.maxChangedLines;
   if (opts.maxChangedLines !== undefined && opts.maxChangedLines !== derivedMaxChangedLines) {
     console.log(`[較正引き継ぎ] 既存の較正設定（task.maxChangedLines: ${opts.maxChangedLines}）を検出し、引き継ぎました（標準の導出初期値: ${derivedMaxChangedLines}）`);
   }
 
   const derivedMaxChangedFiles = 15;
-  const maxChangedFiles = opts.maxChangedFiles ?? derivedMaxChangedFiles;
+  const maxChangedFiles = opts.maxChangedFiles === undefined ? derivedMaxChangedFiles : opts.maxChangedFiles;
   if (opts.maxChangedFiles !== undefined && opts.maxChangedFiles !== derivedMaxChangedFiles) {
     console.log(`[較正引き継ぎ] 既存の較正設定（task.maxChangedFiles: ${opts.maxChangedFiles}）を検出し、引き継ぎました（標準の導出初期値: ${derivedMaxChangedFiles}）`);
   }
@@ -731,7 +759,14 @@ export function buildConfig(answers, opts = {}) {
       recordFormat: gates.g6.params.recordFormat ?? 'standard',
     },
     aiReview: { enabled: true, canApprove: false, requiredCheck: false },
-    task: { maxChangedLines, maxChangedFiles, selfHealMaxIterations },
+    task: {
+      maxChangedLines,
+      maxChangedFiles,
+      selfHealMaxIterations,
+      // 規模の算定で別に数える置き場(既定のテスト・fixture・snapshot に足す。足す変更は閾値として扱う)と、担保水準の宣言(記録。緩和を自動で与えない)
+      ...(Array.isArray(opts.nonProductPaths) && opts.nonProductPaths.length ? { nonProductPaths: opts.nonProductPaths } : {}),
+      ...(opts.assurance && typeof opts.assurance === 'object' ? { assurance: opts.assurance } : {}),
+    },
     matchedRuleIds: result.matchedRuleIds,
     warnings: result.warnings,
     // 体制の変化点の記録(第3章 3.13.4)。構成の生成そのものを最初の1件とする
@@ -768,6 +803,8 @@ export function seatSeparationFindings(config) {
   // 1〜2名の体制で、同一人物が占めた兼務禁止の組。拒否せず逸脱として記録する
   const deviated = [];
   for (const sep of config.separations ?? []) {
+    // 実行主体の文脈の単位でだけ課す規則は、席の責任者の兼務として検査しない(標準 第3章 3.5.3。人の単位では課さない)
+    if (sep.unit === 'context') continue;
     const [a, b] = sep.roles ?? [];
     if (!a || !b || !who[a] || who[a] !== who[b]) continue;
     const person = personName(config, seatOf(a).accountable);
@@ -953,7 +990,7 @@ export function changeLogEntry(e) {
 
 const GATE_RANK = { required: 3, simplified: 2, unmet: 1, omitted: 0 };
 const gateRank = (s) => (String(s ?? '').startsWith('merged-into-') ? 1 : GATE_RANK[s] ?? 3);
-const RULESET_RANK = { regulated: 2, team: 1 };
+const RULESET_RANK = { regulated: 3, safety: 2, team: 1 };
 
 /**
  * 変化点の前後の構成を比べる(標準 第8章「準拠テンプレートが備える手段」)。
@@ -1514,13 +1551,32 @@ export function diffConfig(before, after) {
       push(`${label}: ${[...b].join(', ') || 'なし'} → ${[...a].join(', ') || 'なし'}`, loosens ? 1 : 0, loosens ? 0 : 1, M);
     }
     for (const [k, label] of [
-      ['maxChangedLines', '変更行数の上限'],
-      ['maxChangedFiles', '変更ファイル数の上限'],
+      ['maxChangedLines', '規模の基準値(行数)'],
+      ['maxChangedFiles', '規模の基準値(ファイル数)'],
       ['selfHealMaxIterations', '自己修正ループの反復上限'],
     ]) {
-      const b = num(before.task?.[k]);
-      const a = num(after.task?.[k]);
-      if (b !== null && a !== null && b !== a) push(`${label}: ${b} → ${a}`, -b, -a, M);
+      // null は「基準なし」。上げる向き(最も緩い)として扱う
+      const rawB = before.task?.[k];
+      const rawA = after.task?.[k];
+      const b = rawB === null ? Infinity : num(rawB);
+      const a = rawA === null ? Infinity : num(rawA);
+      if (b !== null && a !== null && b !== a) push(`${label}: ${rawB === null ? 'なし(null)' : b} → ${rawA === null ? 'なし(null)' : a}`, -b, -a, M);
+    }
+    // 規模の算定で別に数える置き場(task.nonProductPaths)。足すと算定の対象が減るため、緩める向き
+    {
+      const b = setOf(before.task?.nonProductPaths);
+      const a = setOf(after.task?.nonProductPaths);
+      const added = [...a].filter((x) => !b.has(x));
+      const removed = [...b].filter((x) => !a.has(x));
+      if (added.length || removed.length) push(`規模の算定で別に数える置き場: ${[...b].join(', ') || 'なし'} → ${[...a].join(', ') || 'なし'}`, added.length ? 1 : 0, added.length ? 0 : 1, M);
+    }
+    // 担保水準の宣言(task.assurance)。L0 から L1・L2 へ上げるのは緩める向き(記名と理由を要する)。宣言は記録であり、緩和を自動で与えない
+    {
+      const lv = (c) => ({ L0: 0, L1: 1, L2: 2 })[c.task?.assurance?.level ?? 'L0'] ?? 0;
+      const b = lv(before);
+      const a = lv(after);
+      if (b !== a) push(`担保水準の宣言: L${b} → L${a}`, a > b ? 1 : 0, a > b ? 0 : 1, M);
+      else if (a > 0 && JSON.stringify(before.task?.assurance ?? null) !== JSON.stringify(after.task?.assurance ?? null)) diff.push(`担保水準の宣言(L${a})の根拠・見直し日の更新`);
     }
     // 区分の下限の規則(第3章 3.8.1 の要求事項5)。下限を下げる変更・規則を削る変更・対象のパスを狭める変更は
     // 緩める向きとして、D-0 表1「体制と運用形態」の決定者の記名と理由を要する(seat は null)
@@ -1761,8 +1817,13 @@ export function deciderProblems(config, report, decidedBy, before = null) {
   }
   for (const item of report.loosenItems) {
     if (allowedDeciders(config, item.seat).has(key)) continue;
+    // 独立レビュアの席の責任者が外部の確認者である席では、緩める向きの決定を、席の責任者の記名では受け付けない(標準 第3章 3.13.3)
+    const externalReviewer =
+      item.seat === 'independent-reviewer' && findPerson(config, (config.seats ?? []).find((s) => s.role === item.seat)?.accountable)?.external === true;
     out.push(
-      item.seat
+      externalReviewer
+        ? `「${item.line}」を決定できるのは、${decider}です("${decidedBy}" は該当しません)。独立レビュアの席の責任者は外部の確認者であり、この席の統制を緩める向きの決定を、席の責任者の記名では受け付けません(標準 第3章 3.13.3)`
+        : item.seat
         ? `「${item.line}」を決定できるのは、${seatName(item.seat)} の席の責任者、または${decider}です("${decidedBy}" はどちらでもありません)`
         : `「${item.line}」を決定できるのは、${decider}です("${decidedBy}" は該当しません)`
     );
@@ -1850,6 +1911,11 @@ export function renderChangeReport(report, clamps = [], config = null) {
   );
   section('無効になった確認の候補(やり直しの要否は文脈オーナーが決める)', report.candidates, 'なし');
   section('残作業', report.remaining, 'なし');
+  // 能力依存の定数の再評価待ち(#295 / ADR-0058 決定6)。値は自動で変えない。件数と契機だけを注記する
+  if (config) {
+    const note = recalibrationNote(recalibrationState(config));
+    section('再評価待ちの能力依存の定数(注記。値は自動で変えない)', note ? [note] : [], 'なし');
+  }
   return L.join('\n');
 }
 
@@ -2227,6 +2293,37 @@ export function bumpD0Version(v) {
 }
 
 /** 標準の該当節へのリンク。参照先がない項目は素のまま出す(#221) */
+/**
+ * 記録の置き場と、その所有者にする席(CODEOWNERS の案。#54)。記録だけの PR の承認者を記名者の席へ誘導する誘導層であり、
+ * 遮断に数えない。出荷の PR(ship-evidence.yml が push する ship/<日付> から出荷判定者が開く)は records ブランチの様式を docs/gates/ へ、承認レビューの写しを
+ * docs/records/reviews/ へ複製し、保証の開示を docs/evidence/ へ置く。その承認者は出荷判定者本人(標準 第4章「判定記録を基底ブランチへ入れる操作」)。
+ * docs/gates/ には停止の解除・例外承認・SG の記録も先に入る(記名者はそのゲートの判定者)。パス単位でさらに分けるなら人が足す
+ */
+export const CODEOWNER_RECORD_PATHS = [
+  ['/docs/gates/', 'qa-gatekeeper', '判定記録(出荷の PR が records/gates/ から複製。停止の解除・例外承認・SG の記録は先に入る)'],
+  ['/docs/records/', 'qa-gatekeeper', '承認レビューの写しの複製(出荷の PR)'],
+  ['/docs/evidence/', 'qa-gatekeeper', '保証の開示を含む品質レポート(出荷の PR)'],
+  ['/docs/debt-ledger.md', 'value-owner', '技術負債台帳(例外承認・前提の受容・未解決事項の記録。例外承認の記名者はリスク区分ごとの決定者)'],
+];
+
+/**
+ * 席の責任者のアカウントから CODEOWNERS の行を起こす。席の責任者が未記入、または名簿にアカウントが無い行は、所有者を書けないため
+ * 行頭を # にして理由を添える(推測で埋めない)。戻り値: [{ path, role, seat, owner, line }]
+ */
+export function codeownersProposal(config) {
+  return CODEOWNER_RECORD_PATHS.map(([p, role, why]) => {
+    const seat = (config.seats ?? []).find((s) => s.role === role);
+    const seatName = seat?.name ?? (KB.roles ?? []).find((r) => r.id === role)?.name ?? role;
+    const person = seat?.accountable ? findPerson(config, seat.accountable) : null;
+    const accounts = (Array.isArray(person?.accounts) ? person.accounts : []).map((a) => String(a).trim().replace(/^@/, '')).filter(Boolean);
+    const pad = p.padEnd(24, ' ');
+    if (!seat?.accountable) return { path: p, role, seat: seatName, owner: null, line: `# ${pad}<${seatName}の席の責任者が未記入>  # ${why}` };
+    if (!accounts.length) return { path: p, role, seat: seatName, owner: null, line: `# ${pad}<${personName(config, seat.accountable)} のアカウントが名簿(people[].accounts)に無い>  # ${why}` };
+    const owner = accounts.map((a) => `@${a}`).join(' ');
+    return { path: p, role, seat: seatName, owner, line: `${pad}${owner}  # ${seatName}。${why}` };
+  });
+}
+
 function link(text, url) {
   return url ? `[${text}](${url})` : text;
 }
@@ -2436,8 +2533,10 @@ export function renderProfileMd(config, result) {
     }
     L.push('');
     L.push(
-      '**起案した主体は、その成果物の判定者になりません**。役割の組み合わせによらず成立しない禁止です。' +
-        '分離は、作業領域・セッション・認証情報の3つがすべて分かれている場合にのみ成立します。'
+      '**成果物を起案した実行主体の文脈は、その成果物の判定の草案を作りません**(標準 第3章 3.5.3)。体制の人数によらない規定です。' +
+        '分離は、作業領域・セッション・認証情報の3つがすべて分かれている場合にのみ成立します。' +
+        '人の単位では、この規定を課しません。成果物の結果責任者が、要件合意(G-2)・技術設計判断(G-3)・機能仕様承認(G-4)・出荷判定(G-7)の判定者を兼ねることは、禁止に当たりません。' +
+        '人の単位で禁止する組み合わせは、上の表の「兼ねてはならない役割」に限ります。この規定を、機械は検査しません。'
     );
     L.push('');
   }
@@ -2507,6 +2606,27 @@ export function renderProfileMd(config, result) {
       );
     }
     L.push('');
+    // 記録の置き場の所有者(CODEOWNERS の案)。席の責任者のアカウントから起こす。/process-init は .github/CODEOWNERS を書き換えない(#54)
+    L.push('### 記録の置き場の所有者(CODEOWNERS の案)');
+    L.push('');
+    L.push(
+      '記録だけの PR(出荷の PR `ship/<日付>`、停止の解除・例外承認の台帳)の承認者を、記名者の席へ誘導する `.github/CODEOWNERS` の行です。' +
+        '席の責任者とそのアカウント(人の名簿)から起こしています。**`/process-init` は `.github/CODEOWNERS` を書き換えません**。人がこの案を写し、体制が変わったら写し直します。' +
+        'これは誘導層です。所有者の誰か 1 人で足り、bypass actor を素通りさせるため、**遮断に数えません**(`.github/rulesets/README.md`「記録だけの PR にも承認 1 件が残る」)。'
+    );
+    L.push('');
+    L.push('```');
+    for (const row of codeownersProposal(config)) L.push(row.line);
+    L.push('```');
+    L.push('');
+    const unfilled = codeownersProposal(config).filter((r) => !r.owner);
+    if (unfilled.length) {
+      L.push(
+        `責任者またはアカウントが未記入の席があるため、${unfilled.length} 行は所有者を書けていません(行頭を \`#\` にして出しています)。` +
+          '`/process-change`(種別 `accountable`)で席の責任者と `people[].accounts` を記入すると、再生成でこの案に入ります。'
+      );
+      L.push('');
+    }
     const d = config.delegation ?? { allowed: false, blockedBy: [], rules: [] };
     L.push('### 委任の範囲');
     L.push('');
@@ -2679,6 +2799,20 @@ export function renderProfileMd(config, result) {
     L.push('- [ ] コア機能の指定をやり直す');
     L.push('- [ ] 技術負債台帳の返却目安を設定する');
     L.push('');
+    // S0 で独立レビュー(G-6)・出荷判定(G-7)を省略する構成の前提(標準 第8章 軸B「S0 の省略が成立する前提」。#302 / ADR-0065 決定1)
+    const omittedInS0 = ['g6', 'g7'].filter((k) => config.gates?.[k]?.state === 'omitted').map((k) => config.gates[k].label);
+    if (omittedInS0.length) {
+      L.push('## S0 の省略が成立する前提');
+      L.push('');
+      L.push(`${omittedInS0.join(' と ')} の省略は、次の3つを前提に成立します(標準 第8章 軸B)。前提が成立しているかを、機械は確かめません。`);
+      L.push('');
+      L.push('1. コア機能の指定が無い');
+      L.push('2. 露出する利用者が、社内と実験参加者に限られる');
+      L.push('3. S1 へ移ると G-6 は適用に戻る。S0 の期間に独立した人の確認を経なかった変更は、S1 以降の出荷の範囲に入ると、記録の欠落として扱う');
+      L.push('');
+      L.push('**露出が前提2 を超える前に、S1 へ移します**(`/process-change` の種別 axis)。省略した構成の出荷は、保証の主張の成立条件3・4 を満たさず、品質保証の対象外として出荷した記録になります。');
+      L.push('');
+    }
   }
 
   if (result.warnings.length) {
@@ -3406,8 +3540,31 @@ if (isMain) {
     }
     for (const k of ['failOnSeverity', 'allowedLicenses']) if (S.ci?.[k] !== undefined && !strList(S.ci[k])) bad.push(`settings.ci.${k} は文字列の配列で書きます`);
     if (S.task !== undefined && !isObject(S.task)) bad.push('settings.task はオブジェクトで書きます');
-    for (const k of ['maxChangedLines', 'maxChangedFiles', 'selfHealMaxIterations']) {
-      if (S.task?.[k] !== undefined && !posInt(S.task[k])) bad.push(`settings.task.${k} は正の整数で書きます`);
+    for (const k of ['maxChangedLines', 'maxChangedFiles']) {
+      // null(基準なし)は、担保水準 L2 の宣言と根拠が実在するときだけ受け付ける(#295 / ADR-0058)
+      if (S.task?.[k] === null) {
+        const asr = S.task?.assurance ?? existing?.task?.assurance;
+        if (!(asr?.level === 'L2' && typeof asr.basis === 'string' && asr.basis.trim() && fs.existsSync(path.join(ROOT, asr.basis)))) {
+          bad.push(`settings.task.${k} の null(基準なし)は、task.assurance が L2 で、根拠(basis)のパスが実在するときだけ書けます`);
+        }
+        // 確約範囲・コア指定のパスが宣言されていない構成では、コア外の変更かを確かめられないため、null を受け付けない
+        if (!corePathsOf({ delegation: existing?.delegation, riskFloor: S.riskFloor !== undefined ? S.riskFloor : existing?.riskFloor }).paths.length) {
+          bad.push(`settings.task.${k} の null(基準なし)は、確約範囲・コア指定のパス(delegation.protectedPaths か riskFloor.rules のパス)を宣言した構成でだけ書けます`);
+        }
+      } else if (S.task?.[k] !== undefined && !posInt(S.task[k])) bad.push(`settings.task.${k} は正の整数、または null(基準なし。L2 の宣言と根拠が要る)で書きます`);
+    }
+    if (S.task?.selfHealMaxIterations !== undefined && !posInt(S.task.selfHealMaxIterations)) bad.push('settings.task.selfHealMaxIterations は正の整数で書きます');
+    if (S.task?.nonProductPaths !== undefined && !strList(S.task.nonProductPaths)) bad.push('settings.task.nonProductPaths は文字列(glob)の配列で書きます');
+    if (S.task?.assurance !== undefined) {
+      const A = S.task.assurance;
+      if (!isObject(A) || !['L0', 'L1', 'L2'].includes(A.level)) bad.push('settings.task.assurance は { "level": "L0" | "L1" | "L2", "basis": "<リポジトリ内のパス>", "declaredBy": "<氏名>", "declaredAt": "YYYY-MM-DD", "reviewAt": "YYYY-MM-DD" } で書きます');
+      else if (A.level !== 'L0') {
+        if (typeof A.basis !== 'string' || !A.basis.trim() || !fs.existsSync(path.join(ROOT, A.basis))) bad.push(`task.assurance の根拠(basis: ${A.basis ?? '未記入'})がリポジトリに実在しません。水準は自己申告でなく、条件の充足を示す記録の所在で宣言します`);
+        if (!isDay(A.reviewAt)) bad.push('task.assurance の見直し日(reviewAt)を YYYY-MM-DD で書きます。過ぎると L0 として扱います');
+        if (!isDay(A.declaredAt)) bad.push('task.assurance の宣言日(declaredAt)を YYYY-MM-DD で書きます');
+        if (typeof A.declaredBy !== 'string' || !A.declaredBy.trim()) bad.push('task.assurance の宣言者(declaredBy)の氏名を書きます');
+        else if (aiNameReason(A.declaredBy, { account: true })) bad.push(`宣言者 "${A.declaredBy}" は ${aiNameReason(A.declaredBy, { account: true })}。担保水準の宣言は人が記名する`);
+      }
     }
     if (S.guard !== undefined && S.guard !== null) {
       if (!isObject(S.guard) || typeof S.guard.enabled !== 'boolean') bad.push('settings.guard は { "enabled": true / false, "reviewBy": "YYYY-MM-DD", "reason": "<理由>" } で書きます。設定を消すときは null です');
@@ -3654,6 +3811,8 @@ if (isMain) {
       maxChangedLines: taskNow.maxChangedLines,
       maxChangedFiles: taskNow.maxChangedFiles,
       selfHealMaxIterations: taskNow.selfHealMaxIterations,
+      nonProductPaths: taskNow.nonProductPaths,
+      assurance: taskNow.assurance,
       platformHost: platformNow.host,
       platformHostUrl: platformNow.hostUrl,
     });

@@ -6,6 +6,8 @@
 // テンプレートの全ファイルを一時のディレクトリへ写し、1名と3名で初期化して、次を確かめます。
 //   - spec-lint(引数なし = CI と同じ範囲)が通る。様式から作る機能仕様・実装計画・D-0・企画書を置いた後も通る
 //   - 契約検査(verify-gate-contract)と生成区間の検査(check-process-rules)が通る
+//   - 既存の CLAUDE.md に区間の目印だけを足した状態(常駐の規則が無い)では、check-process-rules が落ちる。
+//     既存の内容を残してテンプレートの節を含めれば通る。常駐の規則の節の一覧は、テンプレートの CLAUDE.md と一致する
 //   - node の基盤(package.json の test と coverage、秘匿情報の検査の設定、テストの置き場)が作られ、既存のファイルを書き換えない
 //   - 初期化の PR(生成物と基盤だけ。トレーラ Spec: setup)が pr-rules(check-pr)を通る。製品のコードを足すと落ちる。
 //     リスク区分の節が無い本文は落ちる
@@ -21,6 +23,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { ROOT } from './config.mjs';
+import { buildManifest, loadManifest } from './claude-md-resident.mjs';
 
 const own = JSON.parse(fs.readFileSync(path.join(ROOT, 'process.config.json'), 'utf8'));
 if (own.configured !== false) {
@@ -75,6 +78,17 @@ const ANSWERS = {
 const COMMON = { 'q-quality': 'quality-standard', 'q-criticality': 'cl0', 'q-dev-form': 'inhouse', 'q-existing-gates': 'gates-none', 'q-ai-constraint': 'ai-free' };
 const dirs = [];
 
+// 常駐の規則の節の一覧が、テンプレートの CLAUDE.md と一致する(節を変えたのに一覧を作り直していない状態を落とす)
+{
+  const built = buildManifest(fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8'));
+  const stored = loadManifest();
+  check(
+    '常駐の規則の節の一覧(claude-md-resident.json)が、テンプレートの CLAUDE.md の節と一致する',
+    stored !== null && JSON.stringify(stored.sections) === JSON.stringify(built.sections) && built.sections.length > 0,
+    '作り直し: node scripts/gate/check-process-rules.mjs --write-resident'
+  );
+}
+
 for (const n of [1, 3]) {
   const W = workspace(`${n}`);
   dirs.push(W.dir);
@@ -110,9 +124,28 @@ for (const n of [1, 3]) {
   W.write('specs/F-001/plan.md', W.read('templates/07-implementation-plan.md'));
   r = W.node('scripts/gate/spec-lint.mjs');
   check(`${tag}: 様式から機能仕様・実装計画・D-0・企画書を作った直後も spec-lint が通る`, r.ok, r.out);
-  W.write('specs/F-001/spec.md', W.read('specs/F-001/spec.md') + '\n| 9 | 事象駆動 | 入力が空の場合など、エラーを返す |\n');
+  // 検査の範囲は受入基準の節(標準 第4章 G-2)。節の外の語は検出しない
+  const specBase = W.read('specs/F-001/spec.md');
+  const acRow = '| 3 | ユビキタス | システムは招待トークンをログへ出力してはならない |';
+  const withRow = (row) => specBase.replace(acRow, `${acRow}\n${row}`);
+  check(`${tag}: 様式の受入基準の表に、行を足す目印がある`, specBase.includes(acRow));
+  W.write('specs/F-001/spec.md', specBase + '\n| 9 | 事象駆動 | 入力が空の場合など、エラーを返す |\n');
+  r = W.node('scripts/gate/spec-lint.mjs');
+  check(`${tag}: 受入基準の節の外の語では spec-lint が落ちない`, r.ok, r.out);
+  W.write('specs/F-001/spec.md', withRow('| 9 | 事象駆動 | 入力が空の場合など、エラーを返す |'));
   r = W.node('scripts/gate/spec-lint.mjs');
   check(`${tag}: 機能仕様に曖昧語を足すと spec-lint が落ちる`, !r.ok && /specs.F-001.spec\.md/.test(r.out), r.out);
+  W.write('specs/F-001/spec.md', withRow('| 9 | ユビキタス | システムは一覧を高速に表示しなければならない |'));
+  r = W.node('scripts/gate/spec-lint.mjs');
+  check(`${tag}: 標準の表に足した検出語(高速に)で spec-lint が落ちる`, !r.ok && /高速に/.test(r.out), r.out);
+  W.write('specs/F-001/spec.md', withRow('| 9 | 望ましくない事象 | 不適切に操作した場合、システムはエラー E-01 を返さなければならない <!-- spec-lint-ok --> |'));
+  r = W.node('scripts/gate/spec-lint.mjs');
+  check(`${tag}: 理由の無い除外の印は無効(spec-lint が落ちる)`, !r.ok && /理由がありません/.test(r.out), r.out);
+  W.write('specs/F-001/spec.md', withRow('| 9 | 望ましくない事象 | 不適切に操作した場合、システムはエラー E-01 を返さなければならない <!-- spec-lint-ok: 「不適切に操作」は条件の名前で、E-01 の定義に閉じている --> |'));
+  r = W.node('scripts/gate/spec-lint.mjs');
+  check(`${tag}: 理由を書いた除外の印の行は検出から外し、件数と所在を出す`, r.ok && /除外の印で外した行 1 件/.test(r.out) && /specs.F-001.spec\.md:\d+ 除外の印/.test(r.out), r.out);
+  r = W.node('scripts/gate/spec-lint.mjs', ['--terms']);
+  check(`${tag}: spec-lint --terms が、標準の表の検出語(11語)を出す`, r.ok && r.out.trim().split(' / ').length === 11 && /高速に/.test(r.out), r.out);
   for (const f of ['docs/D-0-governance.md', 'docs/project-brief.md']) fs.rmSync(path.join(W.dir, f));
   fs.rmSync(path.join(W.dir, 'specs/F-001'), { recursive: true });
 
@@ -121,6 +154,35 @@ for (const n of [1, 3]) {
   check(`${tag}: verify-gate-contract が通る`, r.ok, r.out);
   r = W.node('scripts/gate/check-process-rules.mjs');
   check(`${tag}: check-process-rules が通る`, r.ok, r.out);
+
+  // 既存のリポジトリへの持ち込み(process-compass #306): 既存の CLAUDE.md を残し、区間の目印だけを足した状態
+  {
+    const full = W.read('CLAUDE.md');
+    const begin = '<!-- generated:process-rules start -->';
+    const end = '<!-- generated:process-rules end -->';
+    const region = full.slice(full.indexOf(begin), full.indexOf(end) + end.length);
+    const own = '# 既存の規約\n\n- 変数名はキャメルケースで書く\n';
+    W.write('CLAUDE.md', `${own}\n## このプロジェクトの構成(自動生成)\n\n${region}\n`);
+    r = W.node('scripts/gate/check-process-rules.mjs');
+    check(
+      `${tag}: 区間の目印だけを足した既存の CLAUDE.md では check-process-rules が落ちる(常駐の規則が無い)`,
+      !r.ok && /常駐の規則の節が 16 件ありません/.test(r.out) && /見出しが無い: ### 行ってはならない作業/.test(r.out),
+      r.out
+    );
+    // 見出しだけを足して本文を持たない節は、あるものとして数えない
+    W.write('CLAUDE.md', `${full.replace(/(### 停止の申し立てと品質保証の層1\r?\n)[\s\S]*?(\r?\n### 標準の条項を課すとき)/, '$1$2')}`);
+    r = W.node('scripts/gate/check-process-rules.mjs');
+    check(
+      `${tag}: 見出しだけで本文の無い節は check-process-rules が落とす`,
+      !r.ok && /本文が無い: ### 停止の申し立てと品質保証の層1/.test(r.out),
+      r.out
+    );
+    // 既存の内容を残して、テンプレートの節を含めれば通る
+    W.write('CLAUDE.md', `${own}\n${full}\n## 案件で足した節\n\n- 案件の規則\n`);
+    r = W.node('scripts/gate/check-process-rules.mjs');
+    check(`${tag}: 既存の内容を残してテンプレートの節を含めた CLAUDE.md は check-process-rules が通る`, r.ok, r.out);
+    W.write('CLAUDE.md', full);
+  }
 
   // 初期化の PR(生成物と基盤だけ)
   W.git('switch', '-q', '-c', 'chore/process-init');

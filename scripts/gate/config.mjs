@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { recordFromForm } from './records.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -124,13 +125,13 @@ const AI_NAME_RULES = [
   [/(?<![A-Za-z])bot(?![A-Za-z])|ボット|dependabot|renovate|github-actions/i, 'bot の表記を含む'],
   [/Bot(?![a-z])/, 'bot の表記を含む'],
   [
-    /(?<![A-Za-z])(claude|anthropic|gpt|chatgpt|openai|gemini|copilot|codex|llama|mistral|grok|deepseek|qwen|sonnet|opus|haiku|fable|mythos|llm|assistant|model)(?![A-Za-z])|モデル/i,
+    /(?<![A-Za-z])(claude|anthropic|gpt|chatgpt|openai|gemini|copilot|codex|llama|mistral|grok|deepseek|qwen|sonnet|opus|haiku|fable|mythos|llm|assistant|model|devin|cursor|windsurf|cline|aider|replit|tabnine|codewhisperer|kiro|perplexity)(?![A-Za-z])|モデル/i,
     'モデル名または提供者名を含む',
   ],
   // 片仮名の読み。語の一致であり、別の文字種・役職名による回避は閉じない(監査観点6 で確かめる)
   [/エーアイ/, 'AI の表記を含む'],
   [
-    /クロード|アンソロピック|チャットジーピーティー|ジーピーティー|オープンエーアイ|ジェミニ|コパイロット|コーデックス|ミストラル|グロック|ディープシーク|ソネット|オーパス|フェイブル|ミトス|アシスタント/,
+    /クロード|デビン|ウィンドサーフ|アンソロピック|チャットジーピーティー|ジーピーティー|オープンエーアイ|ジェミニ|コパイロット|コーデックス|ミストラル|グロック|ディープシーク|ソネット|オーパス|フェイブル|ミトス|アシスタント/,
     'モデル名または提供者名を含む',
   ],
 ];
@@ -512,6 +513,9 @@ export function allowedDeciders(config, seatRole = null) {
   for (const role of [seatRole, structureDeciderSeat(config)]) {
     const seat = role ? (config.seats ?? []).find((s) => s.role === role) : null;
     const key = personKey(config, seat?.accountable);
+    // 独立レビュアの席の責任者に置いた外部の確認者には、その席の統制を緩める向きの決定権を与えない
+    // (標準 第3章 3.5・3.13.3。#307 / ADR-0060 決定2)。決定できるのは D-0 表1「体制と運用形態」の決定者である
+    if (role === 'independent-reviewer' && role === seatRole && findPerson(config, seat?.accountable)?.external === true) continue;
     if (key) keys.add(key);
   }
   return keys;
@@ -727,6 +731,43 @@ export function answersRosterProblems(config) {
 }
 
 /**
+ * 1〜2名の体制で、作成を指示した本人以外の確認者を、人の名簿と席から確かめられるか
+ * (標準 第4章 G-6。#302 / ADR-0065 決定5)。
+ *
+ * 確かめられるのは、開発者の席と独立レビュアの席の責任者がどちらも記入されており、別の人である場合に限る。
+ * テーラリングの設問(q-external-reviewer)への回答は、判定の根拠にしない。席が未記入のあいだは、確かめられない側
+ * (未達)へ倒す。3名以上の体制には当てない(applies: false)
+ */
+export function confirmerOnRoster(config) {
+  if (config?.answers?.['q-team-size'] !== 'size-1-2') return { applies: false, shown: true, why: null, blank: [] };
+  const seat = (role) => (config.seats ?? []).find((s) => s.role === role);
+  const dev = personKey(config, seat('dev-verifier')?.accountable);
+  const rev = personKey(config, seat('independent-reviewer')?.accountable);
+  const blank = [!dev ? '開発者' : null, !rev ? '独立レビュア' : null].filter(Boolean);
+  if (blank.length) return { applies: true, shown: false, why: 'blank', blank };
+  if (dev === rev) return { applies: true, shown: false, why: 'same', blank: [] };
+  return { applies: true, shown: true, why: null, blank: [] };
+}
+
+/**
+ * 回答と名簿の食い違いのうち、「確認者がいる」と回答して、名簿と席からは確認者を確かめられない向き
+ * (標準 第4章 G-6。#302 / ADR-0065 決定5)。
+ *
+ * 逆の向き(「いない」と回答して、席へ別の人を記入)は answersRosterProblems が拒否する。この向きは拒否しない。
+ * 人の離脱で確認者がいなくなった構成を、回答の書き換えを待たずに未達へ反映するためである(第3章 3.13.3)。
+ * 独立レビュー(G-6)は未達として表示され、ここで返す文は注記として出る
+ */
+export function answersRosterNotices(config) {
+  const c = confirmerOnRoster(config);
+  if (!c.applies || c.shown || config.answers?.['q-external-reviewer'] !== 'reviewer-yes') return [];
+  const why = c.why === 'same' ? '独立レビュアの席の責任者が、開発者の席の責任者と同一人物' : `${c.blank.join('・')}の席の責任者が未記入`;
+  return [
+    `回答は「作成を指示した本人以外の確認者がいる」(q-external-reviewer: reviewer-yes)ですが、人の名簿と席からは確認者を確かめられません(${why})。` +
+      '回答は判定の根拠にしません。独立レビュー(G-6)は未達として表示します。確認できる人がいるなら、人の名簿へ記入し、独立レビュアの席の責任者にします。いないなら、回答を reviewer-no へ改めます',
+  ];
+}
+
+/**
  * 構成だけから確かめられる整合を、まとめて返す(契約検査のうち、リポジトリの設定ファイルに依らない部分)。
  *
  * 出荷の証跡の集約が呼ぶ。PR を経ない体制では、契約検査が走らないまま出荷へ進む場合があるため、
@@ -814,10 +855,37 @@ export function broadPathReason(glob) {
  * 機械が確かめるのは記入の有無だけである。内容は、登録する者が判定する
  */
 export const CHANGE_TYPE_BASIS = [
-  ['detection', '第5章 5.4.6 の検知条件を何で計測するか'],
+  ['detection', '第5章 5.4.6 の第2区分の検知条件ごとの、算出の所在'],
   ['rollback', '取り消しを実行した実績の所在'],
   ['tests', '既存のテストで検出できることの根拠'],
 ];
+
+/**
+ * basis.detection に書く検知条件(標準 第5章 5.4.6 の第2区分)。検知条件ごとに、算出の所在
+ * (算出元の記録と、算出する手段の置き場)を書く。1つの文にまとめた記入は、記入なしとして扱う
+ */
+export const CHANGE_TYPE_DETECTION = [
+  ['rejectionRate', '差し戻し率'],
+  ['duplicationRate', '重複率'],
+  ['reworkRate', '手戻り率'],
+];
+
+/** 登録の根拠のうち、記入が無いものを [キー, 名前] の配列で返す */
+function missingBasis(basis) {
+  const out = [];
+  const d = basis?.detection;
+  if (d === null || typeof d !== 'object' || Array.isArray(d)) {
+    out.push(['detection', `${CHANGE_TYPE_BASIS[0][1]}(${CHANGE_TYPE_DETECTION.map(([k, label]) => `${k}: ${label}`).join('・')} を、それぞれ書く)`]);
+  } else {
+    for (const [k, label] of CHANGE_TYPE_DETECTION) {
+      if (typeof d[k] !== 'string' || !isFilledValue(d[k])) out.push([`detection.${k}`, `${label}の算出の所在`]);
+    }
+  }
+  for (const [k, label] of CHANGE_TYPE_BASIS.slice(1)) {
+    if (typeof basis?.[k] !== 'string' || !isFilledValue(basis[k])) out.push([k, label]);
+  }
+  return out;
+}
 
 export function changeTypeProblems(config, { checkRegistrant = true, only = null } = {}) {
   const list = config.delegation?.changeTypes;
@@ -845,11 +913,12 @@ export function changeTypeProblems(config, { checkRegistrant = true, only = null
     }
     if (only && !only.has(id)) return;
     // 様式の文言(<…>)や「—」「未定」などの記入でない値は、記入なしとして扱う(例外承認の記録の判定と同じ関数)
-    const missing = CHANGE_TYPE_BASIS.filter(([k]) => typeof t.basis?.[k] !== 'string' || !isFilledValue(t.basis[k]));
+    const missing = missingBasis(t.basis);
     if (missing.length) {
       out.push(
         `${at}: 変更種別 "${id}" に、登録の根拠(basis)がない(${missing.map(([k, label]) => `${k}: ${label}`).join(' / ')})。` +
-          '3点の記録が無い種別は登録しない(標準 第5章 5.5.4)。様式の文言(<…>)、「—」「未定」「なし」などは記入として扱わない。' +
+          '3点の記録が無い種別は登録しない(標準 第5章 5.5.4)。detection は、検知条件(差し戻し率・重複率・手戻り率)ごとに算出の所在を書く。' +
+          '様式の文言(<…>)、「—」「未定」「なし」などは記入として扱わない。' +
           '機械が確かめるのは記入の有無だけであり、内容は登録する者が判定する'
       );
     }
@@ -1042,6 +1111,24 @@ export function behaviorSummaryShortfall(text) {
 }
 export const hasBehaviorSummary = (text) => behaviorSummaryShortfall(text) === null;
 
+/**
+ * 2件の挙動要約が同一の文かを比べるための形(第4章 G-6。#305 / ADR-0067 決定3)。見出し語「挙動要約」・コメント・空白・記号を除き、
+ * 英字の大小をそろえた文字の並び。最低限の形を満たさない本文は null(数えないので比べない)。
+ * 機械が見るのは文の同一だけであり、言い換えた写しは検出しない(内部監査の抜き取り)
+ */
+export function behaviorSummaryKey(text) {
+  if (behaviorSummaryShortfall(text) !== null) return null;
+  return String(text ?? '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .normalize('NFKC')
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^\s*(?:[#>*\-・]+\s*)?(?:\*\*)?挙動要約(?:\*\*)?\s*[::]?\s*/u, '').trim())
+    .filter(Boolean)
+    .join(' ')
+    .replace(/[\s\p{P}\p{S}]+/gu, '')
+    .toLowerCase();
+}
+
 // ---------------------------------------------------------------- コア機能のパスと、コア機能の変更に要する承認者の数(第8章 軸C 高。#288 第8巡 Z7)
 //
 // 「コア機能」の機械の判定は、構成に既にある2つの宣言だけから導く(新しい欄を作らない)。
@@ -1068,6 +1155,43 @@ export function touchesCore(config, files) {
   if (!core.declared) return null;
   const hit = (files ?? []).filter((f) => core.paths.some((g) => matchGlob(g, f)));
   return { hit: hit.length > 0, files: hit, paths: core.paths };
+}
+
+// ---------------------------------------------------------------- 規模の基準値と担保水準の宣言(#295 / ADR-0058)
+//
+// task.maxChangedLines / maxChangedFiles は「超過で規模の確認を要する基準」であり、遮断の上限ではない。
+// 値の域に null(基準なし)を持つ。null は、担保水準 L2 の宣言と根拠が実在し、R1・R2 の変更・確約範囲・コア指定の
+// パスに触れない変更だけに効く。それ以外は既定値を使う。
+export const DEFAULT_MAX_CHANGED_LINES = 400;
+export const DEFAULT_MAX_CHANGED_FILES = 15;
+export const ASSURANCE_LEVELS = ['L0', 'L1', 'L2'];
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * 構成 task.assurance({ level, basis, declaredBy, declaredAt, reviewAt })の実効の水準を返す。宣言は記録であり、
+ * 緩和を自動で与えない。確かめるのは根拠(basis)の実在と見直し日(reviewAt)だけである。満たさなければ L0 として扱う。
+ * exists(path) は、根拠のパスの実在を返す関数(PR の検査では基底ブランチ、手元ではファイルシステム)
+ */
+export function assuranceOf(config, { exists = () => false, today = new Date().toISOString().slice(0, 10) } = {}) {
+  const a = config?.task?.assurance;
+  const declared = a && typeof a === 'object' && typeof a.level === 'string' ? a.level : 'L0';
+  if (declared === 'L0') return { declared: 'L0', level: 'L0', valid: false, problems: [] };
+  const problems = [];
+  if (!ASSURANCE_LEVELS.includes(declared)) problems.push(`水準 ${declared} は L0・L1・L2 のいずれでもない`);
+  const basis = typeof a.basis === 'string' ? a.basis.trim() : '';
+  if (!basis) problems.push('根拠(basis)が未記入');
+  else if (!exists(basis)) problems.push(`根拠 ${basis} が実在しない`);
+  if (!DAY_RE.test(String(a.reviewAt ?? ''))) problems.push('見直し日(reviewAt)が YYYY-MM-DD でない');
+  else if (a.reviewAt < today) problems.push(`見直し日 ${a.reviewAt} を過ぎている`);
+  return { declared, level: problems.length ? 'L0' : declared, valid: !problems.length, basis, reviewAt: a.reviewAt ?? null, problems };
+}
+
+/** 規模の基準値。null(基準なし)は、呼び出し側が条件(L2 の宣言と根拠、R3、コア外)を確かめたうえで使う */
+export function sizeLimitsOf(config) {
+  const read = (v, d) => (v === null ? { value: null, explicitNull: true } : Number.isInteger(v) && v > 0 ? { value: v, explicitNull: false } : { value: d, explicitNull: false });
+  const l = read(config?.task?.maxChangedLines, DEFAULT_MAX_CHANGED_LINES);
+  const f = read(config?.task?.maxChangedFiles, DEFAULT_MAX_CHANGED_FILES);
+  return { lines: l.value, files: f.value, nullLines: l.explicitNull, nullFiles: f.explicitNull };
 }
 
 /** git の --numstat の出力から、変更行数(追加 + 削除)を合計する */
@@ -1108,8 +1232,9 @@ export function classifyDelegation(config, files, ruleId = null, changedLines = 
     };
   }
   // 委任は変更単位の規模の上限を緩めない(第8章「対象にできる変更の境界」)
-  const maxFiles = config.task?.maxChangedFiles;
-  const maxLines = config.task?.maxChangedLines;
+  // 委任は自動マージのため、規模の基準値の超過に規模の確認を要する形に代えられない。null(基準なし)でも既定値で縛る(#295)
+  const maxFiles = Number.isInteger(config.task?.maxChangedFiles) ? config.task.maxChangedFiles : DEFAULT_MAX_CHANGED_FILES;
+  const maxLines = Number.isInteger(config.task?.maxChangedLines) ? config.task.maxChangedLines : DEFAULT_MAX_CHANGED_LINES;
   if (maxFiles && files.length > maxFiles) {
     return { rule: null, reasons: [`変更ファイル数 ${files.length} が上限 ${maxFiles} を超えている`] };
   }
@@ -1171,31 +1296,12 @@ export function classifyDelegation(config, files, ruleId = null, changedLines = 
 export function readGateRecords() {
   const dir = path.join(ROOT, 'docs/gates');
   if (!fs.existsSync(dir)) return [];
-  const raw = (text, key) => text.match(new RegExp(`^\\|\\s*${key}\\s*\\|\\s*(.*?)\\s*\\|\\s*$`, 'm'))?.[1]?.trim() ?? null;
-  const plain = (v) => v?.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\*\*|__|`/g, '').trim() ?? null;
-  const cell = (text, key) => {
-    const v = plain(raw(text, key)) ?? '';
-    if (!v || v.startsWith('<')) return null;
-    return key === '対象' || !v.includes(' / ') ? v : null;
-  };
+  // 欄の読み方は records.mjs の recordFromForm(記録用ブランチの様式と同じ)。「対象」だけは ` / ` を許す。推奨の書き方
+  // (`F-012 / PR #34`、`F-012 / 1a2b3c4`)が区切りに使うため。ほかの欄の ` / ` は様式の選択肢が残ったものとして未記入に数える(#321 段階2)
   return fs
     .readdirSync(dir)
     .filter((f) => f.endsWith('.md'))
-    .map((f) => {
-      const text = fs.readFileSync(path.join(dir, f), 'utf8');
-      return {
-        file: `docs/gates/${f}`,
-        gate: cell(text, 'ゲート'),
-        target: cell(text, '対象'),
-        result: cell(text, '結果'),
-        // 結果欄の記載そのもの(様式の文言を残したままの値を含む)。2値のどちらとも読めない理由を示すために使う
-        resultRaw: raw(text, '結果'),
-        mode: cell(text, '確定の形態'),
-        riskConfirmedBy: cell(text, 'リスク区分を確定した者'),
-        d0Version: cell(text, '参照した D-0 の版'),
-        judgedAt: cell(text, '判定日時'),
-      };
-    });
+    .map((f) => recordFromForm(fs.readFileSync(path.join(dir, f), 'utf8'), `docs/gates/${f}`, 'base'));
 }
 
 // ---------------------------------------------------------------- 変化点の記録の連鎖
