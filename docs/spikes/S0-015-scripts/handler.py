@@ -2,7 +2,8 @@
 
 op:
   info          実行環境(glibc・lore の版・冷えた起動か)
-  save          path と content(base64)か gen_bytes(大きさ)で版を保存し、flush の後に差分を S3 へ写す
+  save          path と content(base64)か gen_bytes(大きさ)で版を保存し、
+                flush の後に差分を S3 へ写す
   versions      path の版の一覧
   read          path と version の内容(sha256・大きさ・先頭)
   reset         /tmp の保管を消す(冷えた起動の模擬)
@@ -24,10 +25,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import boto3
+from botocore.config import Config as _BotoConfig
 from botocore.exceptions import ClientError
 
 # Lore は起動時に $HOME/.config/lore を作る。Lambda では /tmp 以外が読み取り専用のため、
-# lore を読み込む前に HOME を /tmp へ向ける(要件: 配置側で HOME か XDG_CONFIG_HOME を書ける場所にする)
+# lore を読み込む前に HOME を /tmp へ向ける
+# (要件: 配置側で HOME か XDG_CONFIG_HOME を書ける場所にする)
 if os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
     os.environ["HOME"] = "/tmp/home"
     os.environ["XDG_CONFIG_HOME"] = "/tmp/home/.config"
@@ -39,8 +42,6 @@ ROOT = Path(os.environ.get("REPO_ROOT", "/tmp/repo"))
 MANIFEST_KEY = PREFIX + "manifest.json"
 OBJECTS = PREFIX + "objects/"
 PARALLEL = int(os.environ.get("PARALLEL", "16"))
-
-from botocore.config import Config as _BotoConfig
 
 s3 = boto3.client("s3", config=_BotoConfig(max_pool_connections=max(PARALLEL, 10)))
 
@@ -89,7 +90,9 @@ def pull() -> dict:
         return {"pull_ms": _ms(t0), "pulled": 0, "skipped": True, "seq": m["seq"]}
     ROOT.mkdir(parents=True, exist_ok=True)
     have = _tree(ROOT) if ROOT.exists() else {}
-    todo = [(rel, meta) for rel, meta in m["files"].items() if have.get(rel, ("", 0))[0] != meta["sha"]]
+    todo = [
+        (rel, meta) for rel, meta in m["files"].items() if have.get(rel, ("", 0))[0] != meta["sha"]
+    ]
 
     def fetch(item):
         rel, meta = item
@@ -184,7 +187,7 @@ def push(if_match: str | None = "__current__") -> dict:
     }
 
 
-# ---------------------------------------------------------------- Lore(Task-8 の LoreVersionStore を写した)
+# ---------------------------------------------- Lore(Task-8 の LoreVersionStore を写した)
 class LoreStore:
     def __init__(self, root: Path) -> None:
         from lore import Lore
@@ -195,7 +198,9 @@ class LoreStore:
         self.g = LoreGlobalArgs(repository_path=str(root), offline=True)
         if not (root / ".lore").exists():
             root.mkdir(parents=True, exist_ok=True)
-            Lore.repository_create(self.g, LoreRepositoryCreateArgs(repository_url="filetto")).wait()
+            Lore.repository_create(
+                self.g, LoreRepositoryCreateArgs(repository_url="filetto")
+            ).wait()
 
     def _events(self, call) -> list[tuple[str, dict]]:
         from lore.types.enums import LoreEventTag
@@ -233,7 +238,9 @@ class LoreStore:
 
         if not LORE_ONLY and not (self.root / path).exists():
             return []
-        ev = self._events(self.L.file_history(self.g, LoreFileHistoryArgs(path=str(self.root / path))))
+        ev = self._events(
+            self.L.file_history(self.g, LoreFileHistoryArgs(path=str(self.root / path)))
+        )
         return sorted((d["number"] for t, d in ev if t == "FILE_HISTORY"), key=int)
 
     def read(self, path: str, version: str) -> bytes:
@@ -242,7 +249,8 @@ class LoreStore:
         with tempfile.TemporaryDirectory(dir=str(self.root.parent)) as tmp:
             out = Path(tmp) / "content"
             self.L.file_write(
-                self.g, LoreFileWriteArgs(path=str(self.root / path), revision=version, output=str(out))
+                self.g,
+                LoreFileWriteArgs(path=str(self.root / path), revision=version, output=str(out)),
             ).wait()
             return out.read_bytes()
 
