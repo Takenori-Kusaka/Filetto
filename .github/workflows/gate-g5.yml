@@ -75,6 +75,15 @@ jobs:
       - run: node scripts/gate/test-check-delegation.mjs
       # PR 単位の検査(check-pr)を、一時のリポジトリのフィクスチャで試験する
       - run: node scripts/gate/test-check-pr.mjs
+      # 記録用ブランチの写しと様式の読み取り(records.mjs)、/pit と出荷の証跡の集約がそれを読む経路(process-compass #321 段階2)
+      - run: node scripts/gate/test-records.mjs
+      - run: node scripts/gate/test-next-records.mjs
+      - run: node scripts/gate/test-aggregate-records.mjs
+      - run: node scripts/gate/test-env-findings.mjs
+      # 能力依存の定数の再評価待ち(契機は performer の変化点と暦だけ。#295)
+      - run: node scripts/gate/test-recalibration.mjs
+      # 独立と席の規則(確認者の有無を名簿と席から導く、出荷判定者が兼ねない席、強制する承認の数。process-compass #302・#304・#305・#307)
+      - run: node scripts/gate/test-roster-rules.mjs
       # 初期化した直後に G-5 の手元で確かめられる検査が通ることを、テンプレートの全ファイルで試験する(#286)。
       # 構成が設定済みのリポジトリでは省く(テンプレートの初期の状態が無いため)
       - run: node scripts/gate/test-init-g5.mjs
@@ -201,7 +210,7 @@ jobs:
 
   # PR 単位の検査(#286): トレーラ Spec、変更規模の上限、閾値・除外設定と製品のコードの同時変更(禁止事項6)。
   # 既存のテストの変更(削除・期待値の変更)は、G-6 の材料として PR へ一覧を出す(失敗にはしない)。
-  # 上限と例外承認は基底ブランチの構成と台帳から読む。同じ PR で足した例外承認の行は数えない。
+  # 規模の基準値と、台帳の既存の例外承認の行は、基底ブランチの構成と台帳から読む。同じ PR で足した例外承認の行は数えない。超過は失敗にせず、規模の確認を要する(#295)。
   # 停止の申し立て(ラベル state:stop-requested)が付いた PR は、基底ブランチに解除の記録が入るまで失敗させる(#288)。
   # PR の題名と本文は環境変数で渡す(シェルへ展開しない)
   pr-rules:
@@ -231,7 +240,8 @@ jobs:
           { echo 'events<<PIT_IN_EVENTS'; echo "${ev}"; echo 'PIT_IN_EVENTS'; } >> "$GITHUB_OUTPUT"
       # G-6 の承認者の数(構成 review.reviewerCount。規制業・CL3 は 2 名)。レビューの一覧を渡し、check-pr が
       # 「G-6 の承認者 N 名 / 要求 M 名」を出す(合否にはしない。理由は check-pr.mjs の冒頭)。取得に失敗した場合は
-      # 空にする(check-pr は「読めない」とその旨を出す)
+      # 空にする(check-pr は「読めない」とその旨を出す)。同じ一覧から、項目番号と期限を欠く変更要求(CHANGES_REQUESTED)を
+      # 「理由の無い差し戻し」として出す(標準 第4章 G-6「承認レビューを判定記録とする条件」の条件1。合否にはしない。#321)
       - name: PR のレビュー
         id: reviews
         env:

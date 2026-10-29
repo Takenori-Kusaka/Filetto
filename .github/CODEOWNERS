@@ -23,3 +23,20 @@
 # 強制層。エージェント自身の操作で変えられてはならない
 # /.claude/settings.json  @tech-lead
 # /.github/rulesets/      @tech-lead
+
+# 判定記録の置き場(process-compass #321 / ADR-0070)。記録だけの PR の承認者を、記名者の席へ誘導する。
+# これは誘導層であり、遮断に数えない(所有者の誰か 1 人で足り、bypass actor は素通りする)。
+# require_code_owner_review が偽の構成(team.json)では、承認者の候補として表示されるだけ。
+# 出荷の PR(ship-evidence.yml が push する ship/<日付> から出荷判定者が開く)は、records ブランチの様式を docs/gates/ へ、承認レビューの写しを
+# docs/records/reviews/ へ複製する。その承認者は出荷判定者本人なので、この 2 つの所有者は出荷判定者の席にする。
+# docs/gates/ には停止の解除・例外承認(台帳は docs/debt-ledger.md)・SG の記録も先に入るため、席ごとに分けるなら
+# ゲートごとの判定者の席(価値責任者・出荷判定者・事業決裁者)をここへ書く。
+# records ブランチ自体(records/gates/・records/reviews/)は PR を経ないため、CODEOWNERS は効かない(ルールセットで保護する)
+#
+# 席ごとの行は、/process-init が PROCESS-PROFILE.md の「記録の置き場の所有者(CODEOWNERS の案)」に、席の責任者のアカウント
+# (人の名簿 people[].accounts)から起こす。人がその案をここへ写す(/process-init はこのファイルを書き換えない)。
+# 下の @ship-judge・@value-owner は席の名前の仮の置き字であり、実在のアカウントに置き換えるまで行頭の # を外さない。
+# /docs/gates/            @ship-judge     # 出荷判定者の席
+# /docs/records/          @ship-judge     # 出荷判定者の席
+# /docs/evidence/         @ship-judge     # 出荷判定者の席
+# /docs/debt-ledger.md    @value-owner    # 価値責任者の席(例外承認・前提の受容・未解決事項の台帳)

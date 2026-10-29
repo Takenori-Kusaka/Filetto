@@ -12,8 +12,14 @@ build/
 target/
 *.egg-info/
 
-# 出荷判定の証跡(タグ push 時に CI が生成する)
-evidence/
+# カバレッジの出力(G-5 の test ジョブが毎回作る。coverage-check が読む)
+coverage/
+.nyc_output/
+coverage.json
+coverage.out
+
+# 出荷判定の証跡の作業領域(集約が毎回書く。ルート直下だけ)。docs/evidence/ は出荷の PR が保証の開示を置く記録の置き場であり、無視しない
+/evidence/
 
 # 秘匿情報。強制層の設定でも参照を遮断するが、混入の経路をここでも塞ぐ
 .env
